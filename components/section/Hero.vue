@@ -1,12 +1,62 @@
 <script setup>
+import { ethers } from 'ethers'
+import { MERGE_CONTRACT_ADDRESS, MERGE_ABI } from '~/utils/contract.mjs'
+
 const stats = await useAPI("/stats")
 const omnibus = await useAPI("/omnibus")
 
-const token_count = computed(() => stats.value?.token_count ?? 0)
 const total_mass = computed(() => stats.value?.total_mass ?? 0)
 const alpha_mass = computed(() => stats.value?.alpha_mass ?? 0)
 const merged_count = computed(() => stats.value?.merged_count ?? 0)
 const omnibus_count = computed(() => omnibus.value?.count ?? 0)
+
+// Query live totalSupply from chain
+const token_count = ref(0)
+try {
+  const config = useRuntimeConfig()
+  const rpcUrl = `https://eth-mainnet.g.alchemy.com/v2/${config.public.ALCHEMY_API_KEY}`
+  const provider = new ethers.JsonRpcProvider(rpcUrl)
+  const contract = new ethers.Contract(MERGE_CONTRACT_ADDRESS, MERGE_ABI, provider)
+  token_count.value = Number(await contract.totalSupply())
+} catch {
+  token_count.value = stats.value?.token_count ?? 0
+}
+
+function useCountUp(target, duration = 3500, initialValue = 0) {
+  const display = ref(initialValue)
+  let raf = null
+
+  watch(target, (val) => {
+    if (!val) return
+    const start = display.value
+    const diff = val - start
+    const startTime = performance.now()
+
+    function tick(now) {
+      const elapsed = now - startTime
+      const progress = Math.min(elapsed / duration, 1)
+      // ease-in + extremely slow ease-out
+      const eased = progress < 0.25
+        ? Math.pow(progress / 0.25, 2) * 0.8
+        : 0.8 + 0.2 * (1 - Math.pow(1 - (progress - 0.25) / 0.75, 7))
+      display.value = Math.round(start + diff * eased)
+      if (progress < 1) {
+        raf = requestAnimationFrame(tick)
+      }
+    }
+
+    if (raf) cancelAnimationFrame(raf)
+    raf = requestAnimationFrame(tick)
+  }, { immediate: true })
+
+  return computed(() => String(display.value))
+}
+
+const animTokenCount = useCountUp(token_count, 1500, 28990)
+const animTotalMass = computed(() => String(total_mass.value))
+const animAlphaMass = useCountUp(alpha_mass)
+const animMergedCount = useCountUp(merged_count)
+const animOmnibusCount = useCountUp(omnibus_count, 2200, 28990)
 </script>
 
 <template>
@@ -15,26 +65,26 @@ const omnibus_count = computed(() => omnibus.value?.count ?? 0)
 
     <div class="hero__stats">
       <div class="hero__stat">
-        <span class="hero__stat__value">{{ token_count.toLocaleString() }}</span>
-        <span class="hero__stat__label">tokens</span>
+        <span class="hero__stat__value">{{ animTokenCount }}</span>
+        <span class="hero__stat__label">tokens remain</span>
       </div>
       <div class="hero__stat">
-        <span class="hero__stat__value">{{ total_mass.toLocaleString() }}</span>
+        <span class="hero__stat__value">{{ animTotalMass }}</span>
         <span class="hero__stat__label">total mass</span>
       </div>
       <div class="hero__stat">
-        <span class="hero__stat__value">{{ alpha_mass.toLocaleString() }}</span>
+        <span class="hero__stat__value">{{ animAlphaMass }}</span>
         <span class="hero__stat__label">alpha</span>
       </div>
     </div>
 
     <div class="hero__stats hero__stats--secondary">
       <div class="hero__stat">
-        <span class="hero__stat__value hero__stat__value--secondary">{{ merged_count.toLocaleString() }}</span>
+        <span class="hero__stat__value hero__stat__value--secondary">{{ animMergedCount }}</span>
         <span class="hero__stat__label">merged</span>
       </div>
       <div class="hero__stat">
-        <span class="hero__stat__value hero__stat__value--secondary">{{ omnibus_count.toLocaleString() }}</span>
+        <span class="hero__stat__value hero__stat__value--secondary">{{ animOmnibusCount }}</span>
         <span class="hero__stat__label">in NG omnibus</span>
       </div>
     </div>
@@ -70,6 +120,9 @@ const omnibus_count = computed(() => omnibus.value?.count ?? 0)
 .hero__stat__value {
   @apply text-4xl md:text-7xl lg:text-8xl font-medium;
   @apply text-white;
+  font-variant-numeric: tabular-nums;
+  min-width: 6ch;
+  text-align: center;
 }
 .hero__stat__label {
   @apply text-xs uppercase tracking-[0.2em] mt-2;
