@@ -94,5 +94,7 @@ sw.*
 # Vim swap files
 *.swp
 
-# Generated data files
-public/data/
+# Generated data files (large/temp only)
+public/data/tokens_cache.json
+public/data/failed_ids.json
+public/data/token_28xxx.json
