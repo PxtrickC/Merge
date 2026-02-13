@@ -21,29 +21,29 @@ function formatDate(merged_on) {
     <div class="flex-grow flex flex-col justify-start py-3 pr-2">
       <div class="flex gap-1.5">
         <span class="text-xl lg:text-2xl xl:text-3xl font-semibold">m({{mass}})</span>
-        <span class="self-end ">#{{+id}}</span>
+        <span class="self-end text-white text-opacity-50">#{{+id}}</span>
       </div>
-      <p class="mt-2 ">Tier {{tier}}</p>
+      <p class="mt-2">Tier {{tier}}</p>
       <p>Class {{token_class}}</p>
       <p>Merges {{merges || 0}}</p>
 
       <p class="mt-auto flex items-end gap-1">
-        <span v-if="merged" class="h-fit w-fit px-2 py-1.5 bg-black text-white text-xs font-normal rounded">
+        <span v-if="merged" class="h-fit w-fit px-2 py-1.5 bg-white text-black text-xs font-normal">
           MERGED
         </span>
         <a
-          class="h-8 w-8 ml-auto flex justify-center button bg-white rounded-full"
+          class="h-8 w-8 ml-auto flex justify-center items-center transition-opacity hover:opacity-70"
           :href="`https://opensea.io/assets/0xc3f8a0f5841abff777d3eefa5047e8d413a1c9ab/${+id}`"
           target="_blank"
         >
           <img src="~/assets/svgs/opensea.svg" alt="opensea" />
         </a>
         <a
-          class="h-8 w-8 p-1.5 flex justify-center button bg-black rounded-full"
+          class="h-8 w-8 p-1.5 flex justify-center items-center transition-opacity hover:opacity-70"
           :href="`https://niftygateway.com/marketplace?collection=0xc3f8a0f5841abff777d3eefa5047e8d413a1c9ab&tokenId=${+id}`"
           target="_blank"
         >
-          <img src="~/assets/svgs/nifty.svg" alt="opensea" />
+          <img src="~/assets/svgs/nifty.svg" alt="nifty" />
         </a>
       </p>
     </div>
@@ -55,13 +55,8 @@ function formatDate(merged_on) {
   @apply relative;
   @apply w-full flex-grow;
   @apply p-2;
-  @apply bg-white rounded-xl;
+  border: 1px solid #222;
   @apply flex gap-4;
-  @apply text-black font-medium lg:text-lg xl:text-xl;
-}
-.drop_fit {
-  @apply px-1.5 py-0.5 lg:px-2.5 lg:pt-1 lg:pb-0.5;
-  @apply bg-black rounded-full;
-  @apply text-white text-xs font-thin lg:text-sm lg:font-normal;
+  @apply text-white lg:text-lg xl:text-xl;
 }
 </style>

@@ -28,26 +28,28 @@ function formatDate(merged_on) {
   <div v-if="merged" class="card__container">
     <div class="card__title">Merged</div>
     <div class="card__content">
-      <div v-if="merged_to" class="card__content__row">
-        <icon class="card__icon dark bg-white" :stroke="2" variant="minimize" />
+      <div v-if="merged_to" class="stat__row">
+        <span class="card__content__label">merged into</span>
         <span class="card__content__value">
-          Merged into <NuxtLink tag="a" class="link" :to="`/${+merged_to}`">{{+merged_to}}</NuxtLink>
+          <NuxtLink tag="a" class="link" :to="`/${+merged_to}`">{{+merged_to}}</NuxtLink>
         </span>
       </div>
-      <div v-if="sale_price" class="card__content__row">
-        <icon class="card__icon dark bg-white" :stroke="2" variant="eth" />
-        <span class="card__content__value">Sold for {{+parseFloat(((sale_price)).toFixed(4))}}</span>
-        <icon class="-ml-1.5 w-5" variant="eth" />
-        <span v-if="mass > 1" class="card__content__label">
-          {{+parseFloat(((sale_price/mass)).toFixed(4))}} per mass
+      <div v-if="sale_price" class="stat__row">
+        <span class="card__content__label">sold for</span>
+        <span class="card__content__value">
+          {{+parseFloat(((sale_price)).toFixed(4))}} ETH
+          <span v-if="mass > 1" class="card__content__label ml-2">
+            {{+parseFloat(((sale_price/mass)).toFixed(4))}} per mass
+          </span>
         </span>
       </div>
-      <div v-if="merged_on" class="card__content__row">
-        <icon class="card__icon dark bg-white" :stroke="2" variant="clock" />
-        <span class="card__content__value">Merged on {{formatDate(merged_on)}}</span>
-        <span class="w-full -mt-2.5 ml-10 lg:ml-13 card__content__label">
-          Last {{life_span.days}}d {{life_span.hours}}h
-        </span>
+      <div v-if="merged_on" class="stat__row">
+        <span class="card__content__label">merged on</span>
+        <span class="card__content__value">{{formatDate(merged_on)}}</span>
+      </div>
+      <div v-if="merged_on" class="stat__row">
+        <span class="card__content__label">lifespan</span>
+        <span class="card__content__value">{{life_span.days}}d {{life_span.hours}}h</span>
       </div>
     </div>
   </div>
@@ -55,9 +57,11 @@ function formatDate(merged_on) {
 
 <style lang="postcss" scoped>
 .card__content {
-  @apply grid grid-cols-1 gap-y-6 lg:gap-y-8;
+  @apply flex flex-col;
 }
-.card__content__row {
-  @apply flex-wrap;
+.stat__row {
+  @apply flex justify-between items-center;
+  @apply py-3;
+  border-bottom: 1px solid #1a1a1a;
 }
 </style>

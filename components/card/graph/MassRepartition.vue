@@ -1,80 +1,72 @@
 <script setup>
-import { Bar } from "vue-chartjs"
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend,
-} from "chart.js"
-ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend)
-
 const mass_repartition = await useAPI("/mass_repartition")
 
-const chart_data = {
-  labels: [],
-  datasets: [
-    {
-      label: "tokens",
-      data: [],
-      backgroundColor: "#33F8",
-      hoverBackgroundColor: "#55F",
-      borderRadius: 3,
-    },
-  ],
-}
-const chart_options = {
-  normalized: true,
-  responsive: true,
-  plugins: {
-    legend: { display: false },
-    title: { display: false },
-    tooltip: { backgroundColor: "#33F3" },
-  },
-  scales: {
-    x: { grid: { display: false }, ticks: { color: "#fff6" } },
-    y: {
-      grid: { display: true, color: "#39373E99" },
-      position: "right",
-      ticks: { color: "#fff6" },
-    },
-  },
-}
-
-if (mass_repartition.value) fillChartData(mass_repartition.value)
-else watch(mass_repartition, fillChartData)
-
-function fillChartData(data) {
-  const sorted = [...data].sort((a, b) => b.count - a.count)
-  for (const item of sorted) {
-    if (item.count === 0) continue
-    chart_data.datasets[0].data.push(item.count)
-    chart_data.labels.push(item.label ?? `m(${item.mass})`)
-  }
-}
+const sorted_data = computed(() => {
+  if (!mass_repartition.value) return []
+  const sorted = [...mass_repartition.value].sort((a, b) => b.count - a.count).filter(d => d.count > 0)
+  const max = sorted[0]?.count ?? 1
+  return sorted.map(item => ({
+    label: item.label ?? `m(${item.mass})`,
+    count: item.count,
+    pct: (item.count / max) * 100,
+  }))
+})
 </script>
 
 <template>
-  <div class="graph_container">
-    <div class="graph__title">
-      <span>Token per mass</span>
-    </div>
-    <div class="h-full">
-      <Bar v-if="mass_repartition" :data="chart_data" :options="chart_options" />
+  <div class="card__container">
+    <div class="card__title">Token per mass</div>
+    <div class="card__content">
+      <div v-for="item in sorted_data" :key="item.label" class="bar__row">
+        <span class="bar__label">{{item.label}}</span>
+        <div class="bar__track">
+          <div class="bar__fill" :style="{ width: item.pct + '%' }"></div>
+        </div>
+        <span class="bar__count">{{item.count}}</span>
+      </div>
     </div>
   </div>
 </template>
 
 <style lang="postcss" scoped>
-.graph__container {
-  height: calc(100% - 2rem);
+.card__content {
+  @apply flex flex-col;
+  max-height: 40vh;
+  @apply overflow-y-auto pr-2;
 }
-.graph__title {
-  @apply pb-2;
-  @apply border-b border-white border-opacity-10;
-  @apply flex justify-between items-center;
-  @apply text-xl text-white text-opacity-40;
+.bar__row {
+  @apply flex items-center gap-3;
+  @apply py-1.5;
+  border-bottom: 1px solid #0a0a0a;
+}
+.bar__label {
+  @apply text-xs;
+  color: #555;
+  min-width: 4rem;
+}
+.bar__track {
+  @apply flex-grow;
+  height: 4px;
+  background: #111;
+}
+.bar__fill {
+  height: 100%;
+  background: #fff;
+}
+.bar__count {
+  @apply text-xs text-white;
+  min-width: 2.5rem;
+  text-align: right;
+}
+
+::-webkit-scrollbar {
+  @apply w-1;
+}
+::-webkit-scrollbar-track {
+  background: #111;
+}
+::-webkit-scrollbar-thumb {
+  background: #333;
+  border-radius: 4px;
 }
 </style>

@@ -8,45 +8,41 @@ const omnibus = await useAPI("/omnibus")
   <div class="card__container">
     <div class="card__title">Stats</div>
     <div class="card__content">
-      <p class="card__content__row">
-        <icon class="card__icon" variant="circle" />
-        <span class="card__content__value">{{stats?.token_count}}</span>
+      <div class="stat__row">
         <span class="card__content__label">tokens</span>
-      </p>
-      <p class="card__content__row">
-        <icon class="card__icon bg-red" variant="minimize" :stroke="2" />
-        <span class="card__content__value">{{stats?.merged_count}}</span>
+        <span class="card__content__value">{{stats?.token_count}}</span>
+      </div>
+      <div class="stat__row">
         <span class="card__content__label">merged</span>
-      </p>
-      <p class="card__content__row">
-        <icon class="card__icon dark bg-white" variant="award" :stroke="2" />
-        <span class="card__content__value">{{stats?.alpha_mass}}</span>
+        <span class="card__content__value">{{stats?.merged_count}}</span>
+      </div>
+      <div class="stat__row">
         <span class="card__content__label">alpha mass</span>
-      </p>
-      <p class="card__content__row">
-        <icon class="card__icon" variant="globe" />
-        <span class="card__content__value">{{stats?.total_mass}}</span>
+        <span class="card__content__value">{{stats?.alpha_mass}}</span>
+      </div>
+      <div class="stat__row">
         <span class="card__content__label">global mass</span>
-      </p>
-      <p class="card__content__row">
-        <icon class="card__icon bg-blue" variant="eth" />
-        <span class="card__content__value">—</span>
+        <span class="card__content__value">{{stats?.total_mass}}</span>
+      </div>
+      <div class="stat__row">
         <span class="card__content__label">eth floor</span>
-      </p>
-      <p class="card__content__row">
-        <icon class="card__icon dark bg-yellow" variant="hash" :stroke="2" />
-        <span class="card__content__value">{{omnibus?.count}}</span>
+        <span class="card__content__value">—</span>
+      </div>
+      <div class="stat__row">
         <span class="card__content__label">NiftyGateway</span>
-      </p>
+        <span class="card__content__value">{{omnibus?.count}}</span>
+      </div>
     </div>
   </div>
 </template>
 
 <style lang="postcss" scoped>
 .card__content {
-  @apply grid grid-cols-2 gap-y-6 lg:gap-y-8;
+  @apply flex flex-col;
 }
-.card__content__row {
-  @apply w-fit;
+.stat__row {
+  @apply flex justify-between items-center;
+  @apply py-3;
+  border-bottom: 1px solid #1a1a1a;
 }
 </style>

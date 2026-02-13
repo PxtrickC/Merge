@@ -9,15 +9,13 @@
 
 <style lang="postcss">
 .layout__container {
-  @apply h-screen;
-  @apply md:grid grid-rows-2;
-  grid-template-columns: 36rem 1fr 1fr;
+  @apply min-h-screen;
+  @apply flex flex-col;
 }
 
-section.merge_history {
-  @apply bg-white;
-  @apply overflow-hidden;
-  @apply transition-colors;
+section {
+  @apply p-4 md:p-8;
+  border-bottom: 1px solid #222;
 }
 section li {
   @apply py-4;
@@ -25,7 +23,6 @@ section li {
 }
 .pill {
   @apply px-5 py-2;
-  @apply rounded-full;
   @apply text-sm text-white text-opacity-80 tracking-wider;
 }
 </style>

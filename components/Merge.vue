@@ -7,29 +7,12 @@ const props = defineProps({
 })
 
 const is_alpha = computed(() => props.mass >= props.alpha_mass)
-
-const bg_color = computed(() => {
-  if (is_alpha.value) return "bg-white"
-  let color =
-    props.tier == 4
-      ? "red"
-      : props.tier == 3
-      ? "blue"
-      : props.tier == 2
-      ? "black"
-      : "black"
-  return "bg-" + color
-})
-const text_color = computed(() => {
-  let color = is_alpha.value ? "black font-medium" : "white"
-  return "text-" + color
-})
 </script>
 
 <template>
   <NuxtLink tag="div" class="merge__container" :to="`/${id}`">
     <merge-svg class="rounded-lg" :tier="tier" :mass="mass" :alpha_mass="alpha_mass" />
-    <div class="merge_label" :class="[bg_color, text_color]">
+    <div class="merge_label" :class="{ 'merge_label--alpha': is_alpha }">
       <span>m({{mass}})</span>
       <span>#{{id}}</span>
     </div>
@@ -43,7 +26,11 @@ const text_color = computed(() => {
 .merge_label {
   @apply mt-1;
   @apply py-0.5 px-1.5 xl:py-1 xl:px-2;
-  @apply flex justify-between rounded-md;
-  @apply text-3xs md:text-2xs xl:text-sm text-opacity-90;
+  @apply flex justify-between;
+  @apply text-3xs md:text-2xs xl:text-sm;
+  color: #555;
+}
+.merge_label--alpha {
+  @apply text-white font-medium;
 }
 </style>

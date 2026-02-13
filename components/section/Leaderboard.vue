@@ -12,20 +12,16 @@ const index = ref("mass")
 <template>
   <section class="section__container">
     <div class="section__header">
-      <span class="section__header_title pr-4" :class="{'opacity-20': index != 'mass'}" @click="index = 'mass'"
-        >Global leaderboard</span
+      <span class="section__header_title" :class="index === 'mass' ? 'active' : 'inactive'" @click="index = 'mass'"
+        >Global</span
       >
-      <span
-        class="section__header_title px-4 border-l border-white border-opacity-20 text-white"
-        :class="{'text-opacity-20': index != 'blue'}"
-        @click="index = 'blue'"
-        >Blue leaderboard</span
+      <span class="section__sep">|</span>
+      <span class="section__header_title" :class="index === 'blue' ? 'active' : 'inactive'" @click="index = 'blue'"
+        >Blue</span
       >
-      <span
-        class="section__header_title px-4 border-l border-white border-opacity-20 text-white"
-        :class="{'text-opacity-20': index != 'merges'}"
-        @click="index = 'merges'"
-        >Merges leaderboard</span
+      <span class="section__sep">|</span>
+      <span class="section__header_title" :class="index === 'merges' ? 'active' : 'inactive'" @click="index = 'merges'"
+        >Merges</span
       >
     </div>
 
@@ -37,32 +33,46 @@ const index = ref("mass")
 
 <style lang="postcss" scoped>
 .section__container {
-  @apply col-span-2;
-  @apply md:pb-14; /* scrollbar padding */
-  @apply bg-blue bg-opacity-80;
+  @apply bg-black;
 }
 .section__header {
-  @apply flex items-center;
-  @apply text-white text-opacity-80;
+  @apply flex items-center gap-3;
   @apply cursor-pointer;
 }
 .section__header_title {
-  @apply text-sm md:text-xl font-medium leading-tight;
+  @apply text-sm md:text-base tracking-widest uppercase;
+  @apply transition-opacity;
+}
+.section__header_title.active {
+  @apply text-white;
+}
+.section__header_title.inactive {
+  color: #555;
+}
+.section__header_title.inactive:hover {
+  color: #888;
+}
+.section__sep {
+  color: #333;
 }
 .section__content {
-  @apply h-96 md:h-full;
+  max-height: 60vh;
   @apply mt-4;
   @apply flex content-start flex-wrap gap-x-2 md:gap-x-6 gap-y-2;
-  @apply overflow-y-scroll;
+  @apply overflow-y-auto;
 }
 
 ::-webkit-scrollbar {
-  @apply w-1 md:w-2.5;
+  @apply w-1;
 }
 ::-webkit-scrollbar-track {
-  @apply bg-white bg-opacity-10 rounded-xl;
+  background: #111;
 }
 ::-webkit-scrollbar-thumb {
-  @apply bg-white bg-opacity-70 hover:bg-opacity-100 rounded-xl;
+  background: #333;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
 }
 </style>

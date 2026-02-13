@@ -11,7 +11,9 @@ html {
   -ms-touch-action: manipulation;
   touch-action: manipulation;
 
-  font-family: "Graphik";
+  font-family: "SF Mono", "Fira Code", "Fira Mono", Menlo, Consolas, monospace;
+  background-color: #000;
+  color: #fff;
 }
 
 :focus-visible {
@@ -30,10 +32,6 @@ input[type=number] {
   -moz-appearance: textfield;
 }
 
-section {
-  @apply p-4 md:p-8;
-}
-
 h1, .h1 {
   @apply text-4xl;
 }
@@ -41,16 +39,13 @@ h1, .h1 {
 
 .button, .pill {
   @apply cursor-pointer select-none;
-  @apply transition-all;
-  transition-property: transform shadow;
+  @apply transition-opacity;
 }
 .button:hover, .pill:hover {
-  @apply transform -translate-y-1;
-  @apply shadow-xl;
+  opacity: 0.7;
 }
 .button:active, .pill:active {
-  @apply transform translate-y-0;
-  @apply shadow;
+  opacity: 0.5;
 }
 
 a.link {
@@ -73,19 +68,3 @@ a.link {
   opacity: 0;
 }
 
-@font-face {
-  font-family: 'Graphik';
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  src: local(''),
-       url('~/assets/fonts/graphik/GraphikRegular.woff2') format('woff2');
-}
-@font-face {
-  font-family: 'Graphik';
-  font-style: normal;
-  font-weight: 500;
-  font-display: swap;
-  src: local(''),
-       url('~/assets/fonts/graphik/GraphikMedium.woff2') format('woff2');
-}

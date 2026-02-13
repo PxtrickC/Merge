@@ -11,11 +11,15 @@ module.exports = {
       'gray': '#39373E',
       'gray-light': '#A3A3A3',
       'gray-dark': '#404040',
+      'gray-dim': '#222',
       'white': '#FFF',
       'blue': '#33F',
       'red': '#F33',
       'yellow': '#FC3',
       'transparent': 'transparent'
+    },
+    fontFamily: {
+      mono: ['"SF Mono"', '"Fira Code"', '"Fira Mono"', 'Menlo', 'Consolas', 'monospace'],
     },
     extend: {
       fontSize: {

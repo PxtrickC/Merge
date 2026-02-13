@@ -19,10 +19,8 @@
     "@nuxtjs/tailwindcss": "6.8.1",
     "@pinia/nuxt": "0.5.1",
     "@vueuse/core": "10.5.0",
-    "chart.js": "4.4.0",
     "ethers": "^6.16.0",
     "nuxt": "3.8.0",
-    "pinia": "2.1.7",
-    "vue-chartjs": "5.2.0"
+    "pinia": "2.1.7"
   }
 }

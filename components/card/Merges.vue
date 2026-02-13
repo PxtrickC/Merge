@@ -25,17 +25,21 @@ const merges = computed(() => {
 .card__content {
   @apply max-h-72 md:max-h-40 lg:max-h-64 xl:max-h-72;
   @apply pt-0 mt-8 pr-4;
-  @apply overflow-y-scroll;
+  @apply overflow-y-auto;
   @apply flex flex-wrap gap-x-6 gap-y-3;
 }
 
 ::-webkit-scrollbar {
-  @apply w-1 md:w-2.5;
+  @apply w-1;
 }
 ::-webkit-scrollbar-track {
-  @apply bg-white bg-opacity-10 rounded-xl;
+  background: #111;
 }
 ::-webkit-scrollbar-thumb {
-  @apply bg-white bg-opacity-70 hover:bg-opacity-100 rounded-xl;
+  background: #333;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
 }
 </style>

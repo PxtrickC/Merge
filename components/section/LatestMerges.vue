@@ -28,7 +28,7 @@
           </span>
           <merge-icon v-bind="merge" />
         </NuxtLink>
-        <div class="text-2xs md:text-xs">
+        <div class="section__date">
           {{ formatDate(merge.merged_on) }}
         </div>
         <NuxtLink tag="a" :to="`/${merge.merged_to.id}`" class="section__content_token">
@@ -45,47 +45,55 @@
 
 <style lang="postcss" scoped>
   .section__container {
-    @apply bg-white;
-    @apply md:pb-14;
+    @apply bg-black;
   }
 
   .section__header {
     @apply flex justify-between items-center;
   }
   .section__header_title {
-    @apply text-2xl md:text-xl font-medium leading-tight;
+    @apply text-sm tracking-widest uppercase;
+    color: #555;
   }
   .section__header__timer {
-    @apply text-xs md:text-sm opacity-70;
+    @apply text-xs;
+    color: #555;
   }
   .section__content {
-    @apply h-96 md:h-full;
-    @apply mt-4 pr-4;
-    @apply overflow-y-scroll;
+    max-height: 50vh;
+    @apply mt-4 pr-2;
+    @apply overflow-y-auto;
   }
   .section__content__row {
-    @apply h-12;
-    @apply mb-4 py-2 px-2 md:px-6;
-    @apply bg-gray bg-opacity-5 rounded-lg;
+    @apply py-3 px-2 md:px-4;
+    border-bottom: 1px solid #1a1a1a;
     @apply flex justify-between items-center;
-    @apply text-xs md:text-base;
+    @apply text-xs md:text-base text-white;
   }
   .section__content_token {
     @apply flex items-center gap-3 md:gap-2;
     @apply cursor-pointer;
-    @apply transition-colors;
+    @apply transition-opacity;
   }
   .section__content_token:hover {
-    @apply bg-black bg-opacity-10 rounded-full;
+    opacity: 0.7;
+  }
+  .section__date {
+    @apply text-2xs md:text-xs;
+    color: #555;
   }
 
   ::-webkit-scrollbar {
-    @apply w-1 md:w-2.5;
+    @apply w-1;
   }
   ::-webkit-scrollbar-track {
-    @apply bg-gray bg-opacity-5 rounded-xl;
+    background: #111;
   }
   ::-webkit-scrollbar-thumb {
-    @apply bg-black bg-opacity-50 hover:bg-opacity-100 rounded-xl;
+    background: #333;
+    border-radius: 4px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #555;
   }
 </style>

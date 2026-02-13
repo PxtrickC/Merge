@@ -4,31 +4,24 @@
 .card__title {
   @apply relative;
   @apply pb-2;
-  @apply border-b border-white border-opacity-10;
-  @apply text-xl text-white text-opacity-40;
+  border-bottom: 1px solid #222;
+  @apply text-sm tracking-widest uppercase;
+  color: #555;
 }
 .card__content {
   @apply pt-8;
 }
 .card__content__row {
   @apply flex items-center gap-2 lg:gap-3;
-  @apply transition-transform;
+  @apply transition-opacity;
 }
 a.card__content__row:hover {
-  @apply bg-white bg-opacity-10 rounded-full pr-3;
-  @apply transform -translate-y-1;
-}
-.card__icon {
-  @apply w-6 md:w-8 lg:w-10;
-  @apply p-1 md:p-1.5 lg:p-2;
-  @apply border border-white border-opacity-10 rounded-full;
-}
-.card__icon.dark {
-  @apply text-black;
+  opacity: 0.7;
 }
 .card__content__value {
   @apply text-xl;
 }
 .card__content__label {
-  @apply text-xs sm:text-sm text-white text-opacity-40;
+  @apply text-xs sm:text-sm;
+  color: #555;
 }

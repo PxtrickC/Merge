@@ -36,7 +36,6 @@ const tokenData = computed(() => {
 
 <style lang="postcss" scoped>
 section.overview {
-  @apply col-span-3;
   @apply bg-black;
 }
 .overview__content {
