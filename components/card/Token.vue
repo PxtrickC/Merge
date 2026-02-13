@@ -32,18 +32,18 @@ function formatDate(merged_on) {
           MERGED
         </span>
         <a
-          class="h-8 w-8 ml-auto flex justify-center items-center transition-opacity hover:opacity-70"
-          :href="`https://opensea.io/assets/0xc3f8a0f5841abff777d3eefa5047e8d413a1c9ab/${+id}`"
+          class="ml-auto text-xs text-white text-opacity-40 transition-opacity hover:opacity-70"
+          :href="`https://opensea.io/assets/ethereum/0xc3f8a0f5841abff777d3eefa5047e8d413a1c9ab/${+id}`"
           target="_blank"
         >
-          <img src="~/assets/svgs/opensea.svg" alt="opensea" />
+          opensea
         </a>
         <a
-          class="h-8 w-8 p-1.5 flex justify-center items-center transition-opacity hover:opacity-70"
-          :href="`https://niftygateway.com/marketplace?collection=0xc3f8a0f5841abff777d3eefa5047e8d413a1c9ab&tokenId=${+id}`"
+          class="text-xs text-white text-opacity-40 transition-opacity hover:opacity-70"
+          :href="`https://etherscan.io/nft/0xc3f8a0f5841abff777d3eefa5047e8d413a1c9ab/${+id}`"
           target="_blank"
         >
-          <img src="~/assets/svgs/nifty.svg" alt="nifty" />
+          etherscan
         </a>
       </p>
     </div>
