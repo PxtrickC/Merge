@@ -1,0 +1,46 @@
+name: Sync Merge Events
+
+on:
+  repository_dispatch:
+    types: [merge-event]
+  workflow_dispatch:
+  schedule:
+    - cron: "0 */6 * * *"
+
+# Prevent concurrent sync runs
+concurrency:
+  group: sync-events
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: redesign/mass-black-ui
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - name: Sync events
+        env:
+          NUXT_PUBLIC_ALCHEMY_API_KEY: ${{ secrets.ALCHEMY_API_KEY }}
+          ETHERSCAN_API_KEY: ${{ secrets.ETHERSCAN_API_KEY }}
+        run: node scripts/sync.mjs --events-only
+
+      - name: Commit and push if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add public/data/
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "📊 Auto-sync merge events $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            git push
+          fi
