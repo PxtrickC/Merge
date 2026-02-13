@@ -3,16 +3,33 @@ const $route = useRoute()
 const $router = useRouter()
 
 if (isNaN($route.params.id)) $router.push("/")
-const token = await useAPI(`/token/${$route.params.id}`)
+
+const stats = await useAPI("/stats")
+const { token } = await useToken(+$route.params.id)
+const { mergedTo, mergedOn } = await useTokenMergeHistory(+$route.params.id)
+
+const alpha_mass = computed(() => stats.value?.alpha_mass ?? 0)
+
+const tokenData = computed(() => {
+  if (!token.value) return null
+  return {
+    ...token.value,
+    merged_to: mergedTo.value,
+    merged_on: mergedOn.value,
+  }
+})
 </script>
 
 <template>
   <section class="overview">
     <nav-bar :id="+$route.params.id" back />
-    <div class="overview__content">
-      <card-token v-bind="token" :token_class="token?.class" />
-      <card-merged v-bind="token" />
-      <card-merges v-if="token?.merges > 0" :id="+token.id" />
+    <div v-if="tokenData" class="overview__content">
+      <card-token v-bind="tokenData" :token_class="tokenData.class" :alpha_mass="alpha_mass" />
+      <card-merged v-bind="tokenData" />
+      <card-merges v-if="tokenData.merges > 0" :id="+tokenData.id" />
+    </div>
+    <div v-else class="overview__content">
+      <p class="text-white text-opacity-60">Loading token data...</p>
     </div>
   </section>
 </template>

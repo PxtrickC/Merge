@@ -3,6 +3,7 @@
   const latest_merges = await useAPI("/latest_merges")
 
   function formatDate(merged_on) {
+    if (!merged_on) return ""
     let date = new Date(merged_on)
     return (
       date.toDateString().split(" ").slice(1, 3).join(" ") +
@@ -27,10 +28,6 @@
           </span>
           <merge-icon v-bind="merge" />
         </NuxtLink>
-        <div v-if="merge.sale_price">
-          <p class="flex justify-center gap-1"> {{ +parseFloat(merge.sale_price.toFixed(2)) }} <icon class="w-4" variant="eth" /> </p>
-          <p v-if="merge.mass > 1" class="-mt-0.5 text-2xs"> {{ +parseFloat((merge.sale_price / merge.mass).toFixed(4)) }} / m </p>
-        </div>
         <div class="text-2xs md:text-xs">
           {{ formatDate(merge.merged_on) }}
         </div>

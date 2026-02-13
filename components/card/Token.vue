@@ -6,6 +6,7 @@ defineProps({
   token_class: Number,
   merges: Number,
   merged: Boolean,
+  alpha_mass: { type: Number, default: 0 },
 })
 
 function formatDate(merged_on) {
@@ -16,7 +17,7 @@ function formatDate(merged_on) {
 
 <template>
   <div class="card__container">
-    <merge-svg class="md:w-56 lg:w-80 xl:w-96 rounded-lg" :tier="tier" :mass="mass" />
+    <merge-svg class="md:w-56 lg:w-80 xl:w-96 rounded-lg" :tier="tier" :mass="mass" :alpha_mass="alpha_mass" />
     <div class="flex-grow flex flex-col justify-start py-3 pr-2">
       <div class="flex gap-1.5">
         <span class="text-xl lg:text-2xl xl:text-3xl font-semibold">m({{mass}})</span>

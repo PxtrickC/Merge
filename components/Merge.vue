@@ -6,28 +6,29 @@ const props = defineProps({
   alpha_mass: { type: Number, default: 12149 },
 })
 
+const is_alpha = computed(() => props.mass >= props.alpha_mass)
+
 const bg_color = computed(() => {
+  if (is_alpha.value) return "bg-white"
   let color =
     props.tier == 4
-      ? props.mass >= props.alpha_mass
-        ? "white"
-        : "red"
-      : props.tier == 2
-      ? "black"
+      ? "red"
       : props.tier == 3
       ? "blue"
+      : props.tier == 2
+      ? "black"
       : "black"
   return "bg-" + color
 })
 const text_color = computed(() => {
-  let color = props.mass >= props.alpha_mass ? "black font-medium" : "white"
+  let color = is_alpha.value ? "black font-medium" : "white"
   return "text-" + color
 })
 </script>
 
 <template>
   <NuxtLink tag="div" class="merge__container" :to="`/${id}`">
-    <merge-svg class="rounded-lg" :tier="tier" :mass="mass" />
+    <merge-svg class="rounded-lg" :tier="tier" :mass="mass" :alpha_mass="alpha_mass" />
     <div class="merge_label" :class="[bg_color, text_color]">
       <span>m({{mass}})</span>
       <span>#{{id}}</span>

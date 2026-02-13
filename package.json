@@ -5,6 +5,11 @@
   "version": "2.1.1",
   "type": "module",
   "scripts": {
+    "sync": "node --env-file=.env scripts/sync.mjs",
+    "sync:events": "node --env-file=.env scripts/sync.mjs --events-only",
+    "sync:tokens": "node --env-file=.env scripts/rebuild-tokens.mjs",
+    "sync:retry": "node --env-file=.env scripts/retry-failed.mjs",
+    "watch": "node --env-file=.env scripts/watch.mjs",
     "dev": "nuxt dev",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
@@ -15,6 +20,7 @@
     "@pinia/nuxt": "0.5.1",
     "@vueuse/core": "10.5.0",
     "chart.js": "4.4.0",
+    "ethers": "^6.16.0",
     "nuxt": "3.8.0",
     "pinia": "2.1.7",
     "vue-chartjs": "5.2.0"

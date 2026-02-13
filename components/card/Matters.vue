@@ -1,20 +1,18 @@
 <script setup>
-const unidentified_count = await useAPI("/matter/unidentified_count")
-const antimatter_count = await useAPI("/matter/antimatter_count")
-const mass_repartition = await useAPI("/matter/masses")
+const matter = await useAPI("/matter")
 
 const total_matter_tokens = 1395
 
 const histogram_data = computed(() => {
-  if (!mass_repartition.value) return null
+  if (!matter.value?.masses) return null
 
   let total_mass =
-    mass_repartition.value.positive + mass_repartition.value.unidentified - mass_repartition.value.negative
+    matter.value.masses.positive + matter.value.masses.unidentified - matter.value.masses.negative
 
   return [
-    { value: (mass_repartition.value.positive / total_mass) * 100, color: "white" },
-    { value: (mass_repartition.value.unidentified / total_mass) * 100, color: "gray-light" },
-    { value: (mass_repartition.value.negative / total_mass) * -100, color: "gray-dark" },
+    { value: (matter.value.masses.positive / total_mass) * 100, color: "white" },
+    { value: (matter.value.masses.unidentified / total_mass) * 100, color: "gray-light" },
+    { value: (matter.value.masses.negative / total_mass) * -100, color: "gray-dark" },
   ]
 })
 </script>
@@ -31,12 +29,12 @@ const histogram_data = computed(() => {
         </p>
         <p class="card__content__row">
           <icon class="card__icon text-white" variant="circle-hollow" />
-          <span class="card__content__value">{{unidentified_count}}</span>
+          <span class="card__content__value">{{matter?.unidentified_count}}</span>
           <span class="card__content__label">unidentified Matter</span>
         </p>
         <p class="card__content__row">
           <icon class="card__icon text-white" variant="circle-slashed" />
-          <span class="card__content__value">{{antimatter_count}}</span>
+          <span class="card__content__value">{{matter?.antimatter_count}}</span>
           <span class="card__content__label">Antimatter</span>
         </p>
       </div>
@@ -48,17 +46,17 @@ const histogram_data = computed(() => {
       <div class="flex flex-col gap-2">
         <div class="card__content__row">
           <icon class="w-2 text-white" variant="square" />
-          <span class="text-sm">{{Math.round(mass_repartition?.positive)}}</span>
+          <span class="text-sm">{{Math.round(matter?.masses?.positive)}}</span>
           <span class="hidden md:block text-xs text-white text-opacity-40">positive</span>
         </div>
         <div class="card__content__row mt-auto">
           <icon class="w-2 text-gray-light" variant="square" />
-          <span class="text-sm">{{Math.round(mass_repartition?.unidentified)}}</span>
+          <span class="text-sm">{{Math.round(matter?.masses?.unidentified)}}</span>
           <span class="hidden md:block text-xs text-white text-opacity-40">unidentified</span>
         </div>
         <div class="card__content__row">
           <icon class="w-2 text-gray-dark" variant="square" />
-          <span class="text-sm">{{Math.round(mass_repartition?.negative)}}</span>
+          <span class="text-sm">{{Math.round(matter?.masses?.negative)}}</span>
           <span class="hidden md:block text-xs text-white text-opacity-40">negative</span>
         </div>
       </div>

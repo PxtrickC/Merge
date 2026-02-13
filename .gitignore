@@ -93,3 +93,6 @@ sw.*
 
 # Vim swap files
 *.swp
+
+# Generated data files
+public/data/

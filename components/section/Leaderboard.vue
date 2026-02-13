@@ -1,9 +1,11 @@
 <script setup>
+const stats = await useAPI("/stats")
 const top_100 = reactive({ mass: [], blue: [], merges: [] })
 top_100.mass = await useAPI("/mass_top")
 top_100.blue = await useAPI("/blue_mass")
 top_100.merges = await useAPI("/merges_top")
 
+const alpha_mass = computed(() => stats.value?.alpha_mass ?? 0)
 const index = ref("mass")
 </script>
 
@@ -28,7 +30,7 @@ const index = ref("mass")
     </div>
 
     <div class="section__content">
-      <merge v-for="token in top_100[index]" :key="token.id" class="w-18 md:w-24 xl:w-32" :id="+token.id" :tier="token.tier" :mass="token.mass"/>
+      <merge v-for="token in top_100[index]" :key="token.id" class="w-18 md:w-24 xl:w-32" :id="+token.id" :tier="token.tier" :mass="token.mass" :alpha_mass="alpha_mass"/>
     </div>
   </section>
 </template>

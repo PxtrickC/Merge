@@ -1,6 +1,10 @@
 <script setup>
 const props = defineProps({ id: Number })
-const merges = await useAPI(`/tokens_merged_into/${props.id}`)
+const mergedIntoData = await useAPI("/merged_into")
+const merges = computed(() => {
+  if (!mergedIntoData.value) return []
+  return mergedIntoData.value[props.id] ?? []
+})
 </script>
 
 <template>

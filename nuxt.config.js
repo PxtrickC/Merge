@@ -9,6 +9,7 @@ export default defineNuxtConfig({
         public: {
             API_URL: "",
             CACHE_PROXY_URL: "",
+            ALCHEMY_API_KEY: "",
             VERSION: package_json.version,
         }
     },
