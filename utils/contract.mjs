@@ -1,4 +1,5 @@
 export const MERGE_CONTRACT_ADDRESS = "0xc3f8a0f5841abff777d3eefa5047e8d413a1c9ab"
+export const NIFTY_OMNIBUS_ADDRESS = "0xe052113bd7d7700d623414a0a4585bcae754e9d5"
 
 export const MERGE_ABI = [
   "function totalSupply() view returns (uint256)",
@@ -7,6 +8,7 @@ export const MERGE_ABI = [
   "function decodeClassAndMass(uint256 value) view returns (uint256, uint256)",
   "function getMergeCount(uint256 tokenId) view returns (uint256)",
   "function exists(uint256 tokenId) view returns (bool)",
+  "function balanceOf(address owner) view returns (uint256)",
   "function tokenOf(address owner) view returns (uint256)",
   "function ownerOf(uint256 tokenId) view returns (address)",
   "event MassUpdate(uint256 indexed tokenIdBurned, uint256 indexed tokenIdPersist, uint256 mass)",

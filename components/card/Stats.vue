@@ -1,7 +1,7 @@
 <script setup>
 const stats = await useAPI("/stats")
 const { token: alpha_token } = await useToken(1)
-const token28xxx = await useAPI("/token_28xxx")
+const omnibus = await useAPI("/omnibus")
 </script>
 
 <template>
@@ -35,8 +35,8 @@ const token28xxx = await useAPI("/token_28xxx")
       </p>
       <p class="card__content__row">
         <icon class="card__icon dark bg-yellow" variant="hash" :stroke="2" />
-        <span class="card__content__value">{{token28xxx?.count}}</span>
-        <span class="card__content__label">#id > 28000</span>
+        <span class="card__content__value">{{omnibus?.count}}</span>
+        <span class="card__content__label">NiftyGateway</span>
       </p>
     </div>
   </div>

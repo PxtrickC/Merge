@@ -2,7 +2,7 @@ import { ethers } from "ethers"
 import { writeFileSync, mkdirSync } from "fs"
 import { join, dirname } from "path"
 import { fileURLToPath } from "url"
-import { MERGE_CONTRACT_ADDRESS, MERGE_ABI, decodeValue } from "../utils/contract.mjs"
+import { MERGE_CONTRACT_ADDRESS, MERGE_ABI, NIFTY_OMNIBUS_ADDRESS, decodeValue } from "../utils/contract.mjs"
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const DATA_DIR = join(__dirname, "..", "public", "data")
@@ -216,7 +216,7 @@ async function fetchMergeEvents() {
 // 3. Process and write JSON files
 // ---------------------------------------------------------------------------
 // Write token-derived JSON files (requires full token data)
-function writeTokenFiles(tokens, totalSupply) {
+async function writeTokenFiles(tokens, totalSupply) {
   const mergedCount = MAX_TOKEN_ID - totalSupply
   const totalMass = tokens.reduce((sum, t) => sum + t.mass, 0)
   const alphaMass = Math.max(...tokens.map((t) => t.mass))
@@ -276,7 +276,9 @@ function writeTokenFiles(tokens, totalSupply) {
     },
   })
 
-  writeJSON("token_28xxx.json", { count: tokens.filter((t) => t.id > 28000).length })
+  // Omnibus wallet (NiftyGateway) balance
+  const omnibusBalance = Number(await contract.balanceOf(NIFTY_OMNIBUS_ADDRESS))
+  writeJSON("omnibus.json", { address: NIFTY_OMNIBUS_ADDRESS, count: omnibusBalance })
 
   console.log(`  Token files: ${tokens.length} tokens, mass ${totalMass}, alpha ${alphaMass}`)
   console.log(`  Class distribution: c1=${matterTokens.class1.length} c2=${matterTokens.class2.length} c3=${matterTokens.class3.length} c4=${matterTokens.class4.length}`)
@@ -399,7 +401,7 @@ async function main() {
     const tokenById = new Map()
     for (const t of tokens) tokenById.set(t.id, t)
     console.log("\nWriting token files...")
-    writeTokenFiles(tokens, totalSupply)
+    await writeTokenFiles(tokens, totalSupply)
     const mergeEvents = await fetchMergeEvents()
     console.log("Writing event files...")
     await writeEventFiles(mergeEvents, tokenById)

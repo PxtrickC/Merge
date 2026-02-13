@@ -2,7 +2,7 @@ import { ethers } from "ethers"
 import { writeFileSync, readFileSync, mkdirSync } from "fs"
 import { join, dirname } from "path"
 import { fileURLToPath } from "url"
-import { MERGE_CONTRACT_ADDRESS, MERGE_ABI, decodeValue } from "../utils/contract.mjs"
+import { MERGE_CONTRACT_ADDRESS, MERGE_ABI, NIFTY_OMNIBUS_ADDRESS, decodeValue } from "../utils/contract.mjs"
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const DATA_DIR = join(__dirname, "..", "public", "data")
@@ -174,7 +174,9 @@ async function main() {
     },
   })
 
-  writeJSON("token_28xxx.json", { count: tokens.filter(t => t.id > 28000).length })
+  // Omnibus wallet (NiftyGateway) balance
+  const omnibusBalance = Number(await contract.balanceOf(NIFTY_OMNIBUS_ADDRESS, callOpts))
+  writeJSON("omnibus.json", { address: NIFTY_OMNIBUS_ADDRESS, count: omnibusBalance })
 
   console.log(`\n📊 Summary:`)
   console.log(`  Alive: ${totalSupply}, Merged: ${mergedCount}, Total mass: ${totalMass}, Alpha: ${alphaMass}`)
