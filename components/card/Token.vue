@@ -32,18 +32,18 @@ function formatDate(merged_on) {
           MERGED
         </span>
         <a
-          class="ml-auto text-xs text-white text-opacity-40 transition-opacity hover:opacity-70"
+          class="h-7 w-7 ml-auto flex justify-center items-center text-white text-opacity-40 transition-opacity hover:opacity-70"
           :href="`https://opensea.io/assets/ethereum/0xc3f8a0f5841abff777d3eefa5047e8d413a1c9ab/${+id}`"
           target="_blank"
         >
-          opensea
+          <img src="~/assets/svgs/opensea.svg" alt="OpenSea" />
         </a>
         <a
-          class="text-xs text-white text-opacity-40 transition-opacity hover:opacity-70"
+          class="h-7 w-7 flex justify-center items-center text-white text-opacity-40 transition-opacity hover:opacity-70"
           :href="`https://etherscan.io/nft/0xc3f8a0f5841abff777d3eefa5047e8d413a1c9ab/${+id}`"
           target="_blank"
         >
-          etherscan
+          <img src="~/assets/svgs/etherscan.svg" alt="Etherscan" />
         </a>
       </p>
     </div>
