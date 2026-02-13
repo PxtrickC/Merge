@@ -25,11 +25,7 @@ const omnibus = await useAPI("/omnibus")
         <span class="card__content__value">{{stats?.total_mass}}</span>
       </div>
       <div class="stat__row">
-        <span class="card__content__label">eth floor</span>
-        <span class="card__content__value">—</span>
-      </div>
-      <div class="stat__row">
-        <span class="card__content__label">NiftyGateway</span>
+        <span class="card__content__label">in NG omnibus</span>
         <span class="card__content__value">{{omnibus?.count}}</span>
       </div>
     </div>
