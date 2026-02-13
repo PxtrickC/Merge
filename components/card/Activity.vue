@@ -61,11 +61,12 @@ const timeline = computed(() => {
 function formatDate(dateStr) {
   if (!dateStr) return ''
   const d = new Date(dateStr)
+  const yr = String(d.getFullYear()).slice(2)
   const mon = d.toLocaleString('en-US', { month: 'short' })
   const day = d.getDate()
   const hh = String(d.getHours()).padStart(2, '0')
   const mm = String(d.getMinutes()).padStart(2, '0')
-  return `${mon} ${day} ${hh}:${mm}`
+  return `${yr} ${mon} ${day} ${hh}:${mm}`
 }
 
 function shortAddr(addr) {
