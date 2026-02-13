@@ -9,7 +9,7 @@ const merges = computed(() => {
 
 <template>
   <div class="card__container">
-    <div class="card__title">Tokens Merged</div>
+    <div class="section__title">Tokens Merged</div>
     <div class="card__content">
       <span class="flex items-center gap-3" v-for="token in merges" :key="token.id">
         <merge-icon v-bind="token" dark />
@@ -22,11 +22,14 @@ const merges = computed(() => {
 </template>
 
 <style lang="postcss" scoped>
+.section__title {
+  @apply text-4xl md:text-6xl text-white mb-6;
+}
 .card__content {
-  @apply max-h-72 md:max-h-40 lg:max-h-64 xl:max-h-72;
   @apply pt-0 mt-8 pr-4;
   @apply overflow-y-auto;
   @apply flex flex-wrap gap-x-6 gap-y-3;
+  max-height: 24rem;
 }
 
 ::-webkit-scrollbar {

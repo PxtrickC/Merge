@@ -14,6 +14,9 @@ export const MERGE_ABI = [
   "event MassUpdate(uint256 indexed tokenIdBurned, uint256 indexed tokenIdPersist, uint256 mass)",
 ]
 
+// ERC-721 Transfer event topic
+export const TRANSFER_TOPIC = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"
+
 // The contract encodes value = class * 10^8 + mass
 // class (1-4) directly maps to tier in the frontend:
 //   class 1 / tier 1 → black bg, white circle (most common)

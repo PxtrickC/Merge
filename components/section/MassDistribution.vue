@@ -3,6 +3,16 @@ const mass_repartition = await useAPI("/mass_repartition")
 
 const scrollEl = useDragScroll()
 
+function isPrime(n) {
+  if (n < 2) return false
+  if (n < 4) return true
+  if (n % 2 === 0 || n % 3 === 0) return false
+  for (let i = 5; i * i <= n; i += 6) {
+    if (n % i === 0 || n % (i + 2) === 0) return false
+  }
+  return true
+}
+
 const sorted_data = computed(() => {
   if (!mass_repartition.value) return []
   const filtered = [...mass_repartition.value].filter(d => d.count > 0)
@@ -12,6 +22,7 @@ const sorted_data = computed(() => {
     label: `m(${item.mass})`,
     count: item.count,
     height: Math.max(2, (item.count / max) * 240),
+    prime: isPrime(item.mass),
   }))
 })
 </script>
@@ -31,7 +42,7 @@ const sorted_data = computed(() => {
           class="massd__bar"
           :style="{ height: item.height + 'px' }"
         ></div>
-        <span class="massd__label">{{ item.label }}</span>
+        <span class="massd__label" :class="{ 'massd__label--prime': item.prime }">{{ item.label }}</span>
       </div>
     </div>
   </section>
@@ -81,5 +92,8 @@ const sorted_data = computed(() => {
 }
 .massd__label {
   @apply text-xs md:text-sm text-white mt-2;
+}
+.massd__label--prime {
+  @apply underline;
 }
 </style>

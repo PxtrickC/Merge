@@ -10,6 +10,7 @@ export default defineNuxtConfig({
             API_URL: "",
             CACHE_PROXY_URL: "",
             ALCHEMY_API_KEY: "",
+            ETHERSCAN_API_KEY: "",
             VERSION: package_json.version,
         }
     },

@@ -146,8 +146,14 @@ async function main() {
   const massSorted = [...tokens].sort((a, b) => b.mass - a.mass)
   writeJSON("mass_top.json", massSorted.slice(0, 100).map(t => ({ id: t.id, tier: t.tier, mass: t.mass })))
 
+  const yellowTokens = tokens.filter(t => t.tier === 2).sort((a, b) => b.mass - a.mass)
+  writeJSON("yellow_mass.json", yellowTokens.slice(0, 100).map(t => ({ id: t.id, tier: t.tier, mass: t.mass })))
+
   const blueTokens = tokens.filter(t => t.tier === 3).sort((a, b) => b.mass - a.mass)
   writeJSON("blue_mass.json", blueTokens.slice(0, 100).map(t => ({ id: t.id, tier: t.tier, mass: t.mass })))
+
+  const redTokens = tokens.filter(t => t.tier === 4).sort((a, b) => b.mass - a.mass)
+  writeJSON("red_mass.json", redTokens.slice(0, 100).map(t => ({ id: t.id, tier: t.tier, mass: t.mass })))
 
   const mergesSorted = [...tokens].filter(t => t.merges > 0).sort((a, b) => b.merges - a.merges)
   writeJSON("merges_top.json", mergesSorted.slice(0, 100).map(t => ({ id: t.id, tier: t.tier, mass: t.mass, merges: t.merges })))

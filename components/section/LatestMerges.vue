@@ -38,7 +38,7 @@ function formatDate(merged_on) {
             <span class="latest__mass">m({{ merge.mass }})</span>
             <span class="latest__id">#{{ merge.id }}</span>
           </div>
-          <span class="latest__arrow">&rarr;</span>
+          <span class="latest__arrow" style="color: #fff">&rarr;</span>
           <div class="latest__col">
             <NuxtLink :to="`/${merge.merged_to.id}`" class="latest__frame" :style="{ width: frameSizeValue, height: frameSizeValue }">
               <merge-svg :tier="merge.merged_to.tier" :mass="merge.merged_to.mass" :alpha_mass="alpha_mass" />
@@ -88,9 +88,15 @@ function formatDate(merged_on) {
   @apply flex flex-col items-center;
   @apply flex-shrink-0;
   min-width: 120px;
+  border-right: 1px solid #1a1a1a;
+  @apply pr-6 md:pr-8;
+}
+.latest__card:last-child {
+  border-right: none;
+  @apply pr-0;
 }
 .latest__spheres {
-  @apply flex items-center gap-2;
+  @apply flex items-start gap-2;
 }
 .latest__col {
   @apply flex flex-col items-center;
@@ -105,8 +111,10 @@ function formatDate(merged_on) {
   opacity: 0.7;
 }
 .latest__arrow {
-  color: #333;
-  @apply text-sm;
+  @apply text-base font-bold;
+  color: #fff !important;
+  height: v-bind(frameSizeValue);
+  line-height: v-bind(frameSizeValue);
 }
 .latest__mass {
   @apply text-xs md:text-sm text-white mt-2;
