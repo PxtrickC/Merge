@@ -19,7 +19,7 @@ module.exports = {
       'transparent': 'transparent'
     },
     fontFamily: {
-      mono: ['"SF Mono"', '"Fira Code"', '"Fira Mono"', 'Menlo', 'Consolas', 'monospace'],
+      sans: ['HND', 'sans-serif'],
     },
     extend: {
       fontSize: {
