@@ -37,6 +37,7 @@ const tokenData = computed(() => {
 <style lang="postcss" scoped>
 section.overview {
   @apply bg-black;
+  @apply p-4 md:p-8;
 }
 .overview__content {
   @apply mt-6;

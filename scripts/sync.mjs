@@ -237,26 +237,11 @@ async function writeTokenFiles(tokens, totalSupply) {
   const mergesSorted = [...tokens].filter((t) => t.merges > 0).sort((a, b) => b.merges - a.merges)
   writeJSON("merges_top.json", mergesSorted.slice(0, 100).map((t) => ({ id: t.id, tier: t.tier, mass: t.mass, merges: t.merges })))
 
-  // --- mass_repartition.json (bucket-based) ---
-  const BUCKETS = [1, 2, 3, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 15000]
-  const bucketCounts = new Array(BUCKETS.length).fill(0)
-  for (const t of tokens) {
-    let placed = false
-    for (let i = 0; i < BUCKETS.length - 1; i++) {
-      if (t.mass < BUCKETS[i + 1]) {
-        bucketCounts[i]++
-        placed = true
-        break
-      }
-    }
-    if (!placed) bucketCounts[BUCKETS.length - 1]++
-  }
-  const repartition = []
-  for (let i = 0; i < BUCKETS.length; i++) {
-    const label = i < BUCKETS.length - 1 ? `${BUCKETS[i]}-${BUCKETS[i + 1] - 1}` : `${BUCKETS[i]}+`
-    repartition.push({ label: `m(${label})`, min: BUCKETS[i], count: bucketCounts[i] })
-  }
-  writeJSON("mass_repartition.json", repartition)
+  // --- mass_repartition.json (exact mass values, top 100 by count) ---
+  const massCount = new Map()
+  for (const t of tokens) massCount.set(t.mass, (massCount.get(t.mass) || 0) + 1)
+  const repartSorted = [...massCount.entries()].sort((a, b) => b[1] - a[1])
+  writeJSON("mass_repartition.json", repartSorted.slice(0, 100).map(([mass, count]) => ({ mass, count })))
 
   // --- matter.json ---
   const matterTokens = {

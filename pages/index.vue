@@ -1,20 +1,20 @@
-<template>
-  <section class="overview">
-    <nav-bar tip/>
-    <div class="overview__content">
-      <card-stats />
-      <card-matters />
-      <card-graph-mass-repartition />
-    </div>
-  </section>
-</template>
+<script setup>
+const stats = await useAPI("/stats")
+const mass_top = await useAPI("/mass_top")
+const blue_mass = await useAPI("/blue_mass")
+const merges_top = await useAPI("/merges_top")
 
-<style lang="postcss" scoped>
-section.overview {
-  @apply bg-black;
-}
-.overview__content {
-  @apply mt-0 md:mt-8;
-  @apply grid grid-cols-1 md:grid-cols-3 gap-8;
-}
-</style>
+const alpha_mass = computed(() => stats.value?.alpha_mass ?? 1)
+</script>
+
+<template>
+  <div>
+    <section-hero />
+    <section-stats-bar />
+    <section-ranking title="Top Mass" :items="mass_top" :alpha-mass="alpha_mass" />
+    <section-ranking title="Blue Mass" :items="blue_mass" :alpha-mass="alpha_mass" />
+    <section-ranking title="Top Merges" :items="merges_top" :alpha-mass="alpha_mass" value-key="merges" />
+    <section-mass-distribution />
+    <section-latest-merges />
+  </div>
+</template>

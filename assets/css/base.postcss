@@ -8,7 +8,6 @@
   font-display: swap;
   src: url('~/assets/fonts/HND.ttf') format('truetype');
 }
-
 html {
   -ms-text-size-adjust: 100%;
   -webkit-text-size-adjust: 100%;
@@ -74,5 +73,18 @@ a.link {
 .slide-in-enter, .slide-in-leave-to {
   transform: translateY(.3rem);
   opacity: 0;
+}
+
+.sphere-wrap {
+  @apply rounded-full overflow-hidden;
+  aspect-ratio: 1;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+.animate-float {
+  animation: float 6s ease-in-out infinite;
 }
 
