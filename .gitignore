@@ -98,3 +98,4 @@ sw.*
 public/data/tokens_cache.json
 public/data/failed_ids.json
 public/data/token_28xxx.json
+.vercel
