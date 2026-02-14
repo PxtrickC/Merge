@@ -6,17 +6,18 @@ const props = defineProps({
   alpha_mass: { type: Number, default: 12149 },
 })
 
+const { open } = useTokenDrawer()
 const is_alpha = computed(() => props.mass >= props.alpha_mass)
 </script>
 
 <template>
-  <NuxtLink tag="div" class="merge__container" :to="`/${id}`">
+  <div class="merge__container" @click="open(id)">
     <merge-svg class="rounded-lg" :tier="tier" :mass="mass" :alpha_mass="alpha_mass" />
     <div class="merge_label" :class="{ 'merge_label--alpha': is_alpha }">
       <span>m({{mass}})</span>
       <span>#{{id}}</span>
     </div>
-  </NuxtLink>
+  </div>
 </template>
 
 <style lang="postcss" scoped>

@@ -2,11 +2,11 @@
 
 defineProps({ placeholder: { type: Number, default: 27000 } })
 
-const $router = useRouter()
+const { open } = useTokenDrawer()
 const token_id = ref(undefined)
 
 function submit() {
-  $router.push(`/${token_id.value || 27000}`)
+  open(token_id.value || 27000)
 }
 </script>
 

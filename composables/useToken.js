@@ -31,11 +31,24 @@ export async function useToken(tokenId) {
     const exists = await contract.exists(tokenId)
 
     if (exists) {
-      const [value, mergeCount] = await Promise.all([
+      const [value, mergeCount, ownerAddr] = await Promise.all([
         contract.getValueOf(tokenId),
         contract.getMergeCount(tokenId),
+        contract.ownerOf(tokenId),
       ])
       const { class: classVal, mass } = decodeValue(value)
+
+      let owner = ownerAddr
+      let ownerName = null
+      if (ownerAddr.toLowerCase() === NIFTY_OMNIBUS_ADDRESS.toLowerCase()) {
+        ownerName = 'NG Omnibus'
+      } else {
+        try {
+          const name = await _provider.lookupAddress(ownerAddr)
+          if (name) ownerName = name
+        } catch {}
+      }
+
       token.value = {
         id: Number(tokenId),
         mass,
@@ -43,6 +56,8 @@ export async function useToken(tokenId) {
         tier: classVal,
         merges: Number(mergeCount),
         merged: false,
+        owner,
+        ownerName,
       }
     } else {
       // Burned token — find MassUpdate event via Etherscan API (Alchemy queryFilter hangs)
@@ -88,12 +103,14 @@ export async function useToken(tokenId) {
             merged: true,
             mergedTo: persistId,
             mergedOn: new Date(timestamp * 1000).toISOString(),
+            owner: null,
+            ownerName: null,
           }
         } catch {
-          token.value = { id: Number(tokenId), mass: 0, class: 0, tier: 0, merges: 0, merged: true, mergedTo: persistId, mergedOn: new Date(timestamp * 1000).toISOString() }
+          token.value = { id: Number(tokenId), mass: 0, class: 0, tier: 0, merges: 0, merged: true, mergedTo: persistId, mergedOn: new Date(timestamp * 1000).toISOString(), owner: null, ownerName: null }
         }
       } else {
-        token.value = { id: Number(tokenId), mass: 0, class: 0, tier: 0, merges: 0, merged: true, mergedTo: null, mergedOn: null }
+        token.value = { id: Number(tokenId), mass: 0, class: 0, tier: 0, merges: 0, merged: true, mergedTo: null, mergedOn: null, owner: null, ownerName: null }
       }
     }
   } catch (err) {

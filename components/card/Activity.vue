@@ -83,6 +83,8 @@ function shortAddr(addr) {
   if (!addr) return ''
   return addr.slice(0, 6) + '…' + addr.slice(-4)
 }
+
+const { open: openDrawer } = useTokenDrawer()
 </script>
 
 <template>
@@ -99,10 +101,10 @@ function shortAddr(addr) {
 
         <span v-if="event.type === 'merge_in'" class="activity__detail">
           <span class="link">m({{ event.mass }})</span>
-          <NuxtLink class="card__content__label" :class="tierColorClass(event.tierClass)" :to="`/${+event.tokenId}`">#{{ +event.tokenId }}</NuxtLink>
+          <span class="card__content__label cursor-pointer" :class="tierColorClass(event.tierClass)" @click="openDrawer(event.tokenId)">#{{ +event.tokenId }}</span>
         </span>
         <span v-else-if="event.type === 'merge_out'" class="activity__detail">
-          <NuxtLink class="link" :to="`/${+event.tokenId}`">#{{ +event.tokenId }}</NuxtLink>
+          <span class="link cursor-pointer" @click="openDrawer(event.tokenId)">#{{ +event.tokenId }}</span>
         </span>
         <span v-else-if="event.type === 'mint'" class="activity__detail">
           <span v-if="initialMass" class="link">m({{ initialMass }})</span>

@@ -26,7 +26,7 @@ function formatDate(merged_on) {
 
 <template>
   <div v-if="merged" class="card__container">
-    <div class="card__title">Merged</div>
+    <div class="section__title">Merged</div>
     <div class="card__content">
       <div v-if="merged_to" class="stat__row">
         <span class="card__content__label">merged into</span>
@@ -56,6 +56,9 @@ function formatDate(merged_on) {
 </template>
 
 <style lang="postcss" scoped>
+.section__title {
+  @apply text-4xl md:text-6xl text-white mb-6;
+}
 .card__content {
   @apply flex flex-col;
 }

@@ -2,6 +2,7 @@
 import { useTimeAgo } from "@vueuse/core"
 const latest_merges = await useAPI("/latest_merges")
 const stats = await useAPI("/stats")
+const { open: openDrawer } = useTokenDrawer()
 
 const alpha_mass = computed(() => stats.value?.alpha_mass ?? 1)
 const scrollEl = useDragScroll()
@@ -34,17 +35,17 @@ function formatDate(merged_on) {
       <div v-for="merge in latest_merges" :key="merge.id" class="latest__card">
         <div class="latest__spheres">
           <div class="latest__col">
-            <NuxtLink :to="`/${merge.id}`" class="latest__frame opacity-50 grayscale" :style="{ width: frameSizeValue, height: frameSizeValue }">
+            <div class="latest__frame opacity-50 grayscale cursor-pointer" :style="{ width: frameSizeValue, height: frameSizeValue }" @click="openDrawer(merge.id)">
               <merge-svg :tier="merge.tier" :mass="merge.mass" :alpha_mass="alpha_mass" />
-            </NuxtLink>
+            </div>
             <span class="latest__mass">m({{ merge.mass }})</span>
             <span class="latest__id">#{{ merge.id }}</span>
           </div>
           <span class="latest__arrow" style="color: #fff">&rarr;</span>
           <div class="latest__col">
-            <NuxtLink :to="`/${merge.merged_to.id}`" class="latest__frame" :style="{ width: frameSizeValue, height: frameSizeValue }">
+            <div class="latest__frame cursor-pointer" :style="{ width: frameSizeValue, height: frameSizeValue }" @click="openDrawer(merge.merged_to.id)">
               <merge-svg :tier="merge.merged_to.tier" :mass="merge.merged_to.mass" :alpha_mass="alpha_mass" />
-            </NuxtLink>
+            </div>
             <span class="latest__mass">m({{ merge.merged_to.mass }})</span>
             <span class="latest__id">#{{ merge.merged_to.id }}</span>
           </div>

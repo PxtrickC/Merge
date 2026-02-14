@@ -20,6 +20,7 @@ function onResolve() {
     <Transition name="fade">
       <Loading v-if="loading" />
     </Transition>
+    <TokenDrawer />
   </NuxtLayout>
 </template>
 
