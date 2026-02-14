@@ -153,7 +153,6 @@ const animOmnibusCount = useCountUp(omnibus_count, 2200)
   font-variant-numeric: tabular-nums;
 }
 .stats-bar__label {
-  @apply text-xs uppercase tracking-[0.2em] mt-1;
-  color: #555;
+  @apply text-xs md:text-sm text-white mt-1 capitalize;
 }
 </style>

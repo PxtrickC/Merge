@@ -4,9 +4,17 @@ const props = defineProps({
   items: Array,
   alphaMass: Number,
   valueKey: { type: String, default: null },
+  sortable: { type: Boolean, default: false },
 })
 
 const scrollEl = useDragScroll()
+const sortMode = ref('mass') // 'mass' | 'id'
+
+const sortedItems = computed(() => {
+  if (!props.items) return []
+  if (!props.sortable || sortMode.value === 'mass') return props.items
+  return [...props.items].sort((a, b) => a.id - b.id)
+})
 
 function sphereSize(mass) {
   const ratio = Math.pow(mass / (props.alphaMass || 1), 1 / 3)
@@ -26,11 +34,27 @@ function fillAlpha(tier, mass) {
 
 <template>
   <section class="ranking">
-    <h2 class="ranking__title">{{ title }}</h2>
+    <div class="ranking__header">
+      <h2 class="ranking__title">{{ title }}</h2>
+      <div v-if="sortable" class="ranking__toggle">
+        <button
+          class="ranking__toggle-btn"
+          :class="{ 'ranking__toggle-btn--active': sortMode === 'mass' }"
+          @click="sortMode = 'mass'"
+        >by mass</button>
+        <span class="ranking__toggle-sep">/</span>
+        <button
+          class="ranking__toggle-btn"
+          :class="{ 'ranking__toggle-btn--active': sortMode === 'id' }"
+          @click="sortMode = 'id'"
+        >by id</button>
+      </div>
+    </div>
 
     <div ref="scrollEl" class="ranking__scroll">
+      <TransitionGroup name="rank">
       <NuxtLink
-        v-for="(token, i) in (items ?? [])"
+        v-for="(token, i) in sortedItems"
         :key="token.id"
         :to="`/${token.id}`"
         class="ranking__item"
@@ -48,6 +72,7 @@ function fillAlpha(tier, mass) {
           <span v-else class="ranking__value">m({{ token.mass?.toLocaleString() }})</span>
         </div>
       </NuxtLink>
+      </TransitionGroup>
     </div>
   </section>
 </template>
@@ -57,8 +82,33 @@ function fillAlpha(tier, mass) {
   @apply py-8 md:py-12 px-4 md:px-8;
   border-top: 1px solid #1a1a1a;
 }
+.ranking__header {
+  @apply flex items-baseline justify-between mb-6 gap-4;
+}
 .ranking__title {
-  @apply text-4xl md:text-6xl text-white mb-6;
+  @apply text-4xl md:text-6xl text-white;
+}
+.ranking__toggle {
+  @apply flex items-baseline gap-3;
+}
+.ranking__toggle-sep {
+  @apply text-4xl md:text-6xl;
+  color: rgba(255, 255, 255, 0.5);
+}
+.ranking__toggle-btn {
+  @apply text-4xl md:text-6xl;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  color: rgba(255, 255, 255, 0.5);
+  transition: color 0.2s;
+}
+.ranking__toggle-btn--active {
+  color: rgba(255, 255, 255, 1);
+}
+.rank-move {
+  transition: transform 1s ease;
 }
 .ranking__scroll {
   @apply flex items-end gap-6 md:gap-8;
@@ -80,7 +130,10 @@ function fillAlpha(tier, mass) {
   @apply flex flex-col items-center;
   @apply flex-shrink-0;
   @apply cursor-pointer;
-  @apply transition-transform duration-200;
+  transition: transform 0.2s ease;
+}
+.ranking__item.rank-move {
+  transition: transform 1s ease;
 }
 .ranking__item:hover {
   transform: scale(1.08);
