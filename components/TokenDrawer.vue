@@ -87,21 +87,19 @@ onUnmounted(() => document.removeEventListener('keydown', onKeyDown))
       </button>
 
       <div v-if="loading && !tokenData" class="drawer__loading">
-        <div class="drawer__spinner" />
+        <Loading :fullscreen="false" />
       </div>
 
       <div v-if="tokenData" class="drawer__content">
         <card-token v-bind="tokenData" :alpha_mass="alpha_mass" />
 
-        <div v-if="loading" class="drawer__activity-loading">
-          <div class="drawer__spinner" />
-        </div>
         <card-activity
-          v-else
           :id="+tokenData.id"
+          :loading="loading"
           :merged="tokenData.merged"
           :merged_to="tokenData.merged_to"
           :merged_on="tokenData.merged_on"
+          :alpha_mass="alpha_mass"
           :transfers="transfers"
           :merge-timeline="mergeTimeline"
           :initial-mass="initialMass"
@@ -137,19 +135,8 @@ onUnmounted(() => document.removeEventListener('keydown', onKeyDown))
 .drawer__content {
   @apply flex flex-col gap-10;
 }
-.drawer__loading,
-.drawer__activity-loading {
+.drawer__loading {
   @apply flex justify-center py-12;
-}
-.drawer__spinner {
-  @apply w-6 h-6;
-  border: 2px solid #333;
-  border-top-color: #fff;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-@keyframes spin {
-  to { transform: rotate(360deg); }
 }
 
 /* transitions */

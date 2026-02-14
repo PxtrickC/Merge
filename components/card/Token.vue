@@ -22,42 +22,42 @@ function shortAddr(addr) {
 
     <div class="token-card__info">
       <div class="token-card__header">
-        <span class="token-card__mass">m({{ mass }})</span>
-        <span class="token-card__id">#{{ +id }}</span>
-      </div>
-
-
-      <div class="stat__row">
-        <span class="stat__label">TIER</span>
-        <span class="stat__value">{{ tier }}</span>
-      </div>
-      <div class="stat__row">
-        <span class="stat__label">MERGES</span>
-        <span class="stat__value">{{ merges || 0 }}</span>
-      </div>
-      <div v-if="owner" class="stat__row">
-        <span class="stat__label">OWNER</span>
-        <a class="stat__value stat__addr" :href="`https://etherscan.io/address/${owner}`" target="_blank">
-          {{ ownerName || shortAddr(owner) }}
-        </a>
+        <div class="token-card__left">
+          <span class="token-card__mass">m({{ mass }})</span>
+          <div class="token-card__sub">
+            <span class="token-card__id">#{{ +id }}</span>
+            <template v-if="owner">
+              <span class="token-card__own-by">own by</span>
+              <a class="token-card__id token-card__owner" :href="`https://etherscan.io/address/${owner}`" target="_blank">
+                {{ ownerName || shortAddr(owner) }}
+              </a>
+            </template>
+          </div>
+        </div>
+        <div class="token-card__extlinks">
+          <a
+            class="token-card__extlink"
+            :href="`https://opensea.io/assets/ethereum/0xc3f8a0f5841abff777d3eefa5047e8d413a1c9ab/${+id}`"
+            target="_blank"
+          >
+            <img src="~/assets/svgs/opensea.svg" alt="OpenSea" />
+          </a>
+          <a
+            class="token-card__extlink"
+            :href="`https://etherscan.io/nft/0xc3f8a0f5841abff777d3eefa5047e8d413a1c9ab/${+id}`"
+            target="_blank"
+          >
+            <img src="~/assets/svgs/etherscan.svg" alt="Etherscan" />
+          </a>
+        </div>
       </div>
 
       <div class="token-card__links">
-        <span v-if="merged" class="token-card__badge">MERGED</span>
-        <a
-          class="token-card__extlink"
-          :href="`https://opensea.io/assets/ethereum/0xc3f8a0f5841abff777d3eefa5047e8d413a1c9ab/${+id}`"
-          target="_blank"
-        >
-          <img src="~/assets/svgs/opensea.svg" alt="OpenSea" />
-        </a>
-        <a
-          class="token-card__extlink"
-          :href="`https://etherscan.io/nft/0xc3f8a0f5841abff777d3eefa5047e8d413a1c9ab/${+id}`"
-          target="_blank"
-        >
-          <img src="~/assets/svgs/etherscan.svg" alt="Etherscan" />
-        </a>
+        <span v-if="mass === alpha_mass && alpha_mass > 0" class="token-card__badge token-card__badge--alpha">ALPHA</span>
+        <span v-if="merged" class="token-card__badge token-card__badge--merged">MERGED</span>
+        <span class="token-card__badge token-card__badge--tier" :data-tier="tier">TIER {{ tier }}</span>
+        <span class="token-card__badge">MERGES {{ merges || 0 }}</span>
+        <span class="token-card__badge">CLASS {{ String(id).slice(-2) }}</span>
       </div>
     </div>
   </div>
@@ -71,55 +71,70 @@ function shortAddr(addr) {
   @apply w-full rounded-lg;
 }
 .token-card__info {
-  @apply w-full mt-6;
+  @apply w-full mt-6 flex flex-col gap-4;
 }
 .token-card__header {
-  @apply flex items-baseline gap-2 pb-4;
-  border-bottom: 1px solid #1a1a1a;
+  @apply flex justify-between items-start;
+}
+.token-card__left {
+  @apply flex flex-col gap-3;
 }
 .token-card__mass {
-  @apply text-4xl md:text-6xl font-semibold text-white;
+  @apply text-3xl md:text-6xl font-semibold text-white;
 }
 .token-card__id {
-  @apply text-4xl md:text-6xl text-white;
+  @apply text-lg md:text-xl text-white;
 }
-.stat__row {
-  @apply flex justify-between items-center py-3;
-  border-bottom: 1px solid #1a1a1a;
+.token-card__sub {
+  @apply flex items-baseline gap-1.5;
 }
-.stat__label {
-  @apply text-sm tracking-widest uppercase;
-  color: #555;
+.token-card__own-by {
+  @apply text-lg md:text-xl text-white;
 }
-.stat__value {
-  @apply text-lg text-white;
+.token-card__owner {
+  @apply no-underline text-white;
 }
-.stat__addr {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  color: #999;
-  transition: color 0.15s;
-}
-.stat__addr:hover {
-  color: #fff;
+.token-card__owner:hover {
+  @apply underline;
 }
 .token-card__links {
-  @apply flex items-center gap-2 mt-4;
+  @apply flex items-center gap-2;
 }
 .token-card__badge {
   @apply px-2 py-1.5 text-xs font-normal;
   background: #fff;
   color: #000;
 }
+.token-card__badge--tier[data-tier="4"] {
+  background: #f87171;
+}
+.token-card__badge--tier[data-tier="3"] {
+  background: #60a5fa;
+}
+.token-card__badge--tier[data-tier="2"] {
+  background: #facc15;
+}
+.token-card__badge--tier[data-tier="1"] {
+  background: #e5e5e5;
+}
+.token-card__badge--alpha {
+  background: #000;
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+}
+.token-card__badge--merged {
+  color: #f87171;
+  border: 1px solid #f87171;
+  background:
+    linear-gradient(to top right, transparent calc(50% - 0.5px), #f87171 50%, transparent calc(50% + 0.5px)),
+    linear-gradient(to bottom right, transparent calc(50% - 0.5px), #f87171 50%, transparent calc(50% + 0.5px)),
+    #000;
+}
+.token-card__extlinks {
+  @apply flex items-center gap-2;
+}
 .token-card__extlink {
-  @apply h-7 w-7 flex justify-center items-center;
-  color: rgba(255, 255, 255, 0.4);
-  transition: color 0.15s;
-}
-.token-card__extlink:first-of-type {
-  @apply ml-auto;
-}
-.token-card__extlink:hover {
-  color: rgba(255, 255, 255, 0.7);
+  @apply h-7 w-7 flex justify-center items-center text-white;
 }
 .token-card__extlink img {
   @apply w-full h-full;

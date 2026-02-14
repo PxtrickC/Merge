@@ -51,6 +51,7 @@ function fillAlpha(tier, mass) {
       </div>
     </div>
 
+
     <div ref="scrollEl" class="ranking__scroll">
       <TransitionGroup name="rank">
       <NuxtLink
