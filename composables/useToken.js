@@ -297,6 +297,23 @@ export async function useTokenMergeTimeline(tokenId) {
       }
     }
 
+    // Fetch class of each burned token via archive calls (batch of 5)
+    const burnedClasses = {}
+    for (let i = 0; i < allLogs.length; i += 5) {
+      const batch = allLogs.slice(i, i + 5)
+      const results = await Promise.allSettled(
+        batch.map(async (log) => {
+          const bid = parseInt(log.topics[1], 16)
+          const block = parseInt(log.blockNumber, 16)
+          const val = await contract.getValueOf(bid, { blockTag: block - 1 })
+          return { id: bid, class: decodeValue(val).class }
+        })
+      )
+      for (const r of results) {
+        if (r.status === 'fulfilled') burnedClasses[r.value.id] = r.value.class
+      }
+    }
+
     let runningMass = initialMass.value
     timeline.value = allLogs.map((log) => {
       const burnedId = parseInt(log.topics[1], 16)
@@ -306,6 +323,7 @@ export async function useTokenMergeTimeline(tokenId) {
       return {
         tokenId: burnedId,
         mass: burnedMass,
+        tierClass: burnedClasses[burnedId] || 1,
         date: new Date(parseInt(log.timeStamp, 16) * 1000).toISOString(),
       }
     })

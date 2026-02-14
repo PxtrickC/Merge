@@ -18,6 +18,7 @@ const timeline = computed(() => {
       type: 'merge_in',
       tokenId: t.tokenId,
       mass: t.mass,
+      tierClass: t.tierClass,
       date: t.date,
     })
   }
@@ -69,6 +70,15 @@ function formatDate(dateStr) {
   return `${yr} ${mon} ${day} ${hh}:${mm}`
 }
 
+function tierColorClass(tierClass) {
+  switch (tierClass) {
+    case 4: return 'tier--red'
+    case 3: return 'tier--blue'
+    case 2: return 'tier--yellow'
+    default: return 'tier--white'
+  }
+}
+
 function shortAddr(addr) {
   if (!addr) return ''
   return addr.slice(0, 6) + '…' + addr.slice(-4)
@@ -89,7 +99,7 @@ function shortAddr(addr) {
 
         <span v-if="event.type === 'merge_in'" class="activity__detail">
           <span class="link">m({{ event.mass }})</span>
-          <NuxtLink class="card__content__label" :to="`/${+event.tokenId}`">#{{ +event.tokenId }}</NuxtLink>
+          <NuxtLink class="card__content__label" :class="tierColorClass(event.tierClass)" :to="`/${+event.tokenId}`">#{{ +event.tokenId }}</NuxtLink>
         </span>
         <span v-else-if="event.type === 'merge_out'" class="activity__detail">
           <NuxtLink class="link" :to="`/${+event.tokenId}`">#{{ +event.tokenId }}</NuxtLink>
@@ -153,6 +163,10 @@ function shortAddr(addr) {
   @apply text-xs;
   color: #555;
 }
+.tier--red { color: #f87171; }
+.tier--blue { color: #60a5fa; }
+.tier--yellow { color: #facc15; }
+.tier--white { color: #e5e5e5; }
 .activity__addr {
   @apply text-xs;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
