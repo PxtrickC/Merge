@@ -83,13 +83,13 @@ function shortAddr(addr) {
   @apply text-3xl md:text-6xl font-semibold text-white;
 }
 .token-card__id {
-  @apply text-lg md:text-xl text-white;
+  @apply text-base sm:text-lg md:text-xl text-white;
 }
 .token-card__sub {
-  @apply flex items-baseline gap-1.5;
+  @apply flex items-baseline gap-1.5 flex-wrap;
 }
 .token-card__own-by {
-  @apply text-lg md:text-xl text-white;
+  @apply text-base sm:text-lg md:text-xl text-white;
 }
 .token-card__owner {
   @apply no-underline text-white;
@@ -98,10 +98,10 @@ function shortAddr(addr) {
   @apply underline;
 }
 .token-card__links {
-  @apply flex items-center gap-2;
+  @apply flex items-center gap-1.5 sm:gap-2 flex-wrap;
 }
 .token-card__badge {
-  @apply px-2 py-1.5 text-xs font-normal;
+  @apply px-1.5 py-1 sm:px-2 sm:py-1.5 text-xs font-normal;
   background: #fff;
   color: #000;
 }

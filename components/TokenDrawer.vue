@@ -127,13 +127,13 @@ onUnmounted(() => document.removeEventListener('keydown', onKeyDown))
   border-left: 1px solid #1a1a1a;
   z-index: 51;
   overflow-y: auto;
-  @apply p-6;
+  @apply p-4 sm:p-6;
 }
 .drawer__close {
-  @apply mb-6 text-white;
+  @apply mb-4 sm:mb-6 text-white;
 }
 .drawer__content {
-  @apply flex flex-col gap-10;
+  @apply flex flex-col gap-8 sm:gap-10;
 }
 .drawer__loading {
   @apply flex justify-center py-12;

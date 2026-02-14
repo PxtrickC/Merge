@@ -41,13 +41,13 @@ function fillAlpha(tier, mass) {
           class="ranking__toggle-btn"
           :class="{ 'ranking__toggle-btn--active': sortMode === 'mass' }"
           @click="sortMode = 'mass'"
-        >by mass</button>
+        >mass</button>
         <span class="ranking__toggle-sep">/</span>
         <button
           class="ranking__toggle-btn"
           :class="{ 'ranking__toggle-btn--active': sortMode === 'id' }"
           @click="sortMode = 'id'"
-        >by id</button>
+        >id</button>
       </div>
     </div>
 
@@ -84,48 +84,105 @@ function fillAlpha(tier, mass) {
   border-top: 1px solid #1a1a1a;
 }
 .ranking__header {
-  @apply flex items-baseline justify-between mb-6 gap-4 px-4 md:px-8;
+  @apply flex items-center sm:items-baseline justify-between mb-6 gap-2 sm:gap-4 px-4 md:px-8;
 }
 .ranking__title {
-  @apply text-4xl md:text-6xl text-white;
+  @apply text-2xl sm:text-4xl md:text-6xl text-white;
 }
 .ranking__toggle {
-  @apply flex items-baseline gap-3;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+}
+@media (min-width: 1024px) {
+  .ranking__toggle {
+    gap: 0.75rem;
+    align-items: baseline;
+  }
 }
 .ranking__toggle-sep {
-  @apply text-4xl md:text-6xl;
+  display: none;
   color: rgba(255, 255, 255, 0.5);
+}
+@media (min-width: 1024px) {
+  .ranking__toggle-sep {
+    display: inline;
+    font-size: 2.25rem;
+    line-height: 2.5rem;
+  }
+}
+@media (min-width: 1081px) {
+  .ranking__toggle-sep {
+    font-size: 3.75rem;
+    line-height: 1;
+  }
 }
 .ranking__toggle-btn {
-  @apply text-4xl md:text-6xl;
+  font-size: 1rem;
+  line-height: 1;
+  padding: 0 0.4rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 1.5rem;
+  flex: 1;
   background: none;
   border: none;
-  padding: 0;
   cursor: pointer;
   color: rgba(255, 255, 255, 0.5);
-  transition: color 0.2s;
+  transition: color 0.2s, background-color 0.2s;
 }
 .ranking__toggle-btn--active {
-  color: rgba(255, 255, 255, 1);
+  background: #fff;
+  color: #000;
+}
+@media (min-width: 1024px) {
+  .ranking__toggle-btn {
+    font-size: 2.25rem;
+    line-height: 2.5rem;
+    padding: 0;
+    flex: none;
+    justify-content: initial;
+    height: auto;
+  }
+  .ranking__toggle-btn--active {
+    background: none;
+    color: rgba(255, 255, 255, 1);
+  }
+}
+@media (min-width: 1081px) {
+  .ranking__toggle-btn {
+    font-size: 3.75rem;
+    line-height: 1;
+  }
 }
 .rank-move {
   transition: transform 1s ease;
 }
 .ranking__scroll {
-  @apply flex items-end gap-6 md:gap-8;
+  @apply flex items-end gap-4 sm:gap-6 md:gap-8;
   @apply overflow-x-auto pb-4 px-4 md:px-8;
-  scrollbar-width: thin;
-  scrollbar-color: #333 transparent;
+  scrollbar-width: none;
 }
 .ranking__scroll::-webkit-scrollbar {
-  height: 4px;
+  display: none;
 }
-.ranking__scroll::-webkit-scrollbar-track {
-  background: transparent;
-}
-.ranking__scroll::-webkit-scrollbar-thumb {
-  background: #333;
-  border-radius: 4px;
+@media (min-width: 1024px) {
+  .ranking__scroll {
+    scrollbar-width: thin;
+    scrollbar-color: #333 transparent;
+  }
+  .ranking__scroll::-webkit-scrollbar {
+    display: block;
+    height: 4px;
+  }
+  .ranking__scroll::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .ranking__scroll::-webkit-scrollbar-thumb {
+    background: #333;
+    border-radius: 4px;
+  }
 }
 .ranking__item {
   @apply flex flex-col items-center;

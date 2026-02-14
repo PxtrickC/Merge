@@ -116,13 +116,13 @@ onBeforeUnmount(() => {
           class="massd__toggle-btn"
           :class="{ 'massd__toggle-btn--active': sortMode === 'mass' }"
           @click="sortMode = 'mass'"
-        >by mass</button>
+        >mass</button>
         <span class="massd__toggle-sep">/</span>
         <button
           class="massd__toggle-btn"
           :class="{ 'massd__toggle-btn--active': sortMode === 'count' }"
           @click="sortMode = 'count'"
-        >by count</button>
+        >count</button>
       </div>
     </div>
 
@@ -168,47 +168,104 @@ onBeforeUnmount(() => {
   border-top: 1px solid #1a1a1a;
 }
 .massd__header {
-  @apply flex items-baseline justify-between mb-6 gap-4;
+  @apply flex items-center sm:items-baseline justify-between mb-6 gap-2 sm:gap-4;
 }
 .massd__title {
-  @apply text-4xl md:text-6xl text-white;
+  @apply text-2xl sm:text-4xl md:text-6xl text-white;
 }
 .massd__toggle {
-  @apply flex items-baseline gap-3;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+}
+@media (min-width: 1024px) {
+  .massd__toggle {
+    gap: 0.75rem;
+    align-items: baseline;
+  }
 }
 .massd__toggle-sep {
-  @apply text-4xl md:text-6xl;
+  display: none;
   color: rgba(255, 255, 255, 0.5);
+}
+@media (min-width: 1024px) {
+  .massd__toggle-sep {
+    display: inline;
+    font-size: 2.25rem;
+    line-height: 2.5rem;
+  }
+}
+@media (min-width: 1081px) {
+  .massd__toggle-sep {
+    font-size: 3.75rem;
+    line-height: 1;
+  }
 }
 .massd__toggle-btn {
-  @apply text-4xl md:text-6xl;
+  font-size: 1rem;
+  line-height: 1;
+  padding: 0 0.4rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 1.5rem;
+  flex: 1;
   background: none;
   border: none;
-  padding: 0;
   cursor: pointer;
   color: rgba(255, 255, 255, 0.5);
-  transition: color 0.2s;
+  transition: color 0.2s, background-color 0.2s;
 }
 .massd__toggle-btn--active {
-  color: rgba(255, 255, 255, 1);
+  background: #fff;
+  color: #000;
+}
+@media (min-width: 1024px) {
+  .massd__toggle-btn {
+    font-size: 2.25rem;
+    line-height: 2.5rem;
+    padding: 0;
+    flex: none;
+    justify-content: initial;
+    height: auto;
+  }
+  .massd__toggle-btn--active {
+    background: none;
+    color: rgba(255, 255, 255, 1);
+  }
+}
+@media (min-width: 1081px) {
+  .massd__toggle-btn {
+    font-size: 3.75rem;
+    line-height: 1;
+  }
 }
 .massd__scroll {
-  @apply flex gap-3 md:gap-4;
+  @apply flex gap-2 sm:gap-3 md:gap-4;
   @apply overflow-x-auto pb-4;
   height: 300px;
   cursor: grab;
-  scrollbar-width: thin;
-  scrollbar-color: #333 transparent;
+  scrollbar-width: none;
 }
 .massd__scroll::-webkit-scrollbar {
-  height: 4px;
+  display: none;
 }
-.massd__scroll::-webkit-scrollbar-track {
-  background: transparent;
-}
-.massd__scroll::-webkit-scrollbar-thumb {
-  background: #333;
-  border-radius: 4px;
+@media (min-width: 1024px) {
+  .massd__scroll {
+    scrollbar-width: thin;
+    scrollbar-color: #333 transparent;
+  }
+  .massd__scroll::-webkit-scrollbar {
+    display: block;
+    height: 4px;
+  }
+  .massd__scroll::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .massd__scroll::-webkit-scrollbar-thumb {
+    background: #333;
+    border-radius: 4px;
+  }
 }
 .bars-move {
   transition: transform 1s ease;
@@ -217,14 +274,19 @@ onBeforeUnmount(() => {
   @apply flex flex-col items-center justify-end;
   @apply flex-shrink-0;
   height: 100%;
-  min-width: 44px;
+  min-width: 36px;
+}
+@media (min-width: 1024px) {
+  .massd__bar-group {
+    min-width: 44px;
+  }
 }
 .massd__count {
   @apply text-2xs md:text-xs mb-2;
   color: #888;
 }
 .massd__bar {
-  @apply w-8 md:w-10 rounded-t;
+  @apply w-6 sm:w-8 md:w-10 rounded-t;
   background: #fff;
   @apply transition-all duration-300;
 }

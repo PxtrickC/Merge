@@ -144,23 +144,28 @@ const { open: openDrawer } = useTokenDrawer()
   overflow-y: auto;
 }
 .activity__item {
-  @apply flex items-center gap-3;
+  @apply flex items-center gap-2 sm:gap-3;
   @apply py-3;
   border-bottom: 1px solid #1a1a1a;
 }
 .activity__left {
   @apply flex flex-col flex-shrink-0;
-  width: 6.5rem;
+  width: 5.5rem;
+}
+@media (min-width: 1024px) {
+  .activity__left {
+    width: 6.5rem;
+  }
 }
 .activity__date {
   @apply text-xs whitespace-nowrap;
   color: #555;
 }
 .activity__thumb {
-  @apply w-10 h-10 flex-shrink-0 rounded cursor-pointer overflow-hidden;
+  @apply w-8 h-8 sm:w-10 sm:h-10 flex-shrink-0 rounded cursor-pointer overflow-hidden;
 }
 .activity__detail {
-  @apply flex items-baseline gap-2 text-sm;
+  @apply flex items-baseline gap-1.5 sm:gap-2 text-sm;
 }
 .activity__badge {
   @apply text-xs py-0.5;

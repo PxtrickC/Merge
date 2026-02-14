@@ -129,17 +129,17 @@ const animOmnibusCount = useCountUp(omnibus_count, 2200)
 /* Narrow: two rows, each centered */
 @media (max-width: 1023px) {
   .stats-bar {
-    @apply flex flex-col items-center gap-6;
+    @apply flex flex-col items-center gap-4;
   }
   .stats-bar__row {
-    @apply flex items-center justify-center gap-8;
+    @apply flex items-center justify-center gap-4;
   }
 }
 .stats-bar__item {
   @apply flex flex-col items-center;
 }
 .stats-bar__sep {
-  @apply w-px h-12;
+  @apply w-px h-8 sm:h-12;
   background: #1a1a1a;
 }
 /* Hide the between-row sep on narrow screens (it's only for wide single-row) */
@@ -149,7 +149,7 @@ const animOmnibusCount = useCountUp(omnibus_count, 2200)
   }
 }
 .stats-bar__value {
-  @apply text-2xl md:text-4xl lg:text-5xl font-medium text-white;
+  @apply text-xl sm:text-2xl md:text-4xl lg:text-5xl font-medium text-white;
 }
 .stats-bar__label {
   @apply text-xs md:text-sm text-white mt-1 capitalize;
