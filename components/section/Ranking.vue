@@ -80,11 +80,11 @@ function fillAlpha(tier, mass) {
 
 <style lang="postcss" scoped>
 .ranking {
-  @apply py-8 md:py-12 px-4 md:px-8;
+  @apply py-8 md:py-12;
   border-top: 1px solid #1a1a1a;
 }
 .ranking__header {
-  @apply flex items-baseline justify-between mb-6 gap-4;
+  @apply flex items-baseline justify-between mb-6 gap-4 px-4 md:px-8;
 }
 .ranking__title {
   @apply text-4xl md:text-6xl text-white;
@@ -113,7 +113,7 @@ function fillAlpha(tier, mass) {
 }
 .ranking__scroll {
   @apply flex items-end gap-6 md:gap-8;
-  @apply overflow-x-auto pb-4;
+  @apply overflow-x-auto pb-4 px-4 md:px-8;
   scrollbar-width: thin;
   scrollbar-color: #333 transparent;
 }
