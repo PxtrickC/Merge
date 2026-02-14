@@ -96,6 +96,7 @@ function fillAlpha(tier, mass) {
 }
 @media (min-width: 1024px) {
   .ranking__toggle {
+    display: flex;
     gap: 0.75rem;
     align-items: baseline;
   }

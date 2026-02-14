@@ -180,6 +180,7 @@ onBeforeUnmount(() => {
 }
 @media (min-width: 1024px) {
   .massd__toggle {
+    display: flex;
     gap: 0.75rem;
     align-items: baseline;
   }
