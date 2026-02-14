@@ -82,17 +82,17 @@ const animOmnibusCount = useCountUp(omnibus_count, 2200)
   <section class="stats-bar">
     <div class="stats-bar__row">
       <div class="stats-bar__item">
-        <span class="stats-bar__value">{{ animTokenCount }}</span>
-        <span class="stats-bar__label">tokens remain</span>
-      </div>
-      <div class="stats-bar__sep" />
-      <div class="stats-bar__item">
         <span class="stats-bar__value">{{ animTotalMass }}</span>
         <span class="stats-bar__label">total mass</span>
       </div>
       <div class="stats-bar__sep" />
       <div class="stats-bar__item">
-        <span class="stats-bar__value">{{ animAlphaMass }}</span>
+        <span class="stats-bar__value">{{ animTokenCount }}</span>
+        <span class="stats-bar__label">tokens remain</span>
+      </div>
+      <div class="stats-bar__sep" />
+      <div class="stats-bar__item">
+        <span class="stats-bar__value">m({{ animAlphaMass }})</span>
         <span class="stats-bar__label">alpha</span>
       </div>
     </div>
@@ -150,7 +150,6 @@ const animOmnibusCount = useCountUp(omnibus_count, 2200)
 }
 .stats-bar__value {
   @apply text-2xl md:text-4xl lg:text-5xl font-medium text-white;
-  font-variant-numeric: tabular-nums;
 }
 .stats-bar__label {
   @apply text-xs md:text-sm text-white mt-1 capitalize;

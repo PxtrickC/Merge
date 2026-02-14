@@ -18,7 +18,7 @@ const alpha_mass = computed(() => stats.value?.alpha_mass ?? 1)
     <section-ranking title="Top Merges" :items="merges_top" :alpha-mass="alpha_mass" value-key="merges" />
     <section-ranking :title="`Yellow Mass ${yellow_mass?.length ?? 0}/94`" :items="yellow_mass" :alpha-mass="alpha_mass" sortable />
     <section-ranking :title="`Blue Mass ${blue_mass?.length ?? 0}/50`" :items="blue_mass" :alpha-mass="alpha_mass" sortable />
-    <section-ranking :title="`Red Mass ${red_mass?.length ?? 0}/5`" :items="red_mass" :alpha-mass="alpha_mass" />
+    <section-ranking :title="`Red Mass ${red_mass?.length ?? 0}/5`" :items="red_mass" :alpha-mass="alpha_mass" sortable />
     <section-mass-distribution />
   </div>
 </template>

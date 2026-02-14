@@ -13,11 +13,13 @@ const frameSizeValue = computed(() => {
 
 function formatDate(merged_on) {
   if (!merged_on) return ""
-  let date = new Date(merged_on)
-  return (
-    date.toDateString().split(" ").slice(1, 3).join(" ") +
-    ` ${date.getHours().toString().padStart(2, "0")}h${date.getMinutes().toString().padStart(2, "0")}`
-  )
+  const d = new Date(merged_on)
+  const yr = String(d.getFullYear()).slice(2)
+  const mon = d.toLocaleString('en-US', { month: 'short' })
+  const day = d.getDate()
+  const hh = String(d.getHours()).padStart(2, '0')
+  const mm = String(d.getMinutes()).padStart(2, '0')
+  return `${yr} ${mon} ${day} ${hh}:${mm}`
 }
 </script>
 
