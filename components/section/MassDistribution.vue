@@ -53,8 +53,14 @@ function getBarHeight(count) {
   return Math.max(2, (count / visibleMax.value) * BAR_MAX_HEIGHT)
 }
 
+const globalMax = computed(() => {
+  const items = sorted_data.value
+  if (!items.length) return 1
+  return Math.max(...items.map(d => d.count))
+})
+
 const visibleMax = computed(() => {
-  if (visibleSet.size === 0) return 1
+  if (visibleSet.size === 0) return globalMax.value
   let max = 0
   for (const idx of visibleSet) {
     const item = sorted_data.value[idx]
