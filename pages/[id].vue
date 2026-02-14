@@ -49,7 +49,7 @@ const tokenData = computed(() => {
       </div>
     </div>
     <div v-else class="overview__content">
-      <p class="text-white text-opacity-60">Loading token data...</p>
+      <Loading :fullscreen="false" />
     </div>
   </section>
 </template>
