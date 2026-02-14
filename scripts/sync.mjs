@@ -237,11 +237,11 @@ async function writeTokenFiles(tokens, totalSupply) {
   const mergesSorted = [...tokens].filter((t) => t.merges > 0).sort((a, b) => b.merges - a.merges)
   writeJSON("merges_top.json", mergesSorted.slice(0, 100).map((t) => ({ id: t.id, tier: t.tier, mass: t.mass, merges: t.merges })))
 
-  // --- mass_repartition.json (exact mass values, top 100 by count) ---
+  // --- mass_repartition.json (all mass values) ---
   const massCount = new Map()
   for (const t of tokens) massCount.set(t.mass, (massCount.get(t.mass) || 0) + 1)
   const repartSorted = [...massCount.entries()].sort((a, b) => b[1] - a[1])
-  writeJSON("mass_repartition.json", repartSorted.slice(0, 100).map(([mass, count]) => ({ mass, count })))
+  writeJSON("mass_repartition.json", repartSorted.map(([mass, count]) => ({ mass, count })))
 
   // --- matter.json ---
   const matterTokens = {

@@ -1,5 +1,5 @@
 <script setup>
-const tokens_cache = await useAPI("/tokens_cache")
+const mass_repartition = await useAPI("/mass_repartition")
 
 const scrollEl = useDragScroll()
 
@@ -16,21 +16,9 @@ function isPrime(n) {
   return true
 }
 
-// Aggregate mass distribution from tokens_cache
-const massDistribution = computed(() => {
-  if (!tokens_cache.value) return []
-  const countMap = {}
-  for (const t of tokens_cache.value) {
-    if (t.mass >= 1) {
-      countMap[t.mass] = (countMap[t.mass] || 0) + 1
-    }
-  }
-  return Object.entries(countMap)
-    .map(([mass, count]) => ({ mass: Number(mass), count }))
-})
-
 const sorted_data = computed(() => {
-  const items = [...massDistribution.value]
+  if (!mass_repartition.value) return []
+  const items = [...mass_repartition.value].filter(d => d.count > 0)
   if (sortMode.value === 'count') {
     items.sort((a, b) => b.count - a.count || a.mass - b.mass)
   } else {

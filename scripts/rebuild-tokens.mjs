@@ -158,11 +158,11 @@ async function main() {
   const mergesSorted = [...tokens].filter(t => t.merges > 0).sort((a, b) => b.merges - a.merges)
   writeJSON("merges_top.json", mergesSorted.slice(0, 100).map(t => ({ id: t.id, tier: t.tier, mass: t.mass, merges: t.merges })))
 
-  // Exact mass distribution (sorted by count desc, top 100)
+  // Exact mass distribution (all mass values)
   const massCount = new Map()
   for (const t of tokens) massCount.set(t.mass, (massCount.get(t.mass) || 0) + 1)
   const sorted = [...massCount.entries()].sort((a, b) => b[1] - a[1])
-  writeJSON("mass_repartition.json", sorted.slice(0, 100).map(([mass, count]) => ({ mass, count })))
+  writeJSON("mass_repartition.json", sorted.map(([mass, count]) => ({ mass, count })))
 
   // Save token cache for instant re-generation later
   writeJSON("tokens_cache.json", tokens)
