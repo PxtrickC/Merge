@@ -1,15 +1,9 @@
 <script setup>
 const { tokenId, isOpen, close } = useTokenDrawer()
-const { open: openMatter } = useMatterDrawer()
 
 const { alphaMass } = useDB()
 const alpha_mass = computed(() => alphaMass.value || 0)
 
-const { data: matterTokens } = useLazyFetch('/data/matter_tokens.json')
-const matterForToken = computed(() => {
-  if (!matterTokens.value || !tokenData.value) return []
-  return matterTokens.value.filter(m => m.parent === tokenData.value.id)
-})
 
 const tokenData = ref(null)
 const transfers = ref([])
@@ -112,20 +106,6 @@ onUnmounted(() => document.removeEventListener('keydown', onKeyDown))
           :initial-mass="initialMass"
         />
 
-        <div v-if="matterForToken.length" class="drawer__matter">
-          <div class="section__title">matter*</div>
-          <div class="drawer__matter-grid">
-            <div
-              v-for="m in matterForToken"
-              :key="m.id"
-              class="drawer__matter-item"
-              @click="openMatter(m)"
-            >
-              <img :src="m.image_cdn || m.image" :alt="m.name" class="drawer__matter-img" width="512" height="512" />
-              <span class="drawer__matter-name">{{ m.name }}</span>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   </Transition>
@@ -159,32 +139,6 @@ onUnmounted(() => document.removeEventListener('keydown', onKeyDown))
 }
 .drawer__loading {
   @apply flex justify-center py-12;
-}
-
-/* matter section */
-.section__title {
-  @apply text-2xl md:text-6xl text-white mb-4 md:mb-6;
-}
-.drawer__matter {
-  @apply flex flex-col;
-}
-.drawer__matter-grid {
-  @apply grid grid-cols-2 gap-3;
-}
-.drawer__matter-item {
-  @apply flex flex-col items-center gap-1.5 cursor-pointer;
-}
-.drawer__matter-item:hover .drawer__matter-name {
-  color: #999;
-}
-.drawer__matter-img {
-  @apply w-full h-auto block rounded;
-  aspect-ratio: 1;
-  object-fit: cover;
-}
-.drawer__matter-name {
-  @apply text-xs text-white truncate w-full text-center;
-  transition: color 0.2s;
 }
 
 /* transitions */
