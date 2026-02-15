@@ -198,7 +198,7 @@ function fillAlpha(tier, mass) {
   text-underline-offset: 3px;
 }
 .ranking__search {
-  @apply mt-3 px-4 py-2 rounded-lg text-sm text-white;
+  @apply mt-3 px-4 py-2 rounded-lg text-base text-white;
   max-width: 24rem;
   background: #1a1a1a;
   border: 1px solid #333;
