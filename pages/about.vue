@@ -10,6 +10,8 @@
 <style lang="postcss" scoped>
 .about {
   @apply min-h-screen bg-black overflow-hidden;
+  display: flex;
+  justify-content: center;
 }
 .about__back {
   @apply fixed top-4 left-4 z-10 text-white p-2;
@@ -17,13 +19,10 @@
   border-radius: 50%;
 }
 .about__img {
-  @apply block;
+  @apply block flex-shrink-0;
   width: 960px;
   height: 2880px;
   max-width: none;
-  position: relative;
-  left: 50%;
-  transform: translateX(-50%);
 }
 @media (min-width: 768px) {
   .about__img {
