@@ -65,7 +65,14 @@ function formatDate(merged_on) {
   @apply flex justify-between items-center mb-6;
 }
 .latest__title {
-  @apply text-2xl sm:text-4xl md:text-6xl text-white;
+  @apply text-white;
+  font-family: 'HND', sans-serif;
+  font-size: 2em;
+}
+@media (min-width: 768px) {
+  .latest__title {
+    @apply text-6xl;
+  }
 }
 .latest__timer {
   @apply text-xs;

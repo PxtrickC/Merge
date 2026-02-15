@@ -166,7 +166,14 @@ onBeforeUnmount(() => {
   @apply flex flex-col mb-6 gap-2;
 }
 .massd__title {
-  @apply text-2xl sm:text-4xl md:text-6xl text-white;
+  @apply text-white;
+  font-family: 'HND', sans-serif;
+  font-size: 2em;
+}
+@media (min-width: 768px) {
+  .massd__title {
+    @apply text-6xl;
+  }
 }
 .massd__toggle {
   @apply text-base md:text-3xl text-white;

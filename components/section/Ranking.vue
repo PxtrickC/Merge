@@ -169,10 +169,17 @@ function fillAlpha(tier, mass) {
   border-top: 1px solid #1a1a1a;
 }
 .ranking__header {
-  @apply flex flex-col mb-6 gap-2 px-4 md:px-8;
+  @apply flex flex-col mb-3 md:mb-6 gap-1 md:gap-2 px-4 md:px-8;
 }
 .ranking__title {
-  @apply text-2xl sm:text-4xl md:text-6xl text-white;
+  @apply text-white;
+  font-family: 'HND', sans-serif;
+  font-size: 2em;
+}
+@media (min-width: 768px) {
+  .ranking__title {
+    @apply text-6xl;
+  }
 }
 .ranking__toggle {
   @apply text-base md:text-3xl text-white;
