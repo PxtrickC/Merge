@@ -6,7 +6,7 @@ const alpha_mass = computed(() => alphaMass.value || 0)
 
 const { data: matterTokens } = useLazyFetch('/data/matter_tokens.json')
 const matterForToken = computed(() => {
-  if (!matterTokens.value || !tokenData.value) return []
+  if (!Array.isArray(matterTokens.value) || !tokenData.value) return []
   return matterTokens.value.filter(m => m.parent === tokenData.value.id)
 })
 
