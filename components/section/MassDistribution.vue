@@ -201,23 +201,6 @@ onBeforeUnmount(() => {
 .massd__scroll::-webkit-scrollbar {
   display: none;
 }
-@media (min-width: 1024px) {
-  .massd__scroll {
-    scrollbar-width: thin;
-    scrollbar-color: #333 transparent;
-  }
-  .massd__scroll::-webkit-scrollbar {
-    display: block;
-    height: 4px;
-  }
-  .massd__scroll::-webkit-scrollbar-track {
-    background: transparent;
-  }
-  .massd__scroll::-webkit-scrollbar-thumb {
-    background: #333;
-    border-radius: 4px;
-  }
-}
 .bars-move {
   transition: transform 1s ease;
 }

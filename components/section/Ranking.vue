@@ -245,23 +245,6 @@ function fillAlpha(tier, mass) {
 .ranking__scroll::-webkit-scrollbar {
   display: none;
 }
-@media (min-width: 1024px) {
-  .ranking__scroll {
-    scrollbar-width: thin;
-    scrollbar-color: #333 transparent;
-  }
-  .ranking__scroll::-webkit-scrollbar {
-    display: block;
-    height: 4px;
-  }
-  .ranking__scroll::-webkit-scrollbar-track {
-    background: transparent;
-  }
-  .ranking__scroll::-webkit-scrollbar-thumb {
-    background: #333;
-    border-radius: 4px;
-  }
-}
 .ranking__item {
   @apply flex flex-col items-center;
   @apply flex-shrink-0;

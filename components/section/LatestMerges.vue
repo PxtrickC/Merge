@@ -86,23 +86,6 @@ function formatDate(merged_on) {
 .latest__scroll::-webkit-scrollbar {
   display: none;
 }
-@media (min-width: 1024px) {
-  .latest__scroll {
-    scrollbar-width: thin;
-    scrollbar-color: #333 transparent;
-  }
-  .latest__scroll::-webkit-scrollbar {
-    display: block;
-    height: 4px;
-  }
-  .latest__scroll::-webkit-scrollbar-track {
-    background: transparent;
-  }
-  .latest__scroll::-webkit-scrollbar-thumb {
-    background: #333;
-    border-radius: 4px;
-  }
-}
 .latest__card {
   @apply flex flex-col items-center;
   @apply flex-shrink-0;

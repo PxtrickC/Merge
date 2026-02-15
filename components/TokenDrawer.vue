@@ -4,6 +4,11 @@ const { tokenId, isOpen, close } = useTokenDrawer()
 const { alphaMass } = useDB()
 const alpha_mass = computed(() => alphaMass.value || 0)
 
+const { data: matterTokens } = useLazyFetch('/data/matter_tokens.json')
+const matterForToken = computed(() => {
+  if (!matterTokens.value || !tokenData.value) return []
+  return matterTokens.value.filter(m => m.parent === tokenData.value.id)
+})
 
 const tokenData = ref(null)
 const transfers = ref([])
@@ -60,11 +65,13 @@ watch(isOpen, (open) => {
     document.body.style.top = `-${savedScrollY}px`
     document.body.style.left = '0'
     document.body.style.right = '0'
+    document.body.style.overflow = 'hidden'
   } else {
     document.body.style.position = ''
     document.body.style.top = ''
     document.body.style.left = ''
     document.body.style.right = ''
+    document.body.style.overflow = ''
     window.scrollTo(0, savedScrollY)
   }
 })
@@ -79,7 +86,7 @@ onUnmounted(() => document.removeEventListener('keydown', onKeyDown))
 
 <template>
   <Transition name="fade">
-    <div v-if="isOpen" class="drawer__backdrop" @click="close" />
+    <div v-if="isOpen" class="drawer__backdrop" @click="close" @touchmove.prevent />
   </Transition>
   <Transition name="slide">
     <div v-if="isOpen" ref="panelRef" class="drawer__panel">
@@ -106,6 +113,19 @@ onUnmounted(() => document.removeEventListener('keydown', onKeyDown))
           :initial-mass="initialMass"
         />
 
+        <div v-if="matterForToken.length" class="drawer__matter">
+          <div class="drawer__matter-title">matter*</div>
+          <div class="drawer__matter-grid">
+            <div
+              v-for="m in matterForToken"
+              :key="m.id"
+              class="drawer__matter-item"
+            >
+              <img :src="m.image_cdn || m.image" :alt="m.name" class="drawer__matter-img" width="512" height="512" />
+              <span class="drawer__matter-name">{{ m.name }}</span>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </Transition>
@@ -129,6 +149,8 @@ onUnmounted(() => document.removeEventListener('keydown', onKeyDown))
   border-left: 1px solid #1a1a1a;
   z-index: 51;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
   @apply p-4 sm:p-6;
 }
 .drawer__close {
@@ -139,6 +161,28 @@ onUnmounted(() => document.removeEventListener('keydown', onKeyDown))
 }
 .drawer__loading {
   @apply flex justify-center py-12;
+}
+
+/* matter section */
+.drawer__matter-title {
+  @apply text-2xl md:text-6xl text-white mb-4 md:mb-6;
+}
+.drawer__matter {
+  @apply flex flex-col;
+}
+.drawer__matter-grid {
+  @apply grid grid-cols-2 gap-3;
+}
+.drawer__matter-item {
+  @apply flex flex-col items-center gap-1.5;
+}
+.drawer__matter-img {
+  @apply w-full h-auto block rounded;
+  aspect-ratio: 1;
+  object-fit: cover;
+}
+.drawer__matter-name {
+  @apply text-xs text-white truncate w-full text-center;
 }
 
 /* transitions */
