@@ -1,12 +1,8 @@
 /**
  * Incremental db.json update — designed for GitHub Actions / CI.
  *
- * Zero RPC state queries needed! All data derived from event logs + existing db.json:
- *   - event.mass = persist token's new mass after merge
- *   - persist token's tier doesn't change → newValue = tier * 10^8 + event.mass
- *   - burned token's value already in db.json
- *
- * Only RPC calls: getLogs (event scan) + getBlock (timestamps for latest_merges.json)
+ * Uses Etherscan API for event scanning (no block range limit).
+ * Uses Alchemy RPC only for block timestamps.
  *
  * Usage:
  *   node scripts/update-db.mjs    # scan events from db.block+1 to latest
@@ -15,20 +11,22 @@ import { ethers } from "ethers"
 import { readFileSync, writeFileSync } from "fs"
 import { join, dirname } from "path"
 import { fileURLToPath } from "url"
-import { MERGE_CONTRACT_ADDRESS, MERGE_ABI, decodeValue } from "../utils/contract.mjs"
+import { MERGE_CONTRACT_ADDRESS, decodeValue } from "../utils/contract.mjs"
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const DATA_DIR = join(__dirname, "..", "public", "data")
 
 const CLASS_DIVISOR = 100_000_000
+const MASS_UPDATE_TOPIC = "0x7ba170514e8ea35827dbbd10c6d3376ca77ff64b62e4b0a395bac9b142dc81dc"
+const ETHERSCAN_BASE = "https://api.etherscan.io/v2/api"
 
 const ALCHEMY_API_KEY = process.env.NUXT_PUBLIC_ALCHEMY_API_KEY
 if (!ALCHEMY_API_KEY) {
   console.error("Missing NUXT_PUBLIC_ALCHEMY_API_KEY env var")
   process.exit(1)
 }
+const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY || ""
 const RPC_URL = `https://eth-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}`
-const MASS_UPDATE_TOPIC = "0x7ba170514e8ea35827dbbd10c6d3376ca77ff64b62e4b0a395bac9b142dc81dc"
 
 function readJSON(filename) {
   return JSON.parse(readFileSync(join(DATA_DIR, filename), "utf-8"))
@@ -39,32 +37,64 @@ function writeJSON(filename, data) {
   console.log(`  ✅ ${filename}`)
 }
 
+async function fetchEventsFromEtherscan(fromBlock) {
+  const allLogs = []
+  let currentFrom = fromBlock
+
+  while (true) {
+    const url = new URL(ETHERSCAN_BASE)
+    url.searchParams.set("chainid", "1")
+    url.searchParams.set("module", "logs")
+    url.searchParams.set("action", "getLogs")
+    url.searchParams.set("address", MERGE_CONTRACT_ADDRESS)
+    url.searchParams.set("topic0", MASS_UPDATE_TOPIC)
+    url.searchParams.set("fromBlock", currentFrom.toString())
+    url.searchParams.set("toBlock", "latest")
+    url.searchParams.set("page", "1")
+    url.searchParams.set("offset", "1000")
+    if (ETHERSCAN_API_KEY) url.searchParams.set("apikey", ETHERSCAN_API_KEY)
+
+    const res = await fetch(url)
+    const json = await res.json()
+
+    if (json.status !== "1" || !Array.isArray(json.result) || json.result.length === 0) break
+
+    for (const log of json.result) {
+      allLogs.push({
+        burnedId: parseInt(log.topics[1], 16),
+        persistId: parseInt(log.topics[2], 16),
+        mass: parseInt(log.data, 16),
+        blockNumber: parseInt(log.blockNumber, 16),
+        timestamp: parseInt(log.timeStamp, 16),
+      })
+    }
+
+    console.log(`    Fetched ${json.result.length} logs from block ${currentFrom}...`)
+
+    if (json.result.length < 1000) break
+    const lastBlock = parseInt(json.result[json.result.length - 1].blockNumber, 16)
+    if (lastBlock <= currentFrom) { currentFrom = lastBlock + 1 } else { currentFrom = lastBlock }
+
+    // Rate limit
+    await new Promise(r => setTimeout(r, 300))
+  }
+
+  return allLogs
+}
+
 // ---------------------------------------------------------------------------
 // Main
 // ---------------------------------------------------------------------------
 async function main() {
   console.log("🔄 Incremental db.json update\n")
 
-  const provider = new ethers.JsonRpcProvider(RPC_URL)
   const db = readJSON("db.json")
   const tokens = db.tokens
   const fromBlock = (db.block || 0) + 1
 
-  // 1. Fetch new MassUpdate events (log query only, no state query)
-  console.log(`  Scanning events from block ${fromBlock}...`)
-  const logs = await provider.getLogs({
-    address: MERGE_CONTRACT_ADDRESS,
-    topics: [MASS_UPDATE_TOPIC],
-    fromBlock,
-    toBlock: "latest",
-  })
-
-  const events = logs.map(log => ({
-    burnedId: parseInt(log.topics[1], 16),
-    persistId: parseInt(log.topics[2], 16),
-    mass: parseInt(log.data, 16),
-    blockNumber: log.blockNumber,
-  }))
+  // 1. Fetch new MassUpdate events via Etherscan API
+  console.log(`  Scanning events from block ${fromBlock} via Etherscan...`)
+  const events = await fetchEventsFromEtherscan(fromBlock)
 
   console.log(`  Found ${events.length} new events`)
 
@@ -75,22 +105,8 @@ async function main() {
 
   // 2. Apply each event — pure computation, no RPC state queries
   const latestMerges = readJSON("latest_merges.json")
-  // Collect unique block numbers for timestamp lookup
-  const blockNumbers = new Set(events.map(e => e.blockNumber))
 
-  // Batch fetch block timestamps (1 RPC per unique block, for latest_merges.json)
-  console.log(`  Fetching timestamps for ${blockNumbers.size} blocks...`)
-  const blockTimestamps = new Map()
-  for (const bn of blockNumbers) {
-    try {
-      const block = await provider.getBlock(bn)
-      blockTimestamps.set(bn, block.timestamp)
-    } catch {
-      blockTimestamps.set(bn, Math.floor(Date.now() / 1000))
-    }
-  }
-
-  for (const { burnedId, persistId, mass, blockNumber } of events) {
+  for (const { burnedId, persistId, mass, blockNumber, timestamp } of events) {
     // Ensure array is long enough
     while (tokens.length <= Math.max(burnedId, persistId)) tokens.push(null)
 
@@ -106,9 +122,8 @@ async function main() {
     const persistMerges = (existingEntry?.[1] ?? 0) + 1
     tokens[persistId] = [newValue, persistMerges, 0]
 
-    // Append to latest_merges
+    // Append to latest_merges (timestamp from Etherscan, no extra RPC needed)
     const burnedDecoded = decodeValue(burnedValue)
-    const timestamp = blockTimestamps.get(blockNumber)
     latestMerges.unshift({
       id: burnedId,
       mass: burnedDecoded.mass,

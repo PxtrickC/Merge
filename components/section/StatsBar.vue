@@ -60,33 +60,16 @@ const animOmnibusCount = useCountUp(omnibus_count, 2200)
 
 <template>
   <section class="stats-bar">
-    <div class="stats-bar__row">
-      <div class="stats-bar__item">
-        <span class="stats-bar__value">{{ animTotalMass }}</span>
-        <span class="stats-bar__label">total mass</span>
-      </div>
-      <div class="stats-bar__sep" />
-      <div class="stats-bar__item">
-        <span class="stats-bar__value">{{ animTokenCount }}</span>
-        <span class="stats-bar__label">tokens remain</span>
-      </div>
-      <div class="stats-bar__sep" />
-      <div class="stats-bar__item">
-        <span class="stats-bar__value">m({{ animAlphaMass }})</span>
-        <span class="stats-bar__label">alpha</span>
-      </div>
-    </div>
-    <div class="stats-bar__row">
-      <div class="stats-bar__sep stats-bar__sep--between" />
-      <div class="stats-bar__item">
-        <span class="stats-bar__value">{{ animMergedCount }}</span>
-        <span class="stats-bar__label">merged</span>
-      </div>
-      <div class="stats-bar__sep" />
-      <div class="stats-bar__item">
-        <span class="stats-bar__value">{{ animOmnibusCount }}</span>
-        <span class="stats-bar__label">in NG omnibus</span>
-      </div>
+    <h2 class="stats-bar__title">About merge.</h2>
+    <div class="stats-bar__body">
+      <p>Merge is a game of extinction.</p>
+      <p><NuxtLink to="/about" class="stats-bar__link"><span class="stats-bar__link-hl">Learn</span> how it works</NuxtLink></p>
+      <br />
+      <p>Total Mass: {{ animTotalMass }}</p>
+      <p>Tokens Remain: {{ animTokenCount }}</p>
+      <p>Alpha: m({{ animAlphaMass }})</p>
+      <p>Merged: {{ animMergedCount }}</p>
+      <p>In NG Omnibus: {{ animOmnibusCount }}</p>
     </div>
   </section>
 </template>
@@ -95,43 +78,31 @@ const animOmnibusCount = useCountUp(omnibus_count, 2200)
 .stats-bar {
   @apply py-8 md:py-12 px-4 md:px-8;
   border-top: 1px solid #1a1a1a;
-  border-bottom: 1px solid #1a1a1a;
 }
-/* Wide: single row */
-@media (min-width: 1024px) {
-  .stats-bar {
-    @apply flex items-center justify-center gap-16;
-  }
-  .stats-bar__row {
-    display: contents;
-  }
+.stats-bar__title {
+  @apply text-white mb-2;
+  font-family: 'HND', sans-serif;
+  font-size: 2em;
 }
-/* Narrow: two rows, each centered */
-@media (max-width: 1023px) {
-  .stats-bar {
-    @apply flex flex-col items-center gap-4;
-  }
-  .stats-bar__row {
-    @apply flex items-center justify-center gap-4;
+@media (min-width: 768px) {
+  .stats-bar__title {
+    @apply text-6xl;
   }
 }
-.stats-bar__item {
-  @apply flex flex-col items-center;
+.stats-bar__body {
+  @apply text-base md:text-3xl text-white;
+  font-family: 'HND', sans-serif;
 }
-.stats-bar__sep {
-  @apply w-px h-8 sm:h-12;
-  background: #1a1a1a;
+.stats-bar__link {
+  @apply text-white no-underline;
 }
-/* Hide the between-row sep on narrow screens (it's only for wide single-row) */
-@media (max-width: 1023px) {
-  .stats-bar__sep--between {
-    @apply hidden;
-  }
+.stats-bar__link-hl {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  transition: background-color 0.15s, color 0.15s;
 }
-.stats-bar__value {
-  @apply text-xl sm:text-2xl md:text-4xl lg:text-5xl font-medium text-white;
-}
-.stats-bar__label {
-  @apply text-xs md:text-sm text-white mt-1 capitalize;
+.stats-bar__link:hover .stats-bar__link-hl {
+  background: #fff;
+  color: #000;
 }
 </style>
