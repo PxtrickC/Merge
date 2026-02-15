@@ -1,25 +1,96 @@
 <script setup>
+import { decodeValue } from "~/utils/contract.mjs"
+
 const props = defineProps({
   title: String,
   items: Array,
   alphaMass: Number,
-  valueKey: { type: String, default: null },
-  sortable: { type: Boolean, default: false },
+  searchable: Boolean,
+  filterable: Boolean,
+  tier: Number,
 })
 
+const { db } = useDB()
 const scrollEl = useDragScroll()
-const sortMode = ref('mass') // 'mass' | 'id'
+const sortMode = ref('id') // 'id' | 'mass' | 'merges'
+const filterMode = ref('alive') // 'all' | 'alive' | 'dead'
+const searchQuery = ref('')
+
+const DISPLAY_LIMIT = 100
+const MOVE_THRESHOLD = 10 // 超過此排名距離改用淡入淡出
+
+const prevRanks = ref(new Map())
+const sortEpoch = ref(0)
+
+const showFilter = computed(() => props.searchable || props.filterable)
+
+// Burned tokens decoded from db (filtered by tier if set)
+const burnedTokens = computed(() => {
+  if (!showFilter.value || !db.value?.tokens) return []
+  const tokens = db.value.tokens
+  const results = []
+  for (let id = 1; id < tokens.length; id++) {
+    const entry = tokens[id]
+    if (!entry || entry[2] === 0) continue
+    const { class: tier, mass } = entry[0] > 0 ? decodeValue(entry[0]) : { class: 0, mass: 0 }
+    if (props.tier && tier !== props.tier) continue
+    results.push({ id, tier, mass, merges: entry[1] || 0, burned: true, mergedTo: entry[2] })
+  }
+  return results
+})
 
 const sortedItems = computed(() => {
   if (!props.items) return []
-  if (!props.sortable || sortMode.value === 'mass') return props.items
-  return [...props.items].sort((a, b) => a.id - b.id)
+
+  // Filter by alive/dead
+  let list
+  if (!showFilter.value || filterMode.value === 'alive') {
+    list = props.items
+  } else if (filterMode.value === 'dead') {
+    list = burnedTokens.value
+  } else {
+    list = [...props.items, ...burnedTokens.value]
+  }
+
+  // Search filter
+  if (props.searchable && searchQuery.value) {
+    const q = searchQuery.value
+    list = list.filter(t => String(t.id).includes(q))
+  }
+
+  const sorted = [...list]
+  if (sortMode.value === 'mass') sorted.sort((a, b) => b.mass - a.mass || b.id - a.id)
+  else if (sortMode.value === 'merges') sorted.sort((a, b) => (b.merges ?? 0) - (a.merges ?? 0) || b.id - a.id)
+  else sorted.sort((a, b) => a.id - b.id)
+  return sorted.slice(0, DISPLAY_LIMIT)
 })
+
+watch(sortedItems, (_new, old) => {
+  if (!old) return
+  const map = new Map()
+  old.forEach((t, i) => map.set(t.id, i))
+  prevRanks.value = map
+})
+
+watch(sortMode, () => { sortEpoch.value++ })
+
+function itemKey(token, index) {
+  const prev = prevRanks.value.get(token.id)
+  if (prev !== undefined && Math.abs(index - prev) > MOVE_THRESHOLD) {
+    return `${token.id}-${sortEpoch.value}`
+  }
+  return token.id
+}
 
 function sphereSize(mass) {
   const ratio = Math.pow(mass / (props.alphaMass || 1), 1 / 3)
-  return Math.max(40, ratio * 100) + 'px'
+  return (20 + ratio * 80) + 'px'
 }
+
+const scrollHeight = computed(() => {
+  const alphaSphere = parseFloat(sphereSize(props.alphaMass || 1))
+  return (alphaSphere + 120) + 'px' // rank(~30px) + sphere + info(~50px) + padding
+})
 
 // Make circle fill the sphere-wrap; size difference is handled by container
 function fillAlpha(tier, mass) {
@@ -36,45 +107,59 @@ function fillAlpha(tier, mass) {
   <section class="ranking">
     <div class="ranking__header">
       <h2 class="ranking__title">{{ title }}</h2>
-      <div v-if="sortable" class="ranking__toggle">
-        <button
-          class="ranking__toggle-btn"
-          :class="{ 'ranking__toggle-btn--active': sortMode === 'mass' }"
-          @click="sortMode = 'mass'"
-        >mass</button>
-        <span class="ranking__toggle-sep">/</span>
-        <button
-          class="ranking__toggle-btn"
-          :class="{ 'ranking__toggle-btn--active': sortMode === 'id' }"
-          @click="sortMode = 'id'"
-        >id</button>
-      </div>
+      <p v-if="showFilter" class="ranking__toggle">show
+        <span v-for="(mode, i) in ['all', 'alive', 'dead']" :key="mode"
+          >{{ i > 0 ? ' ' : '' }}[<span
+            class="ranking__mode"
+            :class="{ 'ranking__mode--active': filterMode === mode }"
+            @click="filterMode = mode"
+          >{{ mode }}</span>]</span>
+      </p>
+      <p class="ranking__toggle">rank by
+        <span v-for="(mode, i) in ['id', 'mass', 'merges']" :key="mode"
+          >{{ i > 0 ? ' ' : '' }}[<span
+            class="ranking__mode"
+            :class="{ 'ranking__mode--active': sortMode === mode }"
+            @click="sortMode = mode"
+          >{{ mode }}</span>]</span>
+      </p>
+      <input
+        v-if="searchable"
+        v-model="searchQuery"
+        type="number"
+        placeholder="search by #id"
+        class="ranking__search"
+      />
     </div>
 
 
-    <div ref="scrollEl" class="ranking__scroll">
+    <Transition name="fade" mode="out-in">
+    <div :key="filterMode" ref="scrollEl" class="ranking__scroll" :style="{ height: scrollHeight }">
       <TransitionGroup name="rank">
       <NuxtLink
         v-for="(token, i) in sortedItems"
-        :key="token.id"
+        :key="itemKey(token, i)"
         :to="`/${token.id}`"
         class="ranking__item"
       >
         <div class="ranking__rank">{{ i + 1 }}</div>
         <div
           class="sphere-wrap"
+          :class="{ 'sphere-wrap--burned': token.burned }"
           :style="{ width: sphereSize(token.mass), height: sphereSize(token.mass) }"
         >
           <merge-svg :tier="token.tier" :mass="token.mass" :alpha_mass="fillAlpha(token.tier, token.mass)" />
         </div>
         <div class="ranking__info">
+          <span class="ranking__value">m({{ token.mass }})</span>
           <span class="ranking__id">#{{ token.id }}</span>
-          <span v-if="valueKey" class="ranking__value">{{ token[valueKey]?.toLocaleString() }} merges</span>
-          <span v-else class="ranking__value">m({{ token.mass?.toLocaleString() }})</span>
+          <span v-if="token.burned" class="ranking__burned">merged → #{{ token.mergedTo }}</span>
+          <span v-else class="ranking__merges">{{ (token.merges ?? 0).toLocaleString() }} merges</span>
         </div>
       </NuxtLink>
       </TransitionGroup>
     </div>
+    </Transition>
   </section>
 </template>
 
@@ -84,81 +169,65 @@ function fillAlpha(tier, mass) {
   border-top: 1px solid #1a1a1a;
 }
 .ranking__header {
-  @apply flex items-center sm:items-baseline justify-between mb-6 gap-2 sm:gap-4 px-4 md:px-8;
+  @apply flex flex-col mb-6 gap-2 px-4 md:px-8;
 }
 .ranking__title {
   @apply text-2xl sm:text-4xl md:text-6xl text-white;
 }
 .ranking__toggle {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  align-items: center;
+  @apply text-base md:text-3xl text-white;
+  font-family: 'HND', sans-serif;
 }
-@media (min-width: 1024px) {
-  .ranking__toggle {
-    display: flex;
-    gap: 0.75rem;
-    align-items: baseline;
-  }
-}
-.ranking__toggle-sep {
-  display: none;
-  color: rgba(255, 255, 255, 0.5);
-}
-@media (min-width: 1024px) {
-  .ranking__toggle-sep {
-    display: inline;
-    font-size: 2.25rem;
-    line-height: 2.5rem;
-  }
-}
-@media (min-width: 1081px) {
-  .ranking__toggle-sep {
-    font-size: 3.75rem;
-    line-height: 1;
-  }
-}
-.ranking__toggle-btn {
-  font-size: 1rem;
-  line-height: 1;
-  padding: 0 0.4rem;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  height: 1.5rem;
-  flex: 1;
-  background: none;
-  border: none;
+.ranking__mode {
   cursor: pointer;
-  color: rgba(255, 255, 255, 0.5);
-  transition: color 0.2s, background-color 0.2s;
+  transition: background-color 0.15s, color 0.15s;
 }
-.ranking__toggle-btn--active {
+.ranking__mode:hover {
   background: #fff;
   color: #000;
 }
-@media (min-width: 1024px) {
-  .ranking__toggle-btn {
-    font-size: 2.25rem;
-    line-height: 2.5rem;
-    padding: 0;
-    flex: none;
-    justify-content: initial;
-    height: auto;
-  }
-  .ranking__toggle-btn--active {
-    background: none;
-    color: rgba(255, 255, 255, 1);
-  }
+.ranking__mode--active {
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
-@media (min-width: 1081px) {
-  .ranking__toggle-btn {
-    font-size: 3.75rem;
-    line-height: 1;
-  }
+.ranking__search {
+  @apply mt-3 px-4 py-2 rounded-lg text-sm text-white;
+  max-width: 24rem;
+  background: #1a1a1a;
+  border: 1px solid #333;
+  outline: none;
+  transition: border-color 0.2s;
+  -moz-appearance: textfield;
 }
-.rank-move {
-  transition: transform 1s ease;
+.ranking__search::-webkit-inner-spin-button,
+.ranking__search::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.ranking__search:focus {
+  border-color: #555;
+}
+.ranking__search::placeholder {
+  color: rgba(255, 255, 255, 0.3);
+}
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+.rank-enter-active {
+  transition: opacity 0.4s ease 0.2s;
+}
+.rank-leave-active {
+  transition: opacity 0.3s ease;
+  position: absolute;
+}
+.rank-enter-from,
+.rank-leave-to {
+  opacity: 0;
 }
 .ranking__scroll {
   @apply flex items-end gap-4 sm:gap-6 md:gap-8;
@@ -189,13 +258,10 @@ function fillAlpha(tier, mass) {
   @apply flex flex-col items-center;
   @apply flex-shrink-0;
   @apply cursor-pointer;
-  transition: transform 0.2s ease;
-}
-.ranking__item.rank-move {
-  transition: transform 1s ease;
+  transition: scale 0.2s ease, transform 2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .ranking__item:hover {
-  transform: scale(1.08);
+  scale: 1.08;
 }
 .ranking__rank {
   @apply text-lg md:text-xl font-medium mb-2;
@@ -210,5 +276,16 @@ function fillAlpha(tier, mass) {
 }
 .ranking__value {
   @apply text-xs md:text-sm text-white;
+}
+.ranking__merges {
+  @apply text-2xs md:text-xs;
+  color: #555;
+}
+.ranking__burned {
+  @apply text-2xs md:text-xs;
+  color: #555;
+}
+.sphere-wrap--burned {
+  opacity: 0.5;
 }
 </style>

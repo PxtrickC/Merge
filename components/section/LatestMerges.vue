@@ -1,10 +1,10 @@
 <script setup>
 import { useTimeAgo } from "@vueuse/core"
 const latest_merges = await useAPI("/latest_merges")
-const stats = await useAPI("/stats")
+const { alphaMass } = useDB()
 const { open: openDrawer } = useTokenDrawer()
 
-const alpha_mass = computed(() => stats.value?.alpha_mass ?? 1)
+const alpha_mass = computed(() => alphaMass.value || 1)
 const scrollEl = useDragScroll()
 
 const frameSizeValue = computed(() => {

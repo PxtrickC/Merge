@@ -1,9 +1,18 @@
 <script setup>
+import { decodeValue } from '~/utils/contract.mjs'
+
 const props = defineProps({ id: Number })
-const mergedIntoData = await useAPI("/merged_into")
+const { db, mergedIntoIndex } = useDB()
+
 const merges = computed(() => {
-  if (!mergedIntoData.value) return []
-  return mergedIntoData.value[props.id] ?? []
+  const burnedIds = mergedIntoIndex.value?.get(props.id) ?? []
+  if (!burnedIds.length || !db.value?.tokens) return []
+  return burnedIds.map(bid => {
+    const entry = db.value.tokens[bid]
+    if (!entry) return { id: bid, tier: 0, mass: 0 }
+    const { class: tier, mass } = decodeValue(entry[0])
+    return { id: bid, tier, mass }
+  })
 })
 </script>
 

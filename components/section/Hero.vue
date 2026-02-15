@@ -4,6 +4,7 @@
       <h1 class="hero__title">&thinsp;merge.</h1>
       <span class="hero__subtitle">Leaderboard</span>
     </div>
+    <NuxtLink to="/matters" class="hero__matters">Matters →</NuxtLink>
   </section>
 </template>
 
@@ -35,5 +36,17 @@
   font-size: clamp(4rem, 15vw, 10rem);
   line-height: 1;
   letter-spacing: -0.03em;
+}
+.hero__matters {
+  position: absolute;
+  bottom: 2rem;
+  right: 2rem;
+  color: rgba(255, 255, 255, 0.4);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.875rem;
+  transition: color 0.2s;
+}
+.hero__matters:hover {
+  color: rgba(255, 255, 255, 0.8);
 }
 </style>

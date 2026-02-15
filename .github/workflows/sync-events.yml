@@ -18,7 +18,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: redesign/mass-black-ui
+          ref: main
 
       - uses: actions/setup-node@v4
         with:
@@ -27,11 +27,11 @@ jobs:
 
       - run: npm ci
 
-      - name: Sync events
+      - name: Incremental db.json update
         env:
           NUXT_PUBLIC_ALCHEMY_API_KEY: ${{ secrets.ALCHEMY_API_KEY }}
           ETHERSCAN_API_KEY: ${{ secrets.ETHERSCAN_API_KEY }}
-        run: node scripts/sync.mjs --events-only
+        run: node scripts/update-db.mjs
 
       - name: Commit and push if changed
         run: |

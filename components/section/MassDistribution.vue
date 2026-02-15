@@ -1,5 +1,5 @@
 <script setup>
-const mass_repartition = await useAPI("/mass_repartition")
+const { massDistribution } = useDB()
 
 const scrollEl = useDragScroll()
 
@@ -17,8 +17,8 @@ function isPrime(n) {
 }
 
 const sorted_data = computed(() => {
-  if (!mass_repartition.value) return []
-  const items = [...mass_repartition.value].filter(d => d.count > 0)
+  if (!massDistribution.value) return []
+  const items = [...massDistribution.value].filter(d => d.count > 0)
   if (sortMode.value === 'count') {
     items.sort((a, b) => b.count - a.count || a.mass - b.mass)
   } else {

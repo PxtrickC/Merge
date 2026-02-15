@@ -1,45 +1,25 @@
 <script setup>
 import { ethers } from 'ethers'
-import { MERGE_CONTRACT_ADDRESS, MERGE_ABI, NIFTY_OMNIBUS_ADDRESS, decodeValue } from '~/utils/contract.mjs'
+import { MERGE_CONTRACT_ADDRESS, MERGE_ABI, NIFTY_OMNIBUS_ADDRESS } from '~/utils/contract.mjs'
 
-const TOTAL_MINTED = 28990
-
-const stats = await useAPI("/stats")
-const massTop = await useAPI("/mass_top")
+const { stats } = useDB()
 
 const total_mass = computed(() => stats.value?.total_mass ?? 0)
+const token_count = computed(() => stats.value?.token_count ?? 0)
+const merged_count = computed(() => stats.value?.merged_count ?? 0)
+const alpha_mass = computed(() => stats.value?.alpha_mass ?? 0)
 
-// Query live data from chain
-const token_count = ref(0)
-const merged_count = ref(0)
+// Omnibus count still requires a live RPC call (not in db.json)
 const omnibus_count = ref(0)
-const alpha_mass = ref(0)
 try {
   const config = useRuntimeConfig()
   const rpcUrl = `https://eth-mainnet.g.alchemy.com/v2/${config.public.ALCHEMY_API_KEY}`
   const provider = new ethers.JsonRpcProvider(rpcUrl)
   const contract = new ethers.Contract(MERGE_CONTRACT_ADDRESS, MERGE_ABI, provider)
-
-  const alphaTokenId = massTop.value?.[0]?.id
-
-  const [supply, omniBal, ...rest] = await Promise.all([
-    contract.totalSupply(),
-    contract.balanceOf(NIFTY_OMNIBUS_ADDRESS),
-    alphaTokenId ? contract.getValueOf(alphaTokenId) : Promise.resolve(null),
-  ])
-  token_count.value = Number(supply)
-  merged_count.value = TOTAL_MINTED - Number(supply)
+  const omniBal = await contract.balanceOf(NIFTY_OMNIBUS_ADDRESS)
   omnibus_count.value = Number(omniBal)
-  if (rest[0] !== null) {
-    alpha_mass.value = decodeValue(rest[0]).mass
-  } else {
-    alpha_mass.value = stats.value?.alpha_mass ?? 0
-  }
 } catch {
-  token_count.value = stats.value?.token_count ?? 0
-  merged_count.value = stats.value?.merged_count ?? 0
   omnibus_count.value = 0
-  alpha_mass.value = stats.value?.alpha_mass ?? 0
 }
 
 function useCountUp(target, duration = 3500, initialValue = 0) {

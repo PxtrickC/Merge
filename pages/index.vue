@@ -1,10 +1,13 @@
 <script setup>
-const stats = await useAPI("/stats")
-const mass_top = await useAPI("/mass_top")
-const yellow_mass = await useAPI("/yellow_mass")
-const blue_mass = await useAPI("/blue_mass")
-const red_mass = await useAPI("/red_mass")
-const merges_top = await useAPI("/merges_top")
+const { stats, alphaMass, aliveTokens, byTier, tierCount, tierTotal } = useDB()
+
+const yellow_mass = byTier(2)
+const blue_mass = byTier(3)
+const red_mass = byTier(4)
+
+const yellowCount = tierCount(2)
+const blueCount = tierCount(3)
+const redCount = tierCount(4)
 
 const alpha_mass = computed(() => stats.value?.alpha_mass ?? 1)
 </script>
@@ -14,11 +17,10 @@ const alpha_mass = computed(() => stats.value?.alpha_mass ?? 1)
     <section-hero />
     <section-stats-bar />
     <section-latest-merges />
-    <section-ranking title="Top Mass" :items="mass_top" :alpha-mass="alpha_mass" />
-    <section-ranking title="Top Merges" :items="merges_top" :alpha-mass="alpha_mass" value-key="merges" />
-    <section-ranking :title="`Yellow Mass ${yellow_mass?.length ?? 0}/94`" :items="yellow_mass" :alpha-mass="alpha_mass" sortable />
-    <section-ranking :title="`Blue Mass ${blue_mass?.length ?? 0}/50`" :items="blue_mass" :alpha-mass="alpha_mass" sortable />
-    <section-ranking :title="`Red Mass ${red_mass?.length ?? 0}/5`" :items="red_mass" :alpha-mass="alpha_mass" sortable />
+    <section-ranking :title="`All Mass ${stats?.token_count ?? ''}/28990`" :items="aliveTokens" :alpha-mass="alpha_mass" searchable />
+    <section-ranking :title="`Yellow Mass ${yellowCount}/${tierTotal(2)}`" :items="yellow_mass" :alpha-mass="alpha_mass" filterable :tier="2" />
+    <section-ranking :title="`Blue Mass ${blueCount}/${tierTotal(3)}`" :items="blue_mass" :alpha-mass="alpha_mass" filterable :tier="3" />
+    <section-ranking :title="`Red Mass ${redCount}/${tierTotal(4)}`" :items="red_mass" :alpha-mass="alpha_mass" />
     <section-mass-distribution />
   </div>
 </template>
