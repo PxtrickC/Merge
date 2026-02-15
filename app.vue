@@ -21,7 +21,7 @@ function onResolve() {
       <Loading v-if="loading" />
     </Transition>
     <TokenDrawer />
-    <MatterDrawer />
+    <!-- <MatterDrawer /> -->
   </NuxtLayout>
 </template>
 

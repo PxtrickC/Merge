@@ -111,19 +111,14 @@ onBeforeUnmount(() => {
   <section class="massd">
     <div class="massd__header">
       <h2 class="massd__title">Mass Distribution</h2>
-      <div class="massd__toggle">
-        <button
-          class="massd__toggle-btn"
-          :class="{ 'massd__toggle-btn--active': sortMode === 'mass' }"
-          @click="sortMode = 'mass'"
-        >mass</button>
-        <span class="massd__toggle-sep">/</span>
-        <button
-          class="massd__toggle-btn"
-          :class="{ 'massd__toggle-btn--active': sortMode === 'count' }"
-          @click="sortMode = 'count'"
-        >count</button>
-      </div>
+      <p class="massd__toggle">sort by
+        <span v-for="(mode, i) in ['mass', 'count']" :key="mode"
+          >{{ i > 0 ? ' ' : '' }}[<span
+            class="massd__mode"
+            :class="{ 'massd__mode--active': sortMode === mode }"
+            @click="sortMode = mode"
+          >{{ mode }}</span>]</span>
+      </p>
     </div>
 
     <div ref="scrollEl" class="massd__scroll">
@@ -168,78 +163,26 @@ onBeforeUnmount(() => {
   border-top: 1px solid #1a1a1a;
 }
 .massd__header {
-  @apply flex items-center sm:items-baseline justify-between mb-6 gap-2 sm:gap-4;
+  @apply flex flex-col mb-6 gap-2;
 }
 .massd__title {
   @apply text-2xl sm:text-4xl md:text-6xl text-white;
 }
 .massd__toggle {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  align-items: center;
+  @apply text-base md:text-3xl text-white;
+  font-family: 'HND', sans-serif;
 }
-@media (min-width: 1024px) {
-  .massd__toggle {
-    display: flex;
-    gap: 0.75rem;
-    align-items: baseline;
-  }
-}
-.massd__toggle-sep {
-  display: none;
-  color: rgba(255, 255, 255, 0.5);
-}
-@media (min-width: 1024px) {
-  .massd__toggle-sep {
-    display: inline;
-    font-size: 2.25rem;
-    line-height: 2.5rem;
-  }
-}
-@media (min-width: 1081px) {
-  .massd__toggle-sep {
-    font-size: 3.75rem;
-    line-height: 1;
-  }
-}
-.massd__toggle-btn {
-  font-size: 1rem;
-  line-height: 1;
-  padding: 0 0.4rem;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  height: 1.5rem;
-  flex: 1;
-  background: none;
-  border: none;
+.massd__mode {
   cursor: pointer;
-  color: rgba(255, 255, 255, 0.5);
-  transition: color 0.2s, background-color 0.2s;
+  transition: background-color 0.15s, color 0.15s;
 }
-.massd__toggle-btn--active {
+.massd__mode:hover {
   background: #fff;
   color: #000;
 }
-@media (min-width: 1024px) {
-  .massd__toggle-btn {
-    font-size: 2.25rem;
-    line-height: 2.5rem;
-    padding: 0;
-    flex: none;
-    justify-content: initial;
-    height: auto;
-  }
-  .massd__toggle-btn--active {
-    background: none;
-    color: rgba(255, 255, 255, 1);
-  }
-}
-@media (min-width: 1081px) {
-  .massd__toggle-btn {
-    font-size: 3.75rem;
-    line-height: 1;
-  }
+.massd__mode--active {
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 .massd__scroll {
   @apply flex gap-2 sm:gap-3 md:gap-4;

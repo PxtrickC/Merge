@@ -115,7 +115,7 @@ function fillAlpha(tier, mass) {
             @click="filterMode = mode"
           >{{ mode }}</span>]</span>
       </p>
-      <p class="ranking__toggle">rank by
+      <p class="ranking__toggle">sort by
         <span v-for="(mode, i) in ['id', 'mass', 'merges']" :key="mode"
           >{{ i > 0 ? ' ' : '' }}[<span
             class="ranking__mode"
@@ -224,6 +224,7 @@ function fillAlpha(tier, mass) {
 .rank-leave-active {
   transition: opacity 0.3s ease;
   position: absolute;
+  pointer-events: none;
 }
 .rank-enter-from,
 .rank-leave-to {

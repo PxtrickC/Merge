@@ -4,7 +4,7 @@
       <h1 class="hero__title">&thinsp;merge.</h1>
       <span class="hero__subtitle">Leaderboard</span>
     </div>
-    <NuxtLink to="/matters" class="hero__matters">Matters →</NuxtLink>
+    <!-- <NuxtLink to="/matters" class="hero__matters">Matters →</NuxtLink> -->
   </section>
 </template>
 
