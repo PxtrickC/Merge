@@ -18,11 +18,17 @@
 }
 .about__img {
   @apply block;
-  width: 1920px;
-  height: 5760px;
+  width: 960px;
+  height: 2880px;
   max-width: none;
   position: relative;
   left: 50%;
   transform: translateX(-50%);
+}
+@media (min-width: 768px) {
+  .about__img {
+    width: 1920px;
+    height: 5760px;
+  }
 }
 </style>
