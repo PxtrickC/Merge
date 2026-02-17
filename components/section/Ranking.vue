@@ -17,7 +17,7 @@ const filterMode = ref('alive') // 'all' | 'alive' | 'dead'
 const searchQuery = ref('')
 
 const DISPLAY_LIMIT = 100
-const MOVE_THRESHOLD = 10 // 超過此排名距離改用淡入淡出
+const MOVE_THRESHOLD = 50 // 超過此排名距離改用淡入淡出
 
 const prevRanks = ref(new Map())
 const sortEpoch = ref(0)
