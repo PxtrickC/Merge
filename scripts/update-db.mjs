@@ -107,36 +107,46 @@ async function main() {
   const latestMerges = readJSON("latest_merges.json")
 
   for (const { burnedId, persistId, mass, blockNumber, timestamp } of events) {
+    // persistId === 0 means burned without merge target (sent to dead address)
+    const effectivePersistId = persistId || burnedId
+
     // Ensure array is long enough
-    while (tokens.length <= Math.max(burnedId, persistId)) tokens.push(null)
+    while (tokens.length <= Math.max(burnedId, effectivePersistId)) tokens.push(null)
 
     // Burned token: keep existing value, mark as merged
     const burnedValue = tokens[burnedId]?.[0] ?? 0
     const burnedMerges = tokens[burnedId]?.[1] ?? 0
-    tokens[burnedId] = [burnedValue, burnedMerges, persistId]
+    tokens[burnedId] = [burnedValue, burnedMerges, effectivePersistId]
 
-    // Persist token: derive new value from existing tier + event mass
-    const existingEntry = tokens[persistId]
-    const existingTier = existingEntry ? Math.floor(existingEntry[0] / CLASS_DIVISOR) : 1
-    const newValue = existingTier * CLASS_DIVISOR + mass
-    const persistMerges = (existingEntry?.[1] ?? 0) + 1
-    tokens[persistId] = [newValue, persistMerges, 0]
+    // Persist token: update only if a real merge (persistId !== 0)
+    if (persistId !== 0) {
+      const existingEntry = tokens[persistId]
+      const existingTier = existingEntry ? Math.floor(existingEntry[0] / CLASS_DIVISOR) : 1
+      const newValue = existingTier * CLASS_DIVISOR + mass
+      const persistMerges = (existingEntry?.[1] ?? 0) + 1
+      tokens[persistId] = [newValue, persistMerges, 0]
+    }
 
-    // Append to latest_merges (timestamp from Etherscan, no extra RPC needed)
+    // Append to latest_merges
     const burnedDecoded = decodeValue(burnedValue)
-    latestMerges.unshift({
-      id: burnedId,
-      mass: burnedDecoded.mass,
-      tier: burnedDecoded.class,
-      merged_on: new Date(timestamp * 1000).toISOString(),
-      merged_to: {
-        id: persistId,
-        mass,
-        tier: existingTier,
-      },
-    })
+    if (persistId !== 0) {
+      const existingEntry = tokens[persistId]
+      const existingTier = existingEntry ? Math.floor(existingEntry[0] / CLASS_DIVISOR) : 1
+      latestMerges.unshift({
+        id: burnedId,
+        mass: burnedDecoded.mass,
+        tier: burnedDecoded.class,
+        merged_on: new Date(timestamp * 1000).toISOString(),
+        merged_to: {
+          id: persistId,
+          mass,
+          tier: existingTier,
+        },
+      })
+    }
 
-    console.log(`    #${burnedId} (m=${burnedDecoded.mass}) → #${persistId} (m=${mass}) [block ${blockNumber}]`)
+    const label = persistId === 0 ? 'BURNED (dead)' : `#${persistId} (m=${mass})`
+    console.log(`    #${burnedId} (m=${burnedDecoded.mass}) → ${label} [block ${blockNumber}]`)
   }
 
   // 3. Write results

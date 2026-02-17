@@ -34,8 +34,9 @@ const timeline = computed(() => {
     })
   }
 
-  // Mint and transfer events (skip burn transfers — already shown as merge_out)
+  // Mint and transfer events
   const ZERO_ADDR = '0x' + '0'.repeat(40)
+  const DEAD_ADDR = '0x000000000000000000000000000000000000dead'
   for (const tx of props.transfers) {
     if (tx.isMint) {
       events.push({
@@ -46,6 +47,14 @@ const timeline = computed(() => {
       })
     } else if (tx.to === ZERO_ADDR) {
       // Burn transfer (to zero address) — skip, duplicate of merge_out
+    } else if (tx.to.toLowerCase() === DEAD_ADDR) {
+      // Transfer to dead address = burned (not a normal merge)
+      events.push({
+        type: 'burned',
+        from: tx.from,
+        fromName: tx.fromName,
+        date: tx.date,
+      })
     } else {
       events.push({
         type: 'transfer',
@@ -100,6 +109,7 @@ const { open: openDrawer } = useTokenDrawer()
         <div class="activity__left">
           <span v-if="event.type === 'merge_in'" class="activity__badge activity__badge--merge">merged in</span>
           <span v-else-if="event.type === 'merge_out'" class="activity__badge activity__badge--burn">merged into</span>
+          <span v-else-if="event.type === 'burned'" class="activity__badge activity__badge--burn">burned</span>
           <span v-else-if="event.type === 'mint'" class="activity__badge activity__badge--mint">minted</span>
           <span v-else-if="event.type === 'transfer'" class="activity__badge activity__badge--transfer">transfer</span>
           <span class="activity__date">{{ formatDate(event.date) }}</span>
@@ -119,6 +129,11 @@ const { open: openDrawer } = useTokenDrawer()
         <span v-else-if="event.type === 'mint'" class="activity__detail">
           <span v-if="initialMass" class="link">m({{ initialMass }})</span>
           <a class="activity__addr" :href="`https://etherscan.io/address/${event.to}`" target="_blank">{{ event.toName || shortAddr(event.to) }}</a>
+        </span>
+        <span v-else-if="event.type === 'burned'" class="activity__detail">
+          <a class="activity__addr" :href="`https://etherscan.io/address/${event.from}`" target="_blank">{{ event.fromName || shortAddr(event.from) }}</a>
+          <span class="activity__arrow">→</span>
+          <span class="activity__addr" style="color: #f87171;">0x…dead</span>
         </span>
         <span v-else-if="event.type === 'transfer'" class="activity__detail">
           <a class="activity__addr" :href="`https://etherscan.io/address/${event.from}`" target="_blank">{{ event.fromName || shortAddr(event.from) }}</a>

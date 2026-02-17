@@ -115,9 +115,14 @@ export function useDB() {
   })
 
   // ---------------------------------------------------------------------------
-  // Alpha mass (convenience)
+  // Alpha token (highest mass) — returns { id, mass } or null
   // ---------------------------------------------------------------------------
-  const alphaMass = computed(() => stats.value?.alpha_mass ?? 0)
+  const alphaToken = computed(() => {
+    const alive = aliveTokens.value
+    if (!alive.length) return null
+    return alive.reduce((best, t) => t.mass > best.mass ? t : best)
+  })
+  const alphaMass = computed(() => alphaToken.value?.mass ?? 0)
 
   // ---------------------------------------------------------------------------
   // Tier total from mint (for section titles like "Yellow Mass 82/94")
@@ -131,6 +136,7 @@ export function useDB() {
     loading,
     aliveTokens,
     stats,
+    alphaToken,
     alphaMass,
     massTop,
     mergesTop,

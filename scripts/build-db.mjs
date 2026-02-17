@@ -117,8 +117,13 @@ function buildMaps(events) {
   const mergeCountMap = new Map()
 
   for (const e of events) {
-    burnedMap.set(e.burnedId, { persistId: e.persistId, blockNumber: e.blockNumber })
-    mergeCountMap.set(e.persistId, (mergeCountMap.get(e.persistId) || 0) + 1)
+    // persistId === 0 means burned without merge target (sent to dead address)
+    // Use self-ID as persistId so mergedTo !== 0 in db (0 = alive)
+    const effectivePersistId = e.persistId || e.burnedId
+    burnedMap.set(e.burnedId, { persistId: effectivePersistId, blockNumber: e.blockNumber })
+    if (e.persistId !== 0) {
+      mergeCountMap.set(e.persistId, (mergeCountMap.get(e.persistId) || 0) + 1)
+    }
   }
 
   console.log(`  burnedMap: ${burnedMap.size} burned tokens`)

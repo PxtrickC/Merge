@@ -2,23 +2,44 @@
 import { ethers } from 'ethers'
 import { MERGE_CONTRACT_ADDRESS, MERGE_ABI, NIFTY_OMNIBUS_ADDRESS } from '~/utils/contract.mjs'
 
-const { stats } = useDB()
+const { stats, alphaToken } = useDB()
+
+const config = useRuntimeConfig()
+const esKey = config.public.ETHERSCAN_API_KEY
 
 const total_mass = computed(() => stats.value?.total_mass ?? 0)
-const token_count = computed(() => stats.value?.token_count ?? 0)
-const merged_count = computed(() => stats.value?.merged_count ?? 0)
+const token_count = ref(stats.value?.token_count ?? 0)
+const merged_count = computed(() => 28990 - token_count.value)
 const alpha_mass = computed(() => stats.value?.alpha_mass ?? 0)
-
-// Omnibus count still requires a live RPC call (not in db.json)
 const omnibus_count = ref(0)
+
+// Query totalSupply + omnibus balanceOf via Etherscan eth_call proxy
+const iface = new ethers.Interface(MERGE_ABI)
+
+async function etherscanCall(to, data) {
+  const url = new URL('https://api.etherscan.io/v2/api')
+  url.searchParams.set('chainid', '1')
+  url.searchParams.set('module', 'proxy')
+  url.searchParams.set('action', 'eth_call')
+  url.searchParams.set('to', to)
+  url.searchParams.set('data', data)
+  url.searchParams.set('tag', 'latest')
+  url.searchParams.set('apikey', esKey)
+  const res = await fetch(url)
+  const json = await res.json()
+  return json.result
+}
+
 try {
-  const config = useRuntimeConfig()
-  const rpcUrl = `https://eth-mainnet.g.alchemy.com/v2/${config.public.ALCHEMY_API_KEY}`
-  const provider = new ethers.JsonRpcProvider(rpcUrl)
-  const contract = new ethers.Contract(MERGE_CONTRACT_ADDRESS, MERGE_ABI, provider)
-  const omniBal = await contract.balanceOf(NIFTY_OMNIBUS_ADDRESS)
-  omnibus_count.value = Number(omniBal)
+  const [supplyHex, omnibusHex] = await Promise.all([
+    etherscanCall(MERGE_CONTRACT_ADDRESS, iface.encodeFunctionData('totalSupply')),
+    etherscanCall(MERGE_CONTRACT_ADDRESS, iface.encodeFunctionData('balanceOf', [NIFTY_OMNIBUS_ADDRESS])),
+  ])
+  token_count.value = Number(BigInt(supplyHex))
+  omnibus_count.value = Number(BigInt(omnibusHex))
 } catch {
+  // fallback to db.json stats
+  token_count.value = stats.value?.token_count ?? 0
   omnibus_count.value = 0
 }
 
@@ -67,7 +88,7 @@ const animOmnibusCount = useCountUp(omnibus_count, 2200)
       <br />
       <p>Total Mass: {{ animTotalMass }}</p>
       <p>Tokens Remain: {{ animTokenCount }}</p>
-      <p>Alpha: m({{ animAlphaMass }})</p>
+      <p>Alpha: m({{ animAlphaMass }}) #{{ alphaToken?.id ?? '' }}</p>
       <p>Merged: {{ animMergedCount }}</p>
       <p>In NG Omnibus: {{ animOmnibusCount }}</p>
     </div>
