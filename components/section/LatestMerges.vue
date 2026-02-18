@@ -35,7 +35,7 @@ function formatDate(merged_on) {
       <div v-for="merge in latest_merges" :key="merge.id" class="latest__card">
         <div class="latest__spheres">
           <div class="latest__col">
-            <div class="latest__frame opacity-50 grayscale cursor-pointer" :style="{ width: frameSizeValue, height: frameSizeValue }" @click="openDrawer(merge.id)">
+            <div class="latest__frame opacity-50 cursor-pointer" :style="{ width: frameSizeValue, height: frameSizeValue }" @click="openDrawer(merge.id)">
               <merge-svg :tier="merge.tier" :mass="merge.mass" :alpha_mass="alpha_mass" />
             </div>
             <span class="latest__mass">m({{ merge.mass }})</span>
