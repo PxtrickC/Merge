@@ -106,16 +106,22 @@ function shortAddr(addr) {
   color: #000;
 }
 .token-card__badge--tier[data-tier="4"] {
-  background: #f87171;
+  background: #f33;
+  color: #fff;
 }
 .token-card__badge--tier[data-tier="3"] {
-  background: #60a5fa;
+  background: #33f;
+  color: #fff;
 }
 .token-card__badge--tier[data-tier="2"] {
-  background: #facc15;
+  background: #000;
+  color: #fc3;
+  border: 1px solid #fc3;
 }
 .token-card__badge--tier[data-tier="1"] {
-  background: #e5e5e5;
+  background: #000;
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.5);
 }
 .token-card__badge--alpha {
   background: #000;
