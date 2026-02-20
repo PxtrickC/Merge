@@ -15,7 +15,7 @@ const frameSizeValue = computed(() => {
 function formatDate(merged_on) {
   if (!merged_on) return ""
   const d = new Date(merged_on)
-  const yr = String(d.getFullYear()).slice(2)
+  const yr = d.getFullYear()
   const mon = d.toLocaleString('en-US', { month: 'short' })
   const day = d.getDate()
   const hh = String(d.getHours()).padStart(2, '0')

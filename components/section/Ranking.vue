@@ -12,7 +12,7 @@ const props = defineProps({
 
 const { db } = useDB()
 const scrollEl = useDragScroll()
-const sortMode = ref('id') // 'id' | 'mass' | 'merges'
+const sortMode = ref('mass') // 'id' | 'mass' | 'merges'
 const filterMode = ref('alive') // 'all' | 'alive' | 'dead'
 const searchQuery = ref('')
 
