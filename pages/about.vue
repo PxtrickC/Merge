@@ -19,15 +19,9 @@
   border-radius: 50%;
 }
 .about__img {
-  @apply block flex-shrink-0;
-  width: 960px;
-  height: 2880px;
-  max-width: none;
-}
-@media (min-width: 768px) {
-  .about__img {
-    width: 1920px;
-    height: 5760px;
-  }
+  @apply block;
+  width: 100%;
+  height: auto;
+  max-width: 1920px;
 }
 </style>
