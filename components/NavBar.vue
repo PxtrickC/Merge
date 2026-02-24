@@ -21,6 +21,7 @@ const $router = useRouter()
     <div v-if="back" class="flex items-center">
       <button @click="$router.go(-1)"><icon class="w-6" variant="return" /></button>
     </div>
+    <trade-wallet-button />
   </div>
 </template>
 

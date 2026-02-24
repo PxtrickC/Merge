@@ -1,5 +1,8 @@
 <template>
   <div class="layout__container">
+    <div class="layout__wallet">
+      <trade-wallet-button />
+    </div>
     <slot />
   </div>
 </template>
@@ -8,6 +11,14 @@
 .layout__container {
   @apply min-h-screen;
   @apply flex flex-col;
+  @apply relative;
+}
+
+.layout__wallet {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 40;
 }
 
 .pill {

@@ -100,6 +100,12 @@ onUnmounted(() => document.removeEventListener('keydown', onKeyDown))
       <div v-if="tokenData" class="drawer__content">
         <card-token v-bind="tokenData" :alpha_mass="alpha_mass" />
 
+        <trade-panel
+          v-if="!tokenData.merged"
+          :token-id="+tokenData.id"
+          :owner="tokenData.owner"
+        />
+
         <card-activity
           :id="+tokenData.id"
           :loading="loading"

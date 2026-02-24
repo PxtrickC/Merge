@@ -1,4 +1,5 @@
 import package_json from "./package.json"
+import { nodePolyfills } from "vite-plugin-node-polyfills"
 
 export default defineNuxtConfig({
     ssr: false,
@@ -12,7 +13,61 @@ export default defineNuxtConfig({
             ALCHEMY_API_KEY: "",
             ETHERSCAN_API_KEY: "",
             VERSION: package_json.version,
+            REOWN_PROJECT_ID: "",
+            RESERVOIR_API_KEY: "",
+            PLATFORM_FEE_ADDRESS: "",
+            PLATFORM_FEE_BPS: "50",
         }
+    },
+
+    vite: {
+        plugins: [
+            nodePolyfills(),
+        ],
+        define: { global: "globalThis" },
+        optimizeDeps: {
+            // Exclude packages that use import-attributes syntax (requires esbuild 0.21+)
+            // @base-org/account (via @coinbase/wallet-sdk) uses `import x with { type: 'json' }`
+            // which is unsupported in Vite 4's bundled esbuild 0.19.x
+            exclude: ["@base-org/account", "@coinbase/wallet-sdk"],
+            include: [
+                "events",
+                "dayjs",
+                "dayjs/locale/en.js",
+                "dayjs/plugin/relativeTime.js",
+                "dayjs/plugin/updateLocale.js",
+                "@walletconnect/core",
+                "@walletconnect/environment",
+                "@walletconnect/events",
+                "@walletconnect/heartbeat",
+                "@walletconnect/jsonrpc-http-connection",
+                "@walletconnect/jsonrpc-provider",
+                "@walletconnect/jsonrpc-types",
+                "@walletconnect/jsonrpc-utils",
+                "@walletconnect/jsonrpc-ws-connection",
+                "@walletconnect/keyvaluestorage",
+                "@walletconnect/logger",
+                "@walletconnect/relay-api",
+                "@walletconnect/relay-auth",
+                "@walletconnect/safe-json",
+                "@walletconnect/sign-client",
+                "@walletconnect/time",
+                "@walletconnect/types",
+                "@walletconnect/universal-provider",
+                "@walletconnect/utils",
+                "@walletconnect/window-getters",
+                "@walletconnect/window-metadata",
+                "@reown/appkit-common",
+                "@reown/appkit",
+                "@reown/appkit-adapter-ethers",
+                "@reservoir0x/reservoir-sdk",
+                "qrcode",
+            ],
+        },
+    },
+
+    build: {
+        transpile: ["@reown/appkit", "@reown/appkit-adapter-ethers"],
     },
 
     modules: [

@@ -18,9 +18,15 @@
   "dependencies": {
     "@nuxtjs/tailwindcss": "6.8.1",
     "@pinia/nuxt": "0.5.1",
+    "@reown/appkit": "^1.8.18",
+    "@reown/appkit-adapter-ethers": "^1.8.18",
+    "@reservoir0x/reservoir-sdk": "^2.5.7",
     "@vueuse/core": "10.5.0",
     "ethers": "^6.16.0",
     "nuxt": "3.8.0",
     "pinia": "2.1.7"
+  },
+  "devDependencies": {
+    "vite-plugin-node-polyfills": "^0.25.0"
   }
 }
