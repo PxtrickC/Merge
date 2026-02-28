@@ -137,8 +137,9 @@ const tabs = [
   z-index: 40;
 }
 .mobile-tabbar__tab {
-  @apply flex flex-col items-center gap-0.5;
-  @apply py-2 px-4;
+  @apply flex flex-col items-center justify-center gap-0.5;
+  @apply py-2;
+  flex: 1;
   text-decoration: none;
   min-height: 44px;
 }
