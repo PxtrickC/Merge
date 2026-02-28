@@ -12,7 +12,9 @@ const tabs = [
 <template>
   <!-- Desktop: top bar -->
   <nav class="navbar navbar--desktop">
-    <NuxtLink to="/" class="navbar__logo">m.</NuxtLink>
+    <NuxtLink to="/" class="navbar__logo">
+      <span class="logo-sphere" />
+    </NuxtLink>
     <div class="navbar__links">
       <NuxtLink
         v-for="tab in tabs"
@@ -30,7 +32,9 @@ const tabs = [
 
   <!-- Mobile: top header (logo + wallet) -->
   <div class="mobile-header">
-    <NuxtLink to="/" class="navbar__logo">m.</NuxtLink>
+    <NuxtLink to="/" class="navbar__logo">
+      <span class="logo-sphere" />
+    </NuxtLink>
     <div class="mobile-header__actions">
       <WalletButton />
       <NotificationBell />
@@ -84,10 +88,25 @@ const tabs = [
   z-index: 40;
 }
 .navbar__logo {
-  @apply text-white text-xl;
-  font-family: 'DM Sans', sans-serif;
-  font-weight: 700;
-  letter-spacing: -0.03em;
+  @apply flex items-center;
+}
+.logo-sphere {
+  display: block;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #fff;
+  transition: background 0.15s, box-shadow 0.15s;
+}
+.navbar__logo:hover .logo-sphere {
+  animation: sphere-colors 0.5s steps(1) infinite;
+}
+@keyframes sphere-colors {
+  0%   { background: #e53935; }       /* red */
+  25%  { background: #1e88e5; }       /* blue */
+  50%  { background: #fdd835; }       /* yellow */
+  75%  { background: #0a0a0a; box-shadow: inset 0 0 0 2px #fff; } /* black with white outline */
+  100% { background: #e53935; }
 }
 .navbar__links {
   @apply flex items-center gap-6;
