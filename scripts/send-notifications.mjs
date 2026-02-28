@@ -5,7 +5,8 @@
  * sends notifications for new events, updates the marker.
  *
  * Env: VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT,
- *      UPSTASH_REDIS_REST_URL, UPSTASH_REDIS_REST_TOKEN
+ *      UPSTASH_REDIS_REST_URL, UPSTASH_REDIS_REST_TOKEN,
+ *      NUXT_PUBLIC_ALCHEMY_API_KEY (optional, for token image in notification)
  */
 import webpush from "web-push"
 import { readFileSync } from "fs"
@@ -54,6 +55,42 @@ async function redis(...args) {
 }
 
 // ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+const ALCHEMY_KEY = process.env.NUXT_PUBLIC_ALCHEMY_API_KEY
+const MERGE_CONTRACT = "0xc3f8a0F5841aBFf777d3eefA5047e8D413a1C9AB"
+
+const TIER_EMOJI = { 1: '⚪', 2: '🟡', 3: '🔵', 4: '🔴' }
+
+function fmt(n) {
+  return n.toLocaleString('en-US')
+}
+
+function getAliveCount() {
+  const db = JSON.parse(readFileSync(join(DATA_DIR, "db.json"), "utf-8"))
+  return db.tokens.filter(t => t && t[2] === 0).length
+}
+
+async function getTokenImage(tokenId) {
+  if (!ALCHEMY_KEY) return null
+  try {
+    const url = `https://eth-mainnet.g.alchemy.com/nft/v3/${ALCHEMY_KEY}/getNFTMetadata?contractAddress=${MERGE_CONTRACT}&tokenId=${tokenId}&refreshCache=false`
+    const res = await fetch(url)
+    const json = await res.json()
+    return json.image?.pngUrl || json.image?.thumbnailUrl || json.image?.cachedUrl || null
+  } catch {
+    return null
+  }
+}
+
+function mergeLine(e) {
+  const be = TIER_EMOJI[e.tier] || '⚪'
+  const pe = TIER_EMOJI[e.merged_to.tier] || '⚪'
+  const pBefore = e.merged_to.mass - e.mass
+  return `${be} (${fmt(e.mass)}) #${e.id} → ${pe} (${fmt(pBefore)}) #${e.merged_to.id} = ${pe} (${fmt(e.merged_to.mass)}) #${e.merged_to.id}`
+}
+
+// ---------------------------------------------------------------------------
 // Main
 // ---------------------------------------------------------------------------
 async function main() {
@@ -82,22 +119,27 @@ async function main() {
   console.log(`  ${newEvents.length} new merge event(s) to notify\n`)
 
   // 4. Build notification payload
+  const aliveCount = getAliveCount()
+  const remain = `${fmt(aliveCount)}/28,990 remain`
+  const e = newEvents[0]
+  const image = await getTokenImage(e.merged_to.id)
+
   let payload
   if (newEvents.length === 1) {
-    const e = newEvents[0]
     payload = {
-      title: "Merge Event",
-      body: `#${e.id} (m=${e.mass}) merged into #${e.merged_to.id} (m=${e.merged_to.mass})`,
+      title: mergeLine(e),
+      body: remain,
       tag: `merge-${e.id}`,
-      url: "/leaderboard",
+      url: `/${e.merged_to.id}`,
+      ...(image && { image }),
     }
   } else {
-    const totalMass = newEvents.reduce((s, e) => s + e.mass, 0)
     payload = {
-      title: `${newEvents.length} Merge Events`,
-      body: `${newEvents.length} tokens merged (${totalMass} total mass absorbed)`,
+      title: `${mergeLine(e)} (+${newEvents.length - 1})`,
+      body: remain,
       tag: "merge-batch",
-      url: "/leaderboard",
+      url: `/${e.merged_to.id}`,
+      ...(image && { image }),
     }
   }
 

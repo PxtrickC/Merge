@@ -14,9 +14,14 @@
   @apply md:pt-16 pb-16 md:pb-0;
 }
 
-/* First section on each page: no border, reduced top padding */
+/* First section on each page */
 .layout__container > div:not(.mobile-header) > :first-child {
   border-top: none !important;
+}
+@media (max-width: 767px) {
+  .layout__container > div:not(.mobile-header) > :first-child {
+    padding-top: 1rem !important;
+  }
 }
 
 .pill {

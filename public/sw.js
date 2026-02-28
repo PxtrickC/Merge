@@ -16,11 +16,12 @@ self.addEventListener('push', (event) => {
   event.waitUntil(
     self.registration.showNotification(data.title, {
       body: data.body,
-      icon: '/pwa-192x192.png',
-      badge: '/pwa-192x192.png',
+      icon: data.image || '/apple-touch-icon-180x180.png',
+      badge: '/apple-touch-icon-180x180.png',
+      image: data.image || undefined,
       tag: data.tag || 'merge-event',
       renotify: true,
-      data: { url: data.url || '/leaderboard' },
+      data: { url: data.url || '/' },
     })
   )
 })
