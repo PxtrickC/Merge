@@ -271,7 +271,12 @@ onUnmounted(() => document.removeEventListener('keydown', onKeyDown))
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
-  @apply p-4 lg:p-6;
+  padding: calc(1rem + env(safe-area-inset-top)) 1rem 1rem;
+}
+@media (min-width: 1024px) {
+  .drawer__panel {
+    padding: 1.5rem;
+  }
 }
 .drawer__close {
   @apply mb-4 lg:mb-6 text-white;

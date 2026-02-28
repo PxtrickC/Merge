@@ -14,6 +14,11 @@
   @apply md:pt-16 pb-16 md:pb-0;
 }
 
+/* First section on each page: no border, reduced top padding */
+.layout__container > div:not(.mobile-header) > :first-child {
+  border-top: none !important;
+}
+
 .pill {
   @apply px-5 py-2;
   @apply text-sm text-white text-opacity-80 tracking-wider;

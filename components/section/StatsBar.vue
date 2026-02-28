@@ -43,40 +43,6 @@ try {
   omnibus_count.value = 0
 }
 
-function useCountUp(target, duration = 3500, initialValue = 0) {
-  const display = ref(initialValue)
-  let raf = null
-
-  watch(target, (val) => {
-    if (!val) return
-    const start = display.value
-    const diff = val - start
-    const startTime = performance.now()
-
-    function tick(now) {
-      const elapsed = now - startTime
-      const progress = Math.min(elapsed / duration, 1)
-      const eased = progress < 0.25
-        ? Math.pow(progress / 0.25, 2) * 0.8
-        : 0.8 + 0.2 * (1 - Math.pow(1 - (progress - 0.25) / 0.75, 7))
-      display.value = Math.round(start + diff * eased)
-      if (progress < 1) {
-        raf = requestAnimationFrame(tick)
-      }
-    }
-
-    if (raf) cancelAnimationFrame(raf)
-    raf = requestAnimationFrame(tick)
-  }, { immediate: true })
-
-  return computed(() => String(display.value))
-}
-
-const animTokenCount = useCountUp(token_count, 1500)
-const animTotalMass = computed(() => String(total_mass.value))
-const animAlphaMass = useCountUp(alpha_mass, 2000)
-const animMergedCount = useCountUp(merged_count, 2200)
-const animOmnibusCount = useCountUp(omnibus_count, 2200)
 </script>
 
 <template>
@@ -85,11 +51,11 @@ const animOmnibusCount = useCountUp(omnibus_count, 2200)
     <div class="stats-bar__body">
       <p><NuxtLink to="/about" class="stats-bar__link"><span class="stats-bar__link-hl">Learn</span> how it works</NuxtLink></p>
       <br />
-      <p>Total Mass: {{ animTotalMass }}</p>
-      <p>Tokens Remain: {{ animTokenCount }}</p>
-      <p>Alpha: m({{ animAlphaMass }}) #{{ alphaToken?.id ?? '' }}</p>
-      <p>Merged: {{ animMergedCount }}</p>
-      <p>In NG Omnibus: {{ animOmnibusCount }}</p>
+      <p>Total Mass: {{ total_mass }}</p>
+      <p>Tokens Remain: {{ token_count }}</p>
+      <p>Alpha: m({{ alpha_mass }}) #{{ alphaToken?.id ?? '' }}</p>
+      <p>Merged: {{ merged_count }}</p>
+      <p>In NG Omnibus: {{ omnibus_count }}</p>
     </div>
   </section>
 </template>
