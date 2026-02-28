@@ -81,9 +81,8 @@ const animOmnibusCount = useCountUp(omnibus_count, 2200)
 
 <template>
   <section class="stats-bar">
-    <h2 class="stats-bar__title">About merge.</h2>
+    <h2 class="stats-bar__title">Merge is a game of extinction.</h2>
     <div class="stats-bar__body">
-      <p>Merge is a game of extinction.</p>
       <p><NuxtLink to="/about" class="stats-bar__link"><span class="stats-bar__link-hl">Learn</span> how it works</NuxtLink></p>
       <br />
       <p>Total Mass: {{ animTotalMass }}</p>
@@ -97,7 +96,7 @@ const animOmnibusCount = useCountUp(omnibus_count, 2200)
 
 <style lang="postcss" scoped>
 .stats-bar {
-  @apply py-8 md:py-12 px-4 md:px-8;
+  @apply py-8 lg:py-12 px-4 lg:px-8;
   border-top: 1px solid #1a1a1a;
 }
 .stats-bar__title {
@@ -111,7 +110,7 @@ const animOmnibusCount = useCountUp(omnibus_count, 2200)
   }
 }
 .stats-bar__body {
-  @apply text-base md:text-3xl text-white;
+  @apply text-base lg:text-3xl text-white;
   font-family: 'HND', sans-serif;
 }
 .stats-bar__link {

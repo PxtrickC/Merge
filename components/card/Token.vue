@@ -37,13 +37,6 @@ function shortAddr(addr) {
         <div class="token-card__extlinks">
           <a
             class="token-card__extlink"
-            :href="`https://opensea.io/assets/ethereum/0xc3f8a0f5841abff777d3eefa5047e8d413a1c9ab/${+id}`"
-            target="_blank"
-          >
-            <img src="~/assets/svgs/opensea.svg" alt="OpenSea" />
-          </a>
-          <a
-            class="token-card__extlink"
             :href="`https://etherscan.io/nft/0xc3f8a0f5841abff777d3eefa5047e8d413a1c9ab/${+id}`"
             target="_blank"
           >
@@ -80,16 +73,16 @@ function shortAddr(addr) {
   @apply flex flex-col gap-3;
 }
 .token-card__mass {
-  @apply text-3xl md:text-6xl font-semibold text-white;
+  @apply text-3xl lg:text-6xl font-semibold text-white;
 }
 .token-card__id {
-  @apply text-base sm:text-lg md:text-xl text-white;
+  @apply text-base lg:text-xl text-white;
 }
 .token-card__sub {
   @apply flex items-baseline gap-1.5 flex-wrap;
 }
 .token-card__own-by {
-  @apply text-base sm:text-lg md:text-xl text-white;
+  @apply text-base lg:text-xl text-white;
 }
 .token-card__owner {
   @apply no-underline text-white;
@@ -98,10 +91,10 @@ function shortAddr(addr) {
   @apply underline;
 }
 .token-card__links {
-  @apply flex items-center gap-1.5 sm:gap-2 flex-wrap;
+  @apply flex items-center gap-1.5 lg:gap-2 flex-wrap;
 }
 .token-card__badge {
-  @apply px-1.5 py-1 sm:px-2 sm:py-1.5 text-xs font-normal;
+  @apply px-1.5 py-1 lg:px-2 lg:py-1.5 text-xs font-normal;
   background: #fff;
   color: #000;
 }

@@ -1,9 +1,11 @@
 export function useTokenDrawer() {
   const tokenId = useState('drawerTokenId', () => null)
   const isOpen = useState('drawerIsOpen', () => false)
+  const listing = useState('drawerListing', () => null)
 
-  function open(id) {
+  function open(id, listingData = null) {
     tokenId.value = +id
+    listing.value = listingData
     isOpen.value = true
   }
 
@@ -11,5 +13,5 @@ export function useTokenDrawer() {
     isOpen.value = false
   }
 
-  return { tokenId, isOpen, open, close }
+  return { tokenId, isOpen, listing, open, close }
 }
