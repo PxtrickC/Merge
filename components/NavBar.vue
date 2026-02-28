@@ -117,7 +117,9 @@ const tabs = [
 .mobile-header {
   @apply fixed top-0 left-0 right-0;
   @apply flex md:hidden items-center justify-between;
-  @apply px-4 py-3;
+  @apply px-4;
+  padding-top: calc(8px + env(safe-area-inset-top));
+  padding-bottom: 8px;
   background: #0a0a0a;
   z-index: 40;
 }

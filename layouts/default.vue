@@ -10,7 +10,8 @@
 .layout__container {
   @apply min-h-screen;
   @apply flex flex-col;
-  @apply pt-12 md:pt-16 pb-16 md:pb-0;
+  padding-top: calc(3rem + env(safe-area-inset-top));
+  @apply md:pt-16 pb-16 md:pb-0;
 }
 
 .pill {
