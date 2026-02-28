@@ -107,8 +107,8 @@ export default defineNuxtConfig({
                 { hid: 'keywords', name: 'keywords', content: 'Merge NFT pak dashboard meta data' },
 
                 { name: 'twitter:card', content: 'summary' },
-                { name: 'twitter:image', content: '/preview.jpg' },
-                { property: 'og:image', content: '/preview.jpg' },
+                { name: 'twitter:image', content: '/images/og-preview.jpg' },
+                { property: 'og:image', content: '/images/og-preview.jpg' },
                 { property: 'og:image:width', content: '630' },
                 { property: 'og:image:height', content: '630' },
             ]

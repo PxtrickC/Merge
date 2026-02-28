@@ -36,6 +36,17 @@ function onTouchEnd() {
     pullDistance.value = 0
   }
 }
+
+onMounted(() => {
+  nextTick(() => {
+    const header = document.querySelector('.mobile-header')
+    if (header) {
+      document.documentElement.style.setProperty(
+        '--header-h', header.offsetHeight + 'px'
+      )
+    }
+  })
+})
 </script>
 
 <template>
@@ -67,7 +78,7 @@ function onTouchEnd() {
 .layout__container {
   @apply min-h-screen;
   @apply flex flex-col;
-  padding-top: calc(3rem + env(safe-area-inset-top));
+  padding-top: var(--header-h, calc(3rem + env(safe-area-inset-top)));
   @apply md:pt-16 pb-16 md:pb-0;
 }
 
