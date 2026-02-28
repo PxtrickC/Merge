@@ -85,6 +85,7 @@ const tabs = [
   @apply fixed top-0 left-0 right-0;
   @apply px-8 py-4;
   background: #0a0a0a;
+  border-bottom: 1px solid #1a1a1a;
   z-index: 40;
 }
 .navbar__logo {
@@ -140,6 +141,7 @@ const tabs = [
   padding-top: calc(8px + env(safe-area-inset-top));
   padding-bottom: 8px;
   background: #0a0a0a;
+  border-bottom: 1px solid #1a1a1a;
   z-index: 40;
 }
 .mobile-header__actions {

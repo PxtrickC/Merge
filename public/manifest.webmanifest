@@ -1,6 +1,6 @@
 {
-  "name": "Merge Dashboard",
-  "short_name": "Merge",
+  "name": "merge.",
+  "short_name": "merge.",
   "description": "Merge NFT Dashboard & Marketplace",
   "start_url": "/",
   "display": "standalone",
