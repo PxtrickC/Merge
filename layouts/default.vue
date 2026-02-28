@@ -18,11 +18,6 @@
 .layout__container > div:not(.mobile-header) > :first-child {
   border-top: none !important;
 }
-@media (max-width: 767px) {
-  .layout__container > div:not(.mobile-header) > :first-child {
-    padding-top: 1rem !important;
-  }
-}
 
 .pill {
   @apply px-5 py-2;
