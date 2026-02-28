@@ -77,7 +77,7 @@ const tabs = [
 <style lang="postcss" scoped>
 /* ---- Desktop top bar ---- */
 .navbar--desktop {
-  @apply hidden md:flex items-center justify-between gap-4;
+  @apply hidden md:flex items-center justify-between;
   @apply fixed top-0 left-0 right-0;
   @apply px-8 py-4;
   background: #0a0a0a;
@@ -91,6 +91,9 @@ const tabs = [
 }
 .navbar__links {
   @apply flex items-center gap-6;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
 }
 .navbar__link {
   @apply text-base text-white;
