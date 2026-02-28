@@ -85,8 +85,9 @@ dist
 # IDE / Editor
 .idea
 
-# Service worker
+# Service worker (auto-generated, except our custom one)
 sw.*
+!public/sw.js
 
 # macOS
 .DS_Store
