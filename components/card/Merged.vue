@@ -57,7 +57,7 @@ function formatDate(merged_on) {
 
 <style lang="postcss" scoped>
 .section__title {
-  @apply text-4xl md:text-6xl text-white mb-6;
+  @apply text-4xl lg:text-6xl text-white mb-6;
 }
 .card__content {
   @apply flex flex-col;

@@ -16,11 +16,11 @@ async function copyAddress() {
 </script>
 
 <template>
-  <div class="text-3xs md:text-xs text-white text-opacity-30">
+  <div class="text-3xs lg:text-xs text-white text-opacity-30">
     <span class="flex gap-1">
       <span>support me <a class="link cursor-pointer" @click="copyAddress">{{tina_address}}</a></span>
       <transition name="slide-in">
-        <div v-if="show_notification" class="ml-1 px-2 bg-gray-dark text-3xs md:text-2xs">
+        <div v-if="show_notification" class="ml-1 px-2 bg-gray-dark text-3xs lg:text-2xs">
           copied!
         </div>
       </transition>

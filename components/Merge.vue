@@ -28,7 +28,7 @@ const is_alpha = computed(() => props.mass >= props.alpha_mass)
   @apply mt-1;
   @apply py-0.5 px-1.5 xl:py-1 xl:px-2;
   @apply flex justify-between;
-  @apply text-3xs md:text-2xs xl:text-sm;
+  @apply text-3xs lg:text-2xs xl:text-sm;
   color: #555;
 }
 .merge_label--alpha {

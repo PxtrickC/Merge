@@ -58,7 +58,7 @@ function formatDate(merged_on) {
 
 <style lang="postcss" scoped>
 .latest {
-  @apply py-8 md:py-12 px-4 md:px-8;
+  @apply py-8 lg:py-12 px-4 lg:px-8;
   border-top: 1px solid #1a1a1a;
 }
 .latest__header {
@@ -79,7 +79,7 @@ function formatDate(merged_on) {
   color: #555;
 }
 .latest__scroll {
-  @apply flex items-end gap-4 sm:gap-6 md:gap-8;
+  @apply flex items-end gap-4 md:gap-6 lg:gap-8;
   @apply overflow-x-auto pb-4;
   scrollbar-width: none;
 }
@@ -91,7 +91,7 @@ function formatDate(merged_on) {
   @apply flex-shrink-0;
   min-width: 100px;
   border-right: 1px solid #1a1a1a;
-  @apply pr-4 sm:pr-6 md:pr-8;
+  @apply pr-4 md:pr-6 lg:pr-8;
 }
 @media (min-width: 1024px) {
   .latest__card {
@@ -124,10 +124,10 @@ function formatDate(merged_on) {
   line-height: v-bind(frameSizeValue);
 }
 .latest__mass {
-  @apply text-xs md:text-sm text-white mt-2;
+  @apply text-xs lg:text-sm text-white mt-2;
 }
 .latest__id {
-  @apply text-2xs md:text-xs;
+  @apply text-2xs lg:text-xs;
   color: #555;
 }
 .latest__date {

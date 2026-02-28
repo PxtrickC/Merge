@@ -165,11 +165,11 @@ function fillAlpha(tier, mass) {
 
 <style lang="postcss" scoped>
 .ranking {
-  @apply py-8 md:py-12;
+  @apply py-8 lg:py-12;
   border-top: 1px solid #1a1a1a;
 }
 .ranking__header {
-  @apply flex flex-col mb-3 md:mb-6 gap-1 md:gap-2 px-4 md:px-8;
+  @apply flex flex-col mb-3 lg:mb-6 gap-1 lg:gap-2 px-4 lg:px-8;
 }
 .ranking__title {
   @apply text-white;
@@ -182,7 +182,7 @@ function fillAlpha(tier, mass) {
   }
 }
 .ranking__toggle {
-  @apply text-base md:text-3xl text-white;
+  @apply text-base lg:text-3xl text-white;
   font-family: 'HND', sans-serif;
 }
 .ranking__mode {
@@ -238,8 +238,8 @@ function fillAlpha(tier, mass) {
   opacity: 0;
 }
 .ranking__scroll {
-  @apply flex items-end gap-4 sm:gap-6 md:gap-8;
-  @apply overflow-x-auto pb-4 px-4 md:px-8;
+  @apply flex items-end gap-4 md:gap-6 lg:gap-8;
+  @apply overflow-x-auto pb-4 px-4 lg:px-8;
   scrollbar-width: none;
 }
 .ranking__scroll::-webkit-scrollbar {
@@ -255,25 +255,25 @@ function fillAlpha(tier, mass) {
   scale: 1.08;
 }
 .ranking__rank {
-  @apply text-lg md:text-xl font-medium mb-2;
+  @apply text-lg lg:text-xl font-medium mb-2;
   color: #333;
 }
 .ranking__info {
   @apply mt-2 flex flex-col items-center;
 }
 .ranking__id {
-  @apply text-2xs md:text-xs;
+  @apply text-2xs lg:text-xs;
   color: #555;
 }
 .ranking__value {
-  @apply text-xs md:text-sm text-white;
+  @apply text-xs lg:text-sm text-white;
 }
 .ranking__merges {
-  @apply text-2xs md:text-xs;
+  @apply text-2xs lg:text-xs;
   color: #555;
 }
 .ranking__burned {
-  @apply text-2xs md:text-xs;
+  @apply text-2xs lg:text-xs;
   color: #555;
 }
 .sphere-wrap--burned {

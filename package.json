@@ -18,9 +18,13 @@
   "dependencies": {
     "@nuxtjs/tailwindcss": "6.8.1",
     "@pinia/nuxt": "0.5.1",
+    "@reown/appkit": "^1.8.18",
+    "@reown/appkit-adapter-ethers": "^1.8.18",
+    "@upstash/redis": "^1.36.3",
     "@vueuse/core": "10.5.0",
     "ethers": "^6.16.0",
     "nuxt": "3.8.0",
-    "pinia": "2.1.7"
+    "pinia": "2.1.7",
+    "web-push": "^3.6.7"
   }
 }

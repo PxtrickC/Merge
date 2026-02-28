@@ -22,7 +22,7 @@ const merges = computed(() => {
     <div class="card__content">
       <span class="flex items-center gap-3" v-for="token in merges" :key="token.id">
         <merge-icon v-bind="token" dark />
-        <NuxtLink tag="a" :to="`/${+token.id}`" class="link lg:text-xl">
+        <NuxtLink tag="a" :to="`/${+token.id}`" class="link xl:text-xl">
           {{+token.id}}
         </NuxtLink>
       </span>
@@ -32,7 +32,7 @@ const merges = computed(() => {
 
 <style lang="postcss" scoped>
 .section__title {
-  @apply text-4xl md:text-6xl text-white mb-6;
+  @apply text-4xl lg:text-6xl text-white mb-6;
 }
 .card__content {
   @apply pt-0 mt-8 pr-4;

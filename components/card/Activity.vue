@@ -147,7 +147,7 @@ const { open: openDrawer } = useTokenDrawer()
 
 <style lang="postcss" scoped>
 .section__title {
-  @apply text-2xl md:text-6xl text-white mb-4 md:mb-6;
+  @apply text-2xl lg:text-6xl text-white mb-4 lg:mb-6;
 }
 .activity__loading {
   @apply flex justify-center py-12;
@@ -159,7 +159,7 @@ const { open: openDrawer } = useTokenDrawer()
   overflow-y: auto;
 }
 .activity__item {
-  @apply flex items-center gap-2 sm:gap-3;
+  @apply flex items-center gap-2 lg:gap-3;
   @apply py-3;
   border-bottom: 1px solid #1a1a1a;
 }
@@ -177,10 +177,10 @@ const { open: openDrawer } = useTokenDrawer()
   color: #555;
 }
 .activity__thumb {
-  @apply w-8 h-8 sm:w-10 sm:h-10 flex-shrink-0 rounded cursor-pointer overflow-hidden;
+  @apply w-8 h-8 lg:w-10 lg:h-10 flex-shrink-0 rounded cursor-pointer overflow-hidden;
 }
 .activity__detail {
-  @apply flex items-baseline gap-1.5 sm:gap-2 text-sm;
+  @apply flex items-baseline gap-1.5 lg:gap-2 text-sm;
 }
 .activity__badge {
   @apply text-xs py-0.5;

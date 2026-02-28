@@ -159,7 +159,7 @@ onBeforeUnmount(() => {
 
 <style lang="postcss" scoped>
 .massd {
-  @apply py-8 md:py-12 px-4 md:px-8;
+  @apply py-8 lg:py-12 px-4 lg:px-8;
   border-top: 1px solid #1a1a1a;
 }
 .massd__header {
@@ -176,7 +176,7 @@ onBeforeUnmount(() => {
   }
 }
 .massd__toggle {
-  @apply text-base md:text-3xl text-white;
+  @apply text-base lg:text-3xl text-white;
   font-family: 'HND', sans-serif;
 }
 .massd__mode {
@@ -192,7 +192,7 @@ onBeforeUnmount(() => {
   text-underline-offset: 3px;
 }
 .massd__scroll {
-  @apply flex gap-2 sm:gap-3 md:gap-4;
+  @apply flex gap-2 md:gap-3 lg:gap-4;
   @apply overflow-x-auto pb-4;
   height: 300px;
   cursor: grab;
@@ -216,11 +216,11 @@ onBeforeUnmount(() => {
   }
 }
 .massd__count {
-  @apply text-2xs md:text-xs mb-2;
+  @apply text-2xs lg:text-xs mb-2;
   color: #888;
 }
 .massd__bar {
-  @apply w-6 sm:w-8 md:w-10 rounded-t;
+  @apply w-6 md:w-8 lg:w-10 rounded-t;
   background: #fff;
   @apply transition-all duration-300;
 }
@@ -228,7 +228,7 @@ onBeforeUnmount(() => {
   background: #ccc;
 }
 .massd__label {
-  @apply text-xs md:text-sm text-white mt-2;
+  @apply text-xs lg:text-sm text-white mt-2;
 }
 .massd__label--prime {
   @apply underline;

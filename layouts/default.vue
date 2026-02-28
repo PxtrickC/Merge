@@ -1,6 +1,8 @@
 <template>
   <div class="layout__container">
+    <NavBar />
     <slot />
+    <AppFooter />
   </div>
 </template>
 
@@ -8,6 +10,7 @@
 .layout__container {
   @apply min-h-screen;
   @apply flex flex-col;
+  @apply pt-12 md:pt-16 pb-16 md:pb-0;
 }
 
 .pill {
