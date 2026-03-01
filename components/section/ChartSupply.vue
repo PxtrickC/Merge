@@ -121,7 +121,7 @@ watch([dates, aliveOverTime], () => {
   .cs__title { @apply text-6xl; }
 }
 .cs__stat {
-  @apply text-white mb-4 text-lg lg:text-2xl;
+  @apply text-white mb-4 text-base lg:text-3xl;
   font-family: 'HND', sans-serif;
 }
 .cs__pct {

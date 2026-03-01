@@ -59,7 +59,7 @@ watch([dates, omnibusOverTime], () => {
             color: '#888',
             fontFamily: "'HND', sans-serif",
             fontSize: 10,
-            position: 'start',
+            position: 'end',
           },
           lineStyle: { color: '#333', type: 'dashed', width: 1 },
         }],

@@ -22,17 +22,28 @@ watch([dates, alphaMassOverTime, alphaChanges], () => {
     }
   }
 
-  const markLineData = significantChanges.map(c => ({
+  // Add initial alpha #1 at the start
+  const markLineData = [{
+    xAxis: d[0],
+    label: {
+      formatter: '#1',
+      color: '#888',
+      fontFamily: "'HND', sans-serif",
+      fontSize: 10,
+      position: 'end',
+    },
+    lineStyle: { color: '#333', type: 'dashed', width: 1 },
+  }, ...significantChanges.map(c => ({
     xAxis: c.date,
     label: {
       formatter: `#${c.tokenId}`,
       color: '#888',
       fontFamily: "'HND', sans-serif",
       fontSize: 10,
-      position: 'start',
+      position: 'end',
     },
     lineStyle: { color: '#333', type: 'dashed', width: 1 },
-  }))
+  }))]
 
   setOption({
     backgroundColor: 'transparent',
