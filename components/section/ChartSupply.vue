@@ -5,6 +5,18 @@ const { dates, aliveOverTime, mergeCountOverTime } = useSupplyHistory()
 const chartEl = ref(null)
 const { setOption } = useChart(chartEl)
 
+const ORIGINAL_SUPPLY = 28990
+
+const currentAliveCount = computed(() => {
+  const a = aliveOverTime.value
+  return a.length ? a[a.length - 1] : 0
+})
+const deflationPct = computed(() => {
+  const a = aliveOverTime.value
+  if (!a.length) return 0
+  return ((1 - a[a.length - 1] / ORIGINAL_SUPPLY) * 100).toFixed(1)
+})
+
 watch([dates, aliveOverTime], () => {
   const d = dates.value
   const alive = aliveOverTime.value
@@ -34,9 +46,11 @@ watch([dates, aliveOverTime], () => {
       ...TOOLTIP,
       trigger: 'axis',
       formatter: (params) => {
-        return params.map(p =>
-          `<span style="color:${p.color}">\u25CF</span> ${p.seriesName}: ${p.value[1]?.toLocaleString()}`
-        ).join('<br/>')
+        return params.map(p => {
+          const val = p.value[1]
+          const pct = (-(1 - val / ORIGINAL_SUPPLY) * 100).toFixed(1)
+          return `<span style="color:${p.color}">\u25CF</span> ${p.seriesName}: ${val?.toLocaleString()} (${pct}%)`
+        }).join('<br/>')
       },
     },
     grid: { left: 50, right: 16, top: 16, bottom: 44 },
@@ -86,6 +100,9 @@ watch([dates, aliveOverTime], () => {
 <template>
   <section class="cs">
     <h2 class="cs__title">Supply Deflation</h2>
+    <p v-if="currentAliveCount" class="cs__stat">
+      {{ currentAliveCount.toLocaleString() }} remaining <span class="cs__pct">(-{{ deflationPct }}%)</span>
+    </p>
     <div ref="chartEl" class="cs__canvas"></div>
   </section>
 </template>
@@ -96,12 +113,19 @@ watch([dates, aliveOverTime], () => {
   border-top: 1px solid #1a1a1a;
 }
 .cs__title {
-  @apply text-white mb-6;
+  @apply text-white mb-2;
   font-family: 'HND', sans-serif;
   font-size: 2em;
 }
 @media (min-width: 768px) {
   .cs__title { @apply text-6xl; }
+}
+.cs__stat {
+  @apply text-white mb-4 text-lg lg:text-2xl;
+  font-family: 'HND', sans-serif;
+}
+.cs__pct {
+  color: #888;
 }
 .cs__canvas {
   width: 100%;

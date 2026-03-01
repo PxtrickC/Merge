@@ -342,12 +342,13 @@ function buildHistory(events, tierMap, tierCounts, omnibusTransfers) {
   nextD.setUTCDate(nextD.getUTCDate() + 1)
   currentDay = nextD.toISOString().slice(0, 10)
 
-  // Apply old contract burns (285 tokens burned before contract swap)
-  // Derived: 284 T1 + 1 T3 = 285, based on current alive counts vs initial
-  alive -= 285
-  tiers[1] -= 284
+  // Apply old contract burns (278 tokens burned before contract swap)
+  // Original 285 - 7 erroneously burned by old contract bug (compensated in new contract)
+  // Derived: 277 T1 + 1 T3 = 278, based on current alive counts vs initial
+  alive -= 278
+  tiers[1] -= 277
   tiers[3] -= 1
-  dayMerges = 285
+  dayMerges = 278
   pushDay()
   const nextD2 = new Date(currentDay + "T00:00:00Z")
   nextD2.setUTCDate(nextD2.getUTCDate() + 1)
