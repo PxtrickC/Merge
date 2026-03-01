@@ -1,0 +1,95 @@
+import * as echarts from 'echarts/core'
+import { CanvasRenderer } from 'echarts/renderers'
+import { LineChart, BarChart, PieChart } from 'echarts/charts'
+import {
+  GridComponent,
+  TooltipComponent,
+  LegendComponent,
+  DataZoomComponent,
+  MarkLineComponent,
+} from 'echarts/components'
+
+echarts.use([
+  CanvasRenderer,
+  LineChart,
+  BarChart,
+  PieChart,
+  GridComponent,
+  TooltipComponent,
+  LegendComponent,
+  DataZoomComponent,
+  MarkLineComponent,
+])
+
+// Shared tooltip style matching site design
+export const TOOLTIP = {
+  backgroundColor: 'rgba(10,10,10,0.95)',
+  borderColor: '#222',
+  borderWidth: 1,
+  textStyle: { color: '#ccc', fontFamily: "'HND', sans-serif", fontSize: 12 },
+  padding: [8, 12],
+}
+
+// Shared dataZoom style — very subtle
+export const DATA_ZOOM = [
+  {
+    type: 'slider',
+    bottom: 4,
+    height: 14,
+    borderColor: 'transparent',
+    backgroundColor: 'rgba(255,255,255,0.03)',
+    fillerColor: 'rgba(255,255,255,0.06)',
+    handleStyle: { color: '#555', borderColor: '#555' },
+    moveHandleStyle: { color: '#333' },
+    textStyle: { color: '#555', fontSize: 10 },
+    dataBackground: { lineStyle: { color: '#222' }, areaStyle: { color: '#111' } },
+    selectedDataBackground: { lineStyle: { color: '#444' }, areaStyle: { color: '#1a1a1a' } },
+  },
+  { type: 'inside' },
+]
+
+// Shared axis styles
+export const AXIS_STYLE = {
+  axisLine: { show: false },
+  axisTick: { show: false },
+  axisLabel: { color: '#555', fontFamily: "'HND', sans-serif", fontSize: 11 },
+  splitLine: { lineStyle: { color: '#1a1a1a' } },
+}
+
+export function useChart(containerRef) {
+  let chart = null
+  let pendingOption = null
+  let resizeHandler = null
+
+  onMounted(() => {
+    if (!containerRef.value) return
+    chart = echarts.init(containerRef.value, null, { renderer: 'canvas' })
+    resizeHandler = () => chart?.resize()
+    window.addEventListener('resize', resizeHandler)
+
+    if (pendingOption) {
+      chart.setOption(pendingOption)
+      pendingOption = null
+    }
+  })
+
+  onBeforeUnmount(() => {
+    if (resizeHandler) window.removeEventListener('resize', resizeHandler)
+    chart?.dispose()
+    chart = null
+  })
+
+  function setOption(option) {
+    if (chart) {
+      chart.setOption(option, { notMerge: false })
+    } else {
+      pendingOption = option
+    }
+  }
+
+  function getInstance() {
+    return chart
+  }
+
+  return { setOption, getInstance }
+}

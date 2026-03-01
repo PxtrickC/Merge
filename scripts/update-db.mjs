@@ -156,6 +156,37 @@ async function main() {
   writeJSON("db.json", db)
   writeJSON("latest_merges.json", latestMerges)
 
+  // 4. Update supply_history.json
+  try {
+    const history = readJSON("supply_history.json")
+    const startDate = new Date(history.startDate + "T00:00:00Z")
+    const data = history.data
+
+    for (const { burnedId, persistId, mass, timestamp } of events) {
+      const eventDate = new Date(timestamp * 1000).toISOString().slice(0, 10)
+      const dayIndex = Math.floor((new Date(eventDate + "T00:00:00Z") - startDate) / 86400000)
+
+      // Fill gap days if needed
+      while (data.length <= dayIndex) {
+        const prev = data[data.length - 1]
+        data.push([prev[0], prev[1], prev[2], prev[3], prev[4], prev[5], 0])
+      }
+
+      const row = data[dayIndex]
+      row[0]-- // alive
+      // Determine burned token's tier from db
+      const burnedValue = tokens[burnedId]?.[0] ?? 0
+      const burnedTier = burnedValue > 0 ? Math.floor(burnedValue / CLASS_DIVISOR) : 1
+      if (burnedTier >= 1 && burnedTier <= 4) row[burnedTier]--
+      if (mass > row[5]) row[5] = mass // alpha mass
+      row[6]++ // merge count
+    }
+
+    writeJSON("supply_history.json", history)
+  } catch (err) {
+    console.log(`  ⚠️  supply_history.json update skipped: ${err.message}`)
+  }
+
   console.log(`\n  Applied ${events.length} events. Block: ${db.block}`)
   console.log("\nDone! ✅")
 }

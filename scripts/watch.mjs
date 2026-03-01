@@ -95,6 +95,31 @@ async function handleMassUpdate(tokenIdBurned, tokenIdPersist, newMass, blockNum
   writeJSON("latest_merges.json", latestMerges)
   log("  ✅ latest_merges.json")
 
+  // Update supply_history.json
+  try {
+    const history = readJSON("supply_history.json")
+    const startDate = new Date(history.startDate + "T00:00:00Z")
+    const eventDate = mergedOn.slice(0, 10)
+    const dayIndex = Math.floor((new Date(eventDate + "T00:00:00Z") - startDate) / 86400000)
+
+    while (history.data.length <= dayIndex) {
+      const prev = history.data[history.data.length - 1]
+      history.data.push([prev[0], prev[1], prev[2], prev[3], prev[4], prev[5], 0])
+    }
+
+    const row = history.data[dayIndex]
+    row[0]-- // alive
+    const burnedTier = burnedDecoded.class || 1
+    if (burnedTier >= 1 && burnedTier <= 4) row[burnedTier]--
+    if (newMass > row[5]) row[5] = newMass // alpha mass
+    row[6]++ // merge count
+
+    writeJSON("supply_history.json", history)
+    log("  ✅ supply_history.json")
+  } catch (err) {
+    log(`  ⚠️  supply_history.json skipped: ${err.message}`)
+  }
+
   log(`  🎉 #${tokenIdBurned} (m=${burnedDecoded.mass}) → #${tokenIdPersist} (m=${newMass})\n`)
 }
 
