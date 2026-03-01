@@ -1,5 +1,5 @@
 <script setup>
-import { TOOLTIP, DATA_ZOOM, AXIS_STYLE } from '~/composables/useChart'
+import { TOOLTIP, DATA_ZOOM, AXIS_STYLE, MASS_BLACK_AREA } from '~/composables/useChart'
 
 const { dates, mergeCountOverTime } = useSupplyHistory()
 const chartEl = ref(null)
@@ -68,6 +68,29 @@ watch([dates, mergeCountOverTime, granularity], () => {
       itemStyle: { color: 'rgba(255,255,255,0.7)' },
       emphasis: { itemStyle: { color: '#fff' } },
       barMaxWidth: 16,
+      markArea: {
+        silent: true,
+        data: (() => {
+          const start = labels.find(l => l >= '2022-04-01')
+          const end = [...labels].reverse().find(l => l <= '2022-04-30')
+          if (!start || !end) return []
+          return [[
+            {
+              xAxis: start,
+              itemStyle: { color: 'rgba(255,255,255,0.08)' },
+              label: {
+                show: true,
+                formatter: 'mass.black',
+                position: 'insideTop',
+                color: '#fff',
+                fontFamily: "'HND', sans-serif",
+                fontSize: 10,
+              },
+            },
+            { xAxis: end },
+          ]]
+        })(),
+      },
     }],
   })
 }, { immediate: true })

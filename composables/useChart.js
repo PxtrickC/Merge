@@ -7,6 +7,7 @@ import {
   LegendComponent,
   DataZoomComponent,
   MarkLineComponent,
+  MarkAreaComponent,
 } from 'echarts/components'
 
 echarts.use([
@@ -19,6 +20,7 @@ echarts.use([
   LegendComponent,
   DataZoomComponent,
   MarkLineComponent,
+  MarkAreaComponent,
 ])
 
 // Shared tooltip style matching site design
@@ -54,6 +56,26 @@ export const AXIS_STYLE = {
   axisTick: { show: false },
   axisLabel: { color: '#555', fontFamily: "'HND', sans-serif", fontSize: 11 },
   splitLine: { lineStyle: { color: '#1a1a1a' } },
+}
+
+// mass.black event: 2022-04-01 ~ 2022-04-30
+export const MASS_BLACK_AREA = {
+  silent: true,
+  data: [[
+    {
+      xAxis: '2022-04-01',
+      itemStyle: { color: 'rgba(255,255,255,0.08)' },
+      label: {
+        show: true,
+        formatter: 'mass.black',
+        position: 'insideTop',
+        color: '#fff',
+        fontFamily: "'HND', sans-serif",
+        fontSize: 10,
+      },
+    },
+    { xAxis: '2022-04-30' },
+  ]],
 }
 
 export function useChart(containerRef) {

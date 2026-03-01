@@ -1,5 +1,5 @@
 <script setup>
-import { TOOLTIP, DATA_ZOOM, AXIS_STYLE } from '~/composables/useChart'
+import { TOOLTIP, DATA_ZOOM, AXIS_STYLE, MASS_BLACK_AREA } from '~/composables/useChart'
 
 const { dates, omnibusOverTime } = useSupplyHistory()
 const chartEl = ref(null)
@@ -64,6 +64,7 @@ watch([dates, omnibusOverTime], () => {
           lineStyle: { color: '#333', type: 'dashed', width: 1 },
         }],
       },
+      markArea: MASS_BLACK_AREA,
       data: d.map((date, i) => [date, omnibus[i]]).filter(([date]) => date >= '2021-12-15'),
     }],
   })
@@ -72,7 +73,7 @@ watch([dates, omnibusOverTime], () => {
 
 <template>
   <section class="cs">
-    <h2 class="cs__title">NG Omnibus</h2>
+    <h2 class="cs__title">Tokens in NG Omnibus</h2>
     <div ref="chartEl" class="cs__canvas"></div>
   </section>
 </template>

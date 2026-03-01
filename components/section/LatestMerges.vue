@@ -28,7 +28,10 @@ function formatDate(merged_on) {
   <section class="latest">
     <div class="latest__header">
       <span class="latest__title">Latest Merges</span>
-      <div class="latest__timer">last merge {{ useTimeAgo(new Date(latest_merges?.[0]?.merged_on)) }}</div>
+      <div class="latest__meta">
+        <ClientOnly><span class="latest__tz">{{ Intl.DateTimeFormat().resolvedOptions().timeZone }}</span></ClientOnly>
+        <div class="latest__timer">last merge {{ useTimeAgo(new Date(latest_merges?.[0]?.merged_on)) }}</div>
+      </div>
     </div>
 
     <div ref="scrollEl" class="latest__scroll">
@@ -50,7 +53,7 @@ function formatDate(merged_on) {
             <span class="latest__id">#{{ merge.merged_to.id }}</span>
           </div>
         </div>
-        <span class="latest__date">{{ formatDate(merge.merged_on) }}</span>
+        <ClientOnly><span class="latest__date">{{ formatDate(merge.merged_on) }}</span></ClientOnly>
       </div>
     </div>
   </section>
@@ -74,6 +77,10 @@ function formatDate(merged_on) {
     @apply text-6xl;
   }
 }
+.latest__meta {
+  @apply flex flex-col items-end gap-0.5;
+}
+.latest__tz,
 .latest__timer {
   @apply text-xs;
   color: #555;
