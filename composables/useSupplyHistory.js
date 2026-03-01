@@ -24,7 +24,7 @@ export function useSupplyHistory() {
     })
   })
 
-  // Column extractors: [alive, t1, t2, t3, t4, alphaMass, mergeCount, omnibusCount]
+  // Column extractors: [alive, t1, t2, t3, t4, alphaMass, mergeCount, omnibusCount, omnibusMass]
   const aliveOverTime = computed(() => history.value?.data.map(r => r[0]) ?? [])
   const tier1OverTime = computed(() => history.value?.data.map(r => r[1]) ?? [])
   const tier2OverTime = computed(() => history.value?.data.map(r => r[2]) ?? [])
@@ -33,6 +33,7 @@ export function useSupplyHistory() {
   const alphaMassOverTime = computed(() => history.value?.data.map(r => r[5]) ?? [])
   const mergeCountOverTime = computed(() => history.value?.data.map(r => r[6]) ?? [])
   const omnibusOverTime = computed(() => history.value?.data.map(r => r[7]) ?? [])
+  const omnibusMassOverTime = computed(() => history.value?.data.map(r => r[8]) ?? [])
   const alphaChanges = computed(() => history.value?.alphaChanges ?? [])
 
   return {
@@ -47,6 +48,7 @@ export function useSupplyHistory() {
     alphaMassOverTime,
     mergeCountOverTime,
     omnibusOverTime,
+    omnibusMassOverTime,
     alphaChanges,
   }
 }

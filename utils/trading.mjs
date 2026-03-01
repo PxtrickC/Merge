@@ -11,8 +11,8 @@ export const OPENSEA_CONDUIT_ADDRESS = '0x1E0049783F008A0085193E00003D00cd54003c
 // Merge collection on OpenSea
 export const COLLECTION_SLUG = 'm'
 
-// MergeBuyWrapper — atomic Seaport fulfillment + platform fee
-export const WRAPPER_ADDRESS = '0xC608720b367b8De279688A06e2bDa03FC4F89B2B'
+// MergeBuyWrapperV2 — atomic Seaport fulfillment + fee swapped to ASH
+export const WRAPPER_ADDRESS = '0xf84109d2D2C314aF28043c0AD03b48225E83eFb9'
 export const WRAPPER_ABI = [
   'function buyWithFee(bytes calldata seaportCalldata, address nftContract, uint256 tokenId, uint256 listingValue) external payable',
 ]

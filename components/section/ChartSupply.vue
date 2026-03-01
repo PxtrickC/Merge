@@ -1,5 +1,5 @@
 <script setup>
-import { TOOLTIP, DATA_ZOOM, AXIS_STYLE, MASS_BLACK_AREA } from '~/composables/useChart'
+import { TOOLTIP, DATA_ZOOM, AXIS_STYLE, MASS_BLACK_AREA, MASS_BLACK_LINES } from '~/composables/useChart'
 
 const { dates, aliveOverTime, mergeCountOverTime } = useSupplyHistory()
 const chartEl = ref(null)
@@ -84,6 +84,7 @@ watch([dates, aliveOverTime], () => {
           },
         },
         markArea: MASS_BLACK_AREA,
+        markLine: { silent: true, symbol: 'none', data: MASS_BLACK_LINES },
         data: d.map((date, i) => [date, alive[i]]),
       },
       {

@@ -62,21 +62,28 @@ export const AXIS_STYLE = {
 export const MASS_BLACK_AREA = {
   silent: true,
   data: [[
-    {
-      xAxis: '2022-04-01',
-      itemStyle: { color: 'rgba(255,255,255,0.08)' },
-      label: {
-        show: true,
-        formatter: 'mass.black',
-        position: 'insideTop',
-        color: '#fff',
-        fontFamily: "'HND', sans-serif",
-        fontSize: 10,
-      },
-    },
+    { xAxis: '2022-04-01', itemStyle: { color: 'rgba(255,255,255,0.08)' } },
     { xAxis: '2022-04-30' },
   ]],
 }
+
+export const MASS_BLACK_LINES = [
+  {
+    xAxis: '2022-04-01',
+    label: { show: false },
+    lineStyle: { color: '#333', type: 'dashed', width: 1 },
+  },
+  {
+    xAxis: '2022-04-15',
+    label: { formatter: 'mass.black', color: '#fff', fontFamily: "'HND', sans-serif", fontSize: 10, position: 'end' },
+    lineStyle: { color: 'transparent' },
+  },
+  {
+    xAxis: '2022-04-30',
+    label: { show: false },
+    lineStyle: { color: '#333', type: 'dashed', width: 1 },
+  },
+]
 
 export function useChart(containerRef) {
   let chart = null
@@ -101,9 +108,9 @@ export function useChart(containerRef) {
     chart = null
   })
 
-  function setOption(option) {
+  function setOption(option, opts = { notMerge: false }) {
     if (chart) {
-      chart.setOption(option, { notMerge: false })
+      chart.setOption(option, opts)
     } else {
       pendingOption = option
     }

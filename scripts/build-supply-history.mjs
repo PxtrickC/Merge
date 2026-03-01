@@ -5,7 +5,7 @@
  * and produces daily snapshots of supply, tier counts, alpha mass, and merge count.
  *
  * Output format:
- *   { startDate: "2021-12-02", data: [[alive, t1, t2, t3, t4, alphaMass, mergeCount, omnibusCount], ...] }
+ *   { startDate: "2021-12-02", data: [[alive, t1, t2, t3, t4, alphaMass, mergeCount, omnibusCount, omnibusMass], ...] }
  *
  * Usage:
  *   node --env-file=.env scripts/build-supply-history.mjs
@@ -26,6 +26,7 @@ const MASS_UPDATE_TOPIC = "0x7ba170514e8ea35827dbbd10c6d3376ca77ff64b62e4b0a395b
 const DEPLOY_BLOCK = 13_755_675
 
 const TOTAL_MINTED = 28990
+const TOTAL_MASS = 312_712 // from contract _massTotal (conserved through merges)
 const TIER_INITIAL = { 1: 28841, 2: 94, 3: 50, 4: 5 }
 const CLASS_DIVISOR = 100_000_000
 
@@ -43,6 +44,7 @@ function buildTierMap() {
   const db = JSON.parse(readFileSync(join(DATA_DIR, "db.json"), "utf-8"))
   const tokens = db.tokens
   const tierMap = new Map() // tokenId → tier (1-4)
+  const massMap = new Map() // tokenId → current mass (alive tokens only)
   const tierCounts = { 1: 0, 2: 0, 3: 0, 4: 0 }
 
   const nullTokenIds = new Set()
@@ -56,6 +58,7 @@ function buildTierMap() {
       continue
     }
     const tier = Math.floor(entry[0] / CLASS_DIVISOR)
+    const mass = entry[0] % CLASS_DIVISOR
     if (tier >= 1 && tier <= 4) {
       tierMap.set(id, tier)
       tierCounts[tier]++
@@ -63,11 +66,16 @@ function buildTierMap() {
       tierMap.set(id, 1)
       tierCounts[1]++
     }
+    // Store current mass for alive tokens (mergedTo === 0)
+    if (entry[2] === 0 && mass > 0) {
+      massMap.set(id, mass)
+    }
   }
 
   console.log(`  Tier distribution (all ${tokens.length - 1} tokens):`)
   console.log(`    T1: ${tierCounts[1]}, T2: ${tierCounts[2]}, T3: ${tierCounts[3]}, T4: ${tierCounts[4]}`)
-  return { tierMap, tierCounts, nullTokenIds }
+  console.log(`  Alive tokens with known mass: ${massMap.size}`)
+  return { tierMap, tierCounts, nullTokenIds, massMap }
 }
 
 // ---------------------------------------------------------------------------
@@ -213,8 +221,10 @@ async function fetchOmnibusTransfers() {
 
       for (const log of json.result) {
         events.push({
+          tokenId: parseInt(log.topics[3], 16),
           timestamp: parseInt(log.timeStamp, 16),
           blockNumber: parseInt(log.blockNumber, 16),
+          from: log.topics[1],
         })
       }
 
@@ -237,24 +247,92 @@ async function fetchOmnibusTransfers() {
     return events
   }
 
-  // Only use new contract transfers — migration mints already account for initial state
-  // (Old contract tokens were never explicitly transferred out during contract swap,
-  //  so including both would double-count tokens)
   const newIn = await fetchDirection(MERGE_CONTRACT_ADDRESS, "topic2", OMNIBUS_PADDED, "IN", DEPLOY_BLOCK)
   const newOut = await fetchDirection(MERGE_CONTRACT_ADDRESS, "topic1", OMNIBUS_PADDED, "OUT", DEPLOY_BLOCK)
 
+  // Identify tokens minted to omnibus on new contract (from = 0x0 → migration mint)
+  const ZERO_PADDED = "0x" + "0".repeat(64)
+  const migrationOmnibusIds = new Set(
+    newIn.filter(e => e.from === ZERO_PADDED).map(e => e.tokenId)
+  )
+  console.log(`  Migration mints to omnibus: ${migrationOmnibusIds.size} tokens`)
+
   const all = [
-    ...newIn.map(e => ({ ...e, delta: 1 })),
+    ...newIn.map(e => ({ ...e, delta: +1 })),
     ...newOut.map(e => ({ ...e, delta: -1 })),
   ]
   all.sort((a, b) => a.timestamp - b.timestamp || a.blockNumber - b.blockNumber)
 
   console.log(`  Total: ${all.length} omnibus transfer events`)
-  return all
+  return { events: all, migrationOmnibusIds }
 }
 
 // ---------------------------------------------------------------------------
-// 4. Build daily supply history
+// 4. Compute initial masses for all tokens
+// ---------------------------------------------------------------------------
+// Uses db.json (alive tokens' current mass) + forward propagation through
+// merge events to resolve each token's mass at new-contract deployment.
+function computeInitialMasses(events, massMap) {
+  const initial = new Map()
+
+  // Tokens that were persist at least once in new-contract events
+  const everPersist = new Set()
+  for (const e of events) everPersist.add(e.persistId)
+
+  // Alive tokens never involved as persist: current mass = initial mass
+  for (const [id, mass] of massMap) {
+    if (!everPersist.has(id)) {
+      initial.set(id, mass)
+    }
+  }
+
+  // Iterative forward passes: each pass may resolve more tokens,
+  // which unblocks resolution in the next pass.
+  let pass = 0
+  let changed = true
+  while (changed) {
+    changed = false
+    pass++
+    const tracked = new Map()
+    for (const [id, mass] of initial) tracked.set(id, mass)
+
+    for (const e of events) {
+      const pBefore = tracked.get(e.persistId)
+      const bMass = tracked.get(e.burnedId)
+
+      if (pBefore !== undefined && !initial.has(e.burnedId)) {
+        initial.set(e.burnedId, e.mass - pBefore)
+        changed = true
+      }
+      if (bMass !== undefined && !initial.has(e.persistId)) {
+        initial.set(e.persistId, e.mass - bMass)
+        changed = true
+      }
+
+      // Always update persist to post-merge mass (known from event data)
+      tracked.set(e.persistId, e.mass)
+      tracked.delete(e.burnedId)
+    }
+  }
+
+  // Fallback: distribute remaining mass using total mass conservation.
+  const resolvedSum = [...initial.values()].reduce((s, m) => s + m, 0)
+  const unresolvedCount = TOTAL_MINTED - initial.size
+  if (unresolvedCount > 0) {
+    const avg = Math.max(1, Math.round((TOTAL_MASS - resolvedSum) / unresolvedCount))
+    for (let id = 1; id <= TOTAL_MINTED; id++) {
+      if (!initial.has(id)) initial.set(id, avg)
+    }
+    console.log(`  Initial masses: ${initial.size - unresolvedCount} resolved, ${unresolvedCount} estimated (avg=${avg})`)
+  } else {
+    console.log(`  Initial masses: all ${initial.size} resolved`)
+  }
+  console.log(`  Total mass: ${TOTAL_MASS}, resolved sum: ${resolvedSum} (${pass} passes)`)
+  return initial
+}
+
+// ---------------------------------------------------------------------------
+// 5. Build daily supply history
 // ---------------------------------------------------------------------------
 // Fix tierMap for null db.json entries: merge only happens within same tier,
 // so burned token's tier = persist token's tier
@@ -269,7 +347,7 @@ function fixNullTiers(events, tierMap, nullTokenIds) {
   }
 }
 
-function buildHistory(events, tierMap, tierCounts, omnibusTransfers) {
+function buildHistory(events, tierMap, tierCounts, omnibusTransfers, migrationOmnibusIds, massMap) {
   console.log("\nBuilding daily supply history...")
 
   // Sort events by timestamp, then by blockNumber for stability
@@ -303,13 +381,28 @@ function buildHistory(events, tierMap, tierCounts, omnibusTransfers) {
   }
   console.log(`  Token #1 initial mass (from old contract): ${initialAlphaMass}`)
 
+  // Compute initial masses from db.json + forward propagation through events
+  const initialMasses = computeInitialMasses(events, massMap)
+
+  // Reset tokenMass (was polluted by initialAlphaMass computation above).
+  tokenMass.clear()
+  for (let id = 1; id <= TOTAL_MINTED; id++) {
+    tokenMass.set(id, initialMasses.get(id) || 1)
+  }
+  // Token #1: use computed alpha mass if not resolved
+  if (!initialMasses.has(1)) {
+    tokenMass.set(1, initialAlphaMass)
+  }
+
   let alphaId = 1
   let alphaMass = initialAlphaMass
   const alphaChanges = [] // { date, tokenId, mass }
   let dayMerges = 0
 
-  // Omnibus running count
-  let omnibusCount = 0
+  // Omnibus: all tokens start in omnibus at game launch (100%)
+  const omnibusSet = new Set()
+  for (let id = 1; id <= TOTAL_MINTED; id++) omnibusSet.add(id)
+  let runningOmnibusMass = TOTAL_MASS // start exact, adjust via deltas
   let omnibusIdx = 0 // pointer into sorted omnibusTransfers
 
   // Start one day before first event to show initial state
@@ -326,14 +419,25 @@ function buildHistory(events, tierMap, tierCounts, omnibusTransfers) {
     while (omnibusIdx < omnibusTransfers.length) {
       const t = omnibusTransfers[omnibusIdx]
       if (dayKey(t.timestamp) > dateStr) break
-      omnibusCount += t.delta
+      if (t.delta > 0) {
+        // Only add mass if token is not already in set (avoid double-counting migration mints)
+        if (!omnibusSet.has(t.tokenId)) {
+          runningOmnibusMass += tokenMass.get(t.tokenId) || 0
+          omnibusSet.add(t.tokenId)
+        }
+      } else {
+        if (omnibusSet.has(t.tokenId)) {
+          runningOmnibusMass -= tokenMass.get(t.tokenId) || 0
+          omnibusSet.delete(t.tokenId)
+        }
+      }
       omnibusIdx++
     }
   }
 
   function pushDay() {
     applyOmnibusUntil(currentDay)
-    data.push([alive, tiers[1], tiers[2], tiers[3], tiers[4], alphaMass, dayMerges, omnibusCount])
+    data.push([alive, tiers[1], tiers[2], tiers[3], tiers[4], alphaMass, dayMerges, omnibusSet.size, Math.round(runningOmnibusMass)])
   }
 
   // Push initial state (before any merges)
@@ -342,7 +446,15 @@ function buildHistory(events, tierMap, tierCounts, omnibusTransfers) {
   nextD.setUTCDate(nextD.getUTCDate() + 1)
   currentDay = nextD.toISOString().slice(0, 10)
 
-  // Apply old contract burns (278 tokens burned before contract swap)
+  // Apply old contract adjustments:
+  // 1. Remove tokens claimed on old contract (not in omnibus at migration time)
+  for (let id = 1; id <= TOTAL_MINTED; id++) {
+    if (!migrationOmnibusIds.has(id)) {
+      runningOmnibusMass -= tokenMass.get(id) || 0
+      omnibusSet.delete(id)
+    }
+  }
+  // 2. Old contract burns (278 tokens burned before contract swap)
   // Original 285 - 7 erroneously burned by old contract bug (compensated in new contract)
   // Derived: 277 T1 + 1 T3 = 278, based on current alive counts vs initial
   alive -= 278
@@ -372,6 +484,20 @@ function buildHistory(events, tierMap, tierCounts, omnibusTransfers) {
     alive--
     const burnedTier = tierMap.get(event.burnedId) || 1
     tiers[burnedTier]--
+    // Update omnibus mass for cross-boundary merges before updating tokenMass
+    const persistInOmnibus = omnibusSet.has(event.persistId)
+    const burnedInOmnibus = omnibusSet.has(event.burnedId)
+    if (persistInOmnibus && !burnedInOmnibus) {
+      // Persist (in omnibus) absorbed mass from outside
+      runningOmnibusMass += event.mass - (tokenMass.get(event.persistId) || 0)
+    } else if (burnedInOmnibus && !persistInOmnibus) {
+      // Burned (in omnibus) mass leaves to outside persist
+      runningOmnibusMass -= tokenMass.get(event.burnedId) || 0
+    }
+    // Both in omnibus: mass conserved (net 0). Both outside: no effect.
+    // Update token masses
+    tokenMass.set(event.persistId, event.mass)
+    tokenMass.delete(event.burnedId)
     // Track alpha by mass
     if (event.mass > alphaMass) {
       const prevAlphaId = alphaId
@@ -398,7 +524,7 @@ function buildHistory(events, tierMap, tierCounts, omnibusTransfers) {
   }
 
   console.log(`  ${data.length} days (${startDate} → ${currentDay})`)
-  console.log(`  Final: alive=${alive}, T1=${tiers[1]}, T2=${tiers[2]}, T3=${tiers[3]}, T4=${tiers[4]}, alpha=${alphaMass} (#${alphaId}), omnibus=${omnibusCount}`)
+  console.log(`  Final: alive=${alive}, T1=${tiers[1]}, T2=${tiers[2]}, T3=${tiers[3]}, T4=${tiers[4]}, alpha=${alphaMass} (#${alphaId}), omnibus=${omnibusSet.size} (mass=${Math.round(runningOmnibusMass)})`)
   console.log(`  Alpha changed hands ${alphaChanges.length} times`)
 
   return { startDate, data, alphaChanges }
@@ -410,7 +536,7 @@ function buildHistory(events, tierMap, tierCounts, omnibusTransfers) {
 async function main() {
   console.log("📊 Build Supply History\n")
 
-  const { tierMap, tierCounts, nullTokenIds } = buildTierMap()
+  const { tierMap, tierCounts, nullTokenIds, massMap } = buildTierMap()
   const events = await fetchMergeEvents()
 
   if (events.length === 0) {
@@ -419,8 +545,8 @@ async function main() {
   }
 
   fixNullTiers(events, tierMap, nullTokenIds)
-  const omnibusTransfers = await fetchOmnibusTransfers()
-  const history = buildHistory(events, tierMap, tierCounts, omnibusTransfers)
+  const { events: omnibusTransfers, migrationOmnibusIds } = await fetchOmnibusTransfers()
+  const history = buildHistory(events, tierMap, tierCounts, omnibusTransfers, migrationOmnibusIds, massMap)
 
   const json = JSON.stringify(history)
   writeFileSync(join(DATA_DIR, "supply_history.json"), json)

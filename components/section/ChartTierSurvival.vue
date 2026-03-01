@@ -1,5 +1,5 @@
 <script setup>
-import { TOOLTIP, DATA_ZOOM, AXIS_STYLE, MASS_BLACK_AREA } from '~/composables/useChart'
+import { TOOLTIP, DATA_ZOOM, AXIS_STYLE, MASS_BLACK_AREA, MASS_BLACK_LINES } from '~/composables/useChart'
 
 const { dates, tier1OverTime, tier2OverTime, tier3OverTime, tier4OverTime } = useSupplyHistory()
 const chartEl = ref(null)
@@ -78,7 +78,7 @@ watch([dates, tier1OverTime, viewMode], () => {
       showSymbol: false,
       lineStyle: { color: TIER_COLORS[t], width: 1.5 },
       itemStyle: { color: TIER_COLORS[t] },
-      ...(i === 0 ? { markArea: MASS_BLACK_AREA } : {}),
+      ...(i === 3 ? { markArea: MASS_BLACK_AREA, markLine: { silent: true, symbol: 'none', data: MASS_BLACK_LINES } } : {}),
       data: transform(tiers[t], t),
     })),
   })

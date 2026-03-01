@@ -1,5 +1,5 @@
 <script setup>
-import { TOOLTIP, DATA_ZOOM, AXIS_STYLE, MASS_BLACK_AREA } from '~/composables/useChart'
+import { TOOLTIP, DATA_ZOOM, AXIS_STYLE, MASS_BLACK_AREA, MASS_BLACK_LINES } from '~/composables/useChart'
 
 const { dates, alphaMassOverTime, alphaChanges } = useSupplyHistory()
 const chartEl = ref(null)
@@ -27,7 +27,7 @@ watch([dates, alphaMassOverTime, alphaChanges], () => {
     xAxis: d[0],
     label: {
       formatter: '#1',
-      color: '#888',
+      color: '#fff',
       fontFamily: "'HND', sans-serif",
       fontSize: 10,
       position: 'end',
@@ -37,7 +37,7 @@ watch([dates, alphaMassOverTime, alphaChanges], () => {
     xAxis: c.date,
     label: {
       formatter: `#${c.tokenId}`,
-      color: '#888',
+      color: '#fff',
       fontFamily: "'HND', sans-serif",
       fontSize: 10,
       position: 'end',
@@ -94,7 +94,7 @@ watch([dates, alphaMassOverTime, alphaChanges], () => {
       markLine: {
         silent: true,
         symbol: 'none',
-        data: markLineData,
+        data: [...markLineData, ...MASS_BLACK_LINES],
       },
       markArea: MASS_BLACK_AREA,
       data: d.map((date, i) => [date, alpha[i]]),
