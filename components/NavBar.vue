@@ -1,6 +1,20 @@
 <script setup>
 const route = useRoute()
 
+const sphereAnimating = ref(false)
+let animTimer = null
+
+function onLogoClick() {
+  sphereAnimating.value = false
+  clearTimeout(animTimer)
+  nextTick(() => {
+    sphereAnimating.value = true
+    animTimer = setTimeout(() => {
+      sphereAnimating.value = false
+    }, 500)
+  })
+}
+
 const tabs = [
   { to: '/', label: 'Dashboard', match: p => p === '/' },
   { to: '/leaderboard', label: 'Leaderboard', match: p => p === '/leaderboard' },
@@ -12,8 +26,8 @@ const tabs = [
 <template>
   <!-- Desktop: top bar -->
   <nav class="navbar navbar--desktop">
-    <NuxtLink to="/" class="navbar__logo">
-      <span class="logo-sphere" />
+    <NuxtLink to="/" class="navbar__logo" @click="onLogoClick">
+      <span class="logo-sphere" :class="{ 'logo-sphere--pop': sphereAnimating }" />
     </NuxtLink>
     <div class="navbar__links">
       <NuxtLink
@@ -32,8 +46,8 @@ const tabs = [
 
   <!-- Mobile: top header (logo + wallet) -->
   <div class="mobile-header">
-    <NuxtLink to="/" class="navbar__logo">
-      <span class="logo-sphere" />
+    <NuxtLink to="/" class="navbar__logo" @click="onLogoClick">
+      <span class="logo-sphere" :class="{ 'logo-sphere--pop': sphereAnimating }" />
     </NuxtLink>
     <div class="mobile-header__actions">
       <WalletButton />
@@ -108,6 +122,9 @@ const tabs = [
   50%  { background: #fdd835; }       /* yellow */
   75%  { background: #0a0a0a; box-shadow: inset 0 0 0 2px #fff; } /* black with white outline */
   100% { background: #e53935; }
+}
+.logo-sphere--pop {
+  animation: sphere-colors 0.5s steps(1) 1 !important;
 }
 .navbar__links {
   @apply flex items-center gap-6;

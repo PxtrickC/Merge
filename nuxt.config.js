@@ -106,11 +106,11 @@ export default defineNuxtConfig({
                 { hid: 'og:url', property: 'og:url', content: 'https://merge.tina.cafe/' },
                 { hid: 'keywords', name: 'keywords', content: 'Merge NFT pak dashboard meta data' },
 
-                { name: 'twitter:card', content: 'summary' },
+                { name: 'twitter:card', content: 'summary_large_image' },
                 { name: 'twitter:image', content: '/images/og-preview.jpg' },
                 { property: 'og:image', content: '/images/og-preview.jpg' },
-                { property: 'og:image:width', content: '630' },
-                { property: 'og:image:height', content: '630' },
+                { property: 'og:image:width', content: '1400' },
+                { property: 'og:image:height', content: '787' },
             ]
         }
     }

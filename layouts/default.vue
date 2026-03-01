@@ -5,6 +5,9 @@ const refreshing = ref(false)
 let startY = 0
 const threshold = 80
 
+// Dot spread: 0 (center) → 24px (full apart), proportional to pull
+const dotSpread = computed(() => Math.min(pullDistance.value / threshold * 24, 24))
+
 function onTouchStart(e) {
   if (window.scrollY === 0 && !refreshing.value) {
     startY = e.touches[0].clientY
@@ -62,9 +65,15 @@ onMounted(() => {
       class="ptr"
       :style="{ height: pullDistance + 'px' }"
     >
-      <div class="ptr__dots" :class="{ 'ptr__dots--active': pullDistance >= threshold || refreshing }">
-        <span class="ptr__dot ptr__dot--left" />
-        <span class="ptr__dot ptr__dot--right" />
+      <div class="ptr__dots" :class="{ 'ptr__dots--refreshing': refreshing }">
+        <span
+          class="ptr__dot ptr__dot--left"
+          :style="!refreshing ? { left: `calc(50% - 6px - ${dotSpread}px)` } : undefined"
+        />
+        <span
+          class="ptr__dot ptr__dot--right"
+          :style="!refreshing ? { right: `calc(50% - 6px - ${dotSpread}px)` } : undefined"
+        />
       </div>
     </div>
 
@@ -104,17 +113,6 @@ onMounted(() => {
   position: relative;
   width: 60px;
   height: 12px;
-  opacity: 0.4;
-  transition: opacity 0.2s;
-}
-.ptr__dots--active {
-  opacity: 1;
-}
-.ptr__dots--active .ptr__dot--left {
-  animation: ptr-merge-left 2s ease-in-out infinite;
-}
-.ptr__dots--active .ptr__dot--right {
-  animation: ptr-merge-right 2s ease-in-out infinite;
 }
 .ptr__dot {
   position: absolute;
@@ -124,11 +122,19 @@ onMounted(() => {
   border-radius: 50%;
   background: #fff;
 }
+/* Pull phase: dots positioned via inline style (spread from center) */
 .ptr__dot--left {
   left: 0;
 }
 .ptr__dot--right {
   right: 0;
+}
+/* Refresh phase: merge animation loop */
+.ptr__dots--refreshing .ptr__dot--left {
+  animation: ptr-merge-left 2s ease-in-out infinite;
+}
+.ptr__dots--refreshing .ptr__dot--right {
+  animation: ptr-merge-right 2s ease-in-out infinite;
 }
 
 @keyframes ptr-merge-left {
