@@ -1,5 +1,5 @@
 <script setup>
-import { TOOLTIP, DATA_ZOOM, AXIS_STYLE } from '~/composables/useChart'
+import { TOOLTIP, DATA_ZOOM, AXIS_STYLE, MASS_BLACK_AREA, MASS_BLACK_LINES } from '~/composables/useChart'
 
 const { dates, mergeCountOverTime } = useSupplyHistory()
 const chartEl = ref(null)
@@ -8,7 +8,7 @@ const granularity = ref('week')
 
 function aggregate(dates, values, mode) {
   if (mode === 'day') {
-    return { labels: dates, data: values }
+    return dates.map((d, i) => [d, values[i]])
   }
 
   const map = new Map()
@@ -20,11 +20,12 @@ function aggregate(dates, values, mode) {
       d.setUTCDate(d.getUTCDate() - day + 1)
       key = d.toISOString().slice(0, 10)
     } else {
-      key = dates[i].slice(0, 7)
+      // month: use first day of month for time axis compatibility
+      key = dates[i].slice(0, 7) + '-01'
     }
     map.set(key, (map.get(key) || 0) + values[i])
   }
-  return { labels: [...map.keys()], data: [...map.values()] }
+  return [...map.entries()].map(([k, v]) => [k, v])
 }
 
 watch([dates, mergeCountOverTime, granularity], () => {
@@ -32,7 +33,7 @@ watch([dates, mergeCountOverTime, granularity], () => {
   const merges = mergeCountOverTime.value
   if (!d.length) return
 
-  const { labels, data } = aggregate(d, merges, granularity.value)
+  const chartData = aggregate(d, merges, granularity.value)
 
   setOption({
     backgroundColor: 'transparent',
@@ -42,59 +43,32 @@ watch([dates, mergeCountOverTime, granularity], () => {
       axisPointer: { type: 'shadow', shadowStyle: { color: 'rgba(255,255,255,0.03)' } },
       formatter: (params) => {
         const p = params[0]
-        return `${p.name}<br/>Merges: ${p.value.toLocaleString()}`
+        return `<span style="color:#555">${p.value[0]}</span><br/>Merges: ${p.value[1]?.toLocaleString()}`
       },
     },
     grid: { left: 40, right: 16, top: 16, bottom: 44 },
     xAxis: {
-      type: 'category',
-      data: labels,
+      type: 'time',
       ...AXIS_STYLE,
       splitLine: { show: false },
-      axisLabel: {
-        ...AXIS_STYLE.axisLabel,
-        rotate: 0,
-        interval: Math.max(0, Math.floor(labels.length / 12) - 1),
-      },
     },
     yAxis: { type: 'value', ...AXIS_STYLE },
     dataZoom: DATA_ZOOM.map(dz => ({
       ...dz,
-      ...(dz.type === 'slider' ? { start: Math.max(0, (1 - 365 / d.length) * 100), end: 100 } : {}),
+      ...(dz.type === 'slider' ? { start: Math.max(0, (1 - 100 / chartData.length) * 100), end: 100 } : {}),
     })),
     series: [{
       type: 'bar',
-      data,
+      data: chartData,
       itemStyle: { color: 'rgba(255,255,255,0.7)' },
       emphasis: { itemStyle: { color: '#fff' } },
       barMaxWidth: 16,
-      markArea: {
-        silent: true,
-        data: (() => {
-          const start = labels.find(l => l >= '2022-04-01')
-          const end = [...labels].reverse().find(l => l <= '2022-04-30')
-          if (!start || !end) return []
-          return [[
-            { xAxis: start, itemStyle: { color: 'rgba(255,255,255,0.08)' } },
-            { xAxis: end },
-          ]]
-        })(),
-      },
       markLine: {
         silent: true,
         symbol: 'none',
-        data: (() => {
-          const start = labels.find(l => l >= '2022-04-01')
-          const mid = labels.find(l => l >= '2022-04-15') || start
-          const end = [...labels].reverse().find(l => l <= '2022-04-30')
-          if (!start || !end) return []
-          return [
-            { xAxis: start, label: { show: false }, lineStyle: { color: '#333', type: 'dashed', width: 1 } },
-            { xAxis: mid, label: { formatter: 'mass.black', color: '#fff', fontFamily: "'HND', sans-serif", fontSize: 10, position: 'end' }, lineStyle: { color: 'transparent' } },
-            { xAxis: end, label: { show: false }, lineStyle: { color: '#333', type: 'dashed', width: 1 } },
-          ]
-        })(),
+        data: [...MASS_BLACK_LINES],
       },
+      markArea: MASS_BLACK_AREA,
     }],
   })
 }, { immediate: true })

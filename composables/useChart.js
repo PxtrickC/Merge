@@ -47,7 +47,6 @@ export const DATA_ZOOM = [
     dataBackground: { lineStyle: { color: '#222' }, areaStyle: { color: '#111' } },
     selectedDataBackground: { lineStyle: { color: '#444' }, areaStyle: { color: '#1a1a1a' } },
   },
-  { type: 'inside', zoomOnMouseWheel: false, moveOnMouseWheel: false },
 ]
 
 // Shared axis styles
