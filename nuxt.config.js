@@ -77,6 +77,10 @@ export default defineNuxtConfig({
         head: {
             title: 'Merge',
             htmlAttrs: { lang: 'en' },
+            script: [
+                { src: 'https://www.googletagmanager.com/gtag/js?id=G-QNXJ1ESRDL', async: true },
+                { innerHTML: "window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date());gtag('config','G-QNXJ1ESRDL')" },
+            ],
             link: [
                 { rel: 'icon', type: 'image/x-icon', href: '/favicon.png' },
                 { rel: 'apple-touch-icon', href: '/apple-touch-icon-180x180.png', sizes: '180x180' },
@@ -91,19 +95,19 @@ export default defineNuxtConfig({
                 { name: 'apple-mobile-web-app-capable', content: 'yes' },
                 { name: 'apple-mobile-web-app-status-bar-style', content: 'black-translucent' },
                 { property: 'og:type', content: 'website' },
-                { property: 'og:site_name', content: 'Merge' },
+                { property: 'og:site_name', content: 'merge.' },
 
                 { name: 'author', content: 'Tina Wang' },
                 { name: 'twitter:creator', content: '@ItsTinaWang' },
 
-                { name: 'twitter:site', content: 'https://merge.tina.cafe/' },
-                { name: 'twitter:title', content: 'Merge' },
-                { name: 'twitter:description', content: 'Metadata Dashboard' },
-                { hid: 'og:title', property: 'og:title', content: 'Merge' },
-                { hid: 'description', name: 'description', content: 'Metadata Dashboard' },
-                { hid: 'og:description', property: 'og:description', content: 'Metadata Dashboard' },
+                { name: 'twitter:site', content: 'https://merge.ppatrick.xyz' },
+                { name: 'twitter:title', content: 'merge by pak' },
+                { name: 'twitter:description', content: 'Merge is a game of extinction.' },
+                { hid: 'og:title', property: 'og:title', content: 'merge by pak' },
+                { hid: 'description', name: 'description', content: 'Merge is a game of extinction.' },
+                { hid: 'og:description', property: 'og:description', content: 'Merge is a game of extinction.' },
 
-                { hid: 'og:url', property: 'og:url', content: 'https://merge.tina.cafe/' },
+                { hid: 'og:url', property: 'og:url', content: 'https://merge.ppatrick.xyz' },
                 { hid: 'keywords', name: 'keywords', content: 'Merge NFT pak dashboard meta data' },
 
                 { name: 'twitter:card', content: 'summary_large_image' },
