@@ -99,8 +99,12 @@ const rows = computed(() => [
 }
 .market__loading {
   @apply flex items-center justify-center;
-  min-height: calc(100vh - 3rem);
-  min-height: calc(100dvh - 3rem);
+  min-height: calc(100dvh - var(--header-h, 3rem) - 4rem);
+}
+@media (min-width: 768px) {
+  .market__loading {
+    min-height: calc(100dvh - 4rem);
+  }
 }
 .market__loading-text {
   @apply text-sm;
