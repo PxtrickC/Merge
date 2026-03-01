@@ -46,7 +46,7 @@ watch([dates, mergeCountOverTime, granularity], () => {
         return `<span style="color:#555">${p.value[0]}</span><br/>Merges: ${p.value[1]?.toLocaleString()}`
       },
     },
-    grid: { left: 40, right: 16, top: 16, bottom: 44 },
+    grid: { left: 40, right: 16, top: 16, bottom: 48 },
     xAxis: {
       type: 'time',
       ...AXIS_STYLE,

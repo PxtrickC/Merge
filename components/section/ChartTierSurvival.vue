@@ -57,7 +57,7 @@ watch([dates, tier1OverTime, viewMode], () => {
       itemWidth: 12,
       itemHeight: 8,
     },
-    grid: { left: 50, right: 16, top: 32, bottom: 44 },
+    grid: { left: 50, right: 16, top: 32, bottom: 48 },
     xAxis: {
       type: 'time',
       ...AXIS_STYLE,

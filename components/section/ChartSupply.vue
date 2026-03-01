@@ -53,7 +53,7 @@ watch([dates, aliveOverTime], () => {
         }).join('<br/>')
       },
     },
-    grid: { left: 50, right: 16, top: 16, bottom: 44 },
+    grid: { left: 50, right: 16, top: 16, bottom: 48 },
     xAxis: {
       type: 'time',
       ...AXIS_STYLE,

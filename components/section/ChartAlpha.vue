@@ -62,7 +62,7 @@ watch([dates, alphaMassOverTime, alphaChanges], () => {
         return `<span style="color:#555">${date}</span><br/>Alpha Mass: ${mass?.toLocaleString()}<br/>Token: #${tokenId}`
       },
     },
-    grid: { left: 55, right: 16, top: 24, bottom: 44 },
+    grid: { left: 55, right: 16, top: 24, bottom: 48 },
     xAxis: {
       type: 'time',
       ...AXIS_STYLE,

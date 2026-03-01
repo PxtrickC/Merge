@@ -140,7 +140,7 @@ watch([massDistribution, viewMode], () => {
           return `Mass ${masses[p.dataIndex]}<br/>Tokens: ${counts[p.dataIndex].toLocaleString()}`
         },
       },
-      grid: { left: 40, right: 16, top: 16, bottom: 44 },
+      grid: { left: 40, right: 16, top: 16, bottom: 48 },
       xAxis: {
         type: 'category',
         data: masses,

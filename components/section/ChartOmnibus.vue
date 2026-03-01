@@ -39,7 +39,7 @@ watch([dates, omnibusOverTime, omnibusMassOverTime, viewMode, stats], () => {
         return `<span style="color:#555">${date}</span><br/>${lines.join('<br/>')}`
       },
     },
-    grid: { left: 55, right: 16, top: 24, bottom: 44 },
+    grid: { left: 55, right: 16, top: 24, bottom: 48 },
     xAxis: {
       type: 'time',
       ...AXIS_STYLE,

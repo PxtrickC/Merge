@@ -32,22 +32,40 @@ export const TOOLTIP = {
   padding: [8, 12],
 }
 
-// Shared dataZoom style — very subtle
+// Shared dataZoom slider — modern minimal style
 export const DATA_ZOOM = [
   {
     type: 'slider',
     bottom: 4,
-    height: 14,
+    height: 20,
     borderColor: 'transparent',
-    backgroundColor: 'rgba(255,255,255,0.03)',
-    fillerColor: 'rgba(255,255,255,0.06)',
-    handleStyle: { color: '#555', borderColor: '#555' },
-    moveHandleStyle: { color: '#333' },
-    textStyle: { color: '#555', fontSize: 10 },
-    dataBackground: { lineStyle: { color: '#222' }, areaStyle: { color: '#111' } },
-    selectedDataBackground: { lineStyle: { color: '#444' }, areaStyle: { color: '#1a1a1a' } },
+    backgroundColor: 'rgba(255,255,255,0.04)',
+    fillerColor: 'rgba(255,255,255,0.10)',
+    borderRadius: 4,
+    handleIcon: 'circle',
+    handleSize: '110%',
+    handleStyle: {
+      color: '#666',
+      borderColor: '#666',
+      borderWidth: 2,
+      shadowBlur: 4,
+      shadowColor: 'rgba(0,0,0,0.4)',
+    },
+    moveHandleSize: 0,
+    emphasis: {
+      handleStyle: { color: '#999', borderColor: '#999' },
+    },
+    textStyle: { color: '#666', fontSize: 10, fontFamily: "'HND', sans-serif" },
+    dataBackground: {
+      lineStyle: { color: 'rgba(255,255,255,0.08)', width: 0.5 },
+      areaStyle: { color: 'rgba(255,255,255,0.03)' },
+    },
+    selectedDataBackground: {
+      lineStyle: { color: 'rgba(255,255,255,0.2)', width: 0.5 },
+      areaStyle: { color: 'rgba(255,255,255,0.05)' },
+    },
+    brushSelect: false,
   },
-  { type: 'inside', zoomOnMouseWheel: false, moveOnMouseWheel: false, moveOnMouseMove: false },
 ]
 
 // Shared axis styles

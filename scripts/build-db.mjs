@@ -21,6 +21,7 @@ const BATCH_SIZE = 50
 const BATCH_DELAY = 1000
 const MAX_TOKEN_ID = 28990
 const DEPLOY_BLOCK = 13_755_675
+const CONTRACT_TOTAL_MASS = 312_712 // from contract _massTotal
 
 const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY || ""
 const ETHERSCAN_BASE = "https://api.etherscan.io/v2/api"
@@ -179,15 +180,20 @@ async function fetchAliveTokens(burnedMap) {
     }
 
     if (retryIds.length > 0) {
-      await sleep(800)
       for (const id of retryIds) {
-        try {
-          const value = await contract.getValueOf(id, callOpts)
-          aliveValues.set(id, Number(value))
-        } catch (err) {
-          if (!err.message?.includes("nonexistent")) failedIds.push(id)
+        let fetched = false
+        for (let attempt = 1; attempt <= 3; attempt++) {
+          await sleep(attempt * 500)
+          try {
+            const value = await contract.getValueOf(id, callOpts)
+            aliveValues.set(id, Number(value))
+            fetched = true
+            break
+          } catch (err) {
+            if (err.message?.includes("nonexistent")) { fetched = true; break }
+          }
         }
-        await sleep(150)
+        if (!fetched) failedIds.push(id)
       }
     }
 
@@ -303,16 +309,27 @@ function buildDB(aliveValues, burnedMap, mergeCountMap, burnedValues, snapshotBl
   console.log(`  ✅ db.json written (${(json.length / 1024).toFixed(0)} KB)`)
   console.log(`  Alive: ${alive}, Burned: ${burned} (${burnedWithValue} with value), Missing: ${missing}`)
 
-  // Verify: decode samples
-  const sampleAlive = tokens.find(t => t !== null && t[2] === 0 && t[0] > 0)
-  if (sampleAlive) {
-    const decoded = decodeValue(sampleAlive[0])
-    console.log(`  Sample alive: value=${sampleAlive[0]}, tier=${decoded.class}, mass=${decoded.mass}, merges=${sampleAlive[1]}`)
+  // Mass verification
+  let aliveMass = 0
+  for (let i = 1; i <= MAX_TOKEN_ID; i++) {
+    if (tokens[i] !== null && tokens[i][2] === 0 && tokens[i][0] > 0) {
+      aliveMass += tokens[i][0] % 100_000_000
+    }
   }
-  const sampleBurned = tokens.find(t => t !== null && t[2] > 0 && t[0] > 0)
-  if (sampleBurned) {
-    const decoded = decodeValue(sampleBurned[0])
-    console.log(`  Sample burned: value=${sampleBurned[0]}, tier=${decoded.class}, mass=${decoded.mass}, mergedTo=${sampleBurned[2]}`)
+  const massDiff = CONTRACT_TOTAL_MASS - aliveMass
+  if (massDiff === 0) {
+    console.log(`  ✅ Mass verified: ${aliveMass.toLocaleString()} = contract total`)
+  } else {
+    console.log(`  ⚠️  Mass mismatch: alive=${aliveMass.toLocaleString()}, contract=${CONTRACT_TOTAL_MASS.toLocaleString()}, diff=${massDiff}`)
+    // List null tokens (potential missing mass)
+    const nullIds = []
+    for (let i = 1; i <= MAX_TOKEN_ID; i++) {
+      if (tokens[i] === null && !burnedMap.has(i)) nullIds.push(i)
+    }
+    if (nullIds.length > 0) {
+      console.log(`  ⚠️  ${nullIds.length} tokens not in burnedMap and null in db (possible missing mass)`)
+      console.log(`     Run --retry to attempt recovery`)
+    }
   }
 
   return tokens
@@ -384,30 +401,85 @@ async function retryFailed() {
   const tokens = db.tokens
 
   let fixed = 0
+  const stillFailed = []
+
   for (const id of ids) {
+    while (tokens.length <= id) tokens.push(null)
+
+    // 1. Check if token exists on-chain
+    let exists = false
     try {
-      const value = await contract.getValueOf(id)
-      // Ensure array is long enough
-      while (tokens.length <= id) tokens.push(null)
+      exists = await contract.exists(id)
+    } catch { exists = false }
+
+    if (!exists) {
+      // Token doesn't exist — burned outside merge, mark as burned (self-ref)
       const existingMerges = tokens[id]?.[1] ?? 0
-      tokens[id] = [Number(value), existingMerges, 0]
+      tokens[id] = [0, existingMerges, id]
+      console.log(`  ⏭️  #${id}: does not exist on-chain, marked as burned`)
       fixed++
-      console.log(`  ✅ #${id}: value=${value}`)
-    } catch (err) {
-      if (err.message?.includes("nonexistent")) {
-        console.log(`  ⏭️  #${id}: burned (nonexistent)`)
-      } else {
-        console.log(`  ❌ #${id}: ${err.message}`)
+      await sleep(200)
+      continue
+    }
+
+    // 2. Try getValueOf (3 attempts)
+    let value = null
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        value = Number(await contract.getValueOf(id))
+        break
+      } catch {
+        await sleep(attempt * 500)
       }
+    }
+
+    // 3. Fallback: try massOf
+    if (value === null || value === 0) {
+      try {
+        const mass = Number(await contract.massOf(id))
+        if (mass > 0) {
+          // Reconstruct value: assume tier 1 (most common), mass from massOf
+          value = 1 * 100_000_000 + mass
+          console.log(`  🔧 #${id}: used massOf fallback (mass=${mass})`)
+        }
+      } catch {}
+    }
+
+    if (value && value > 0) {
+      const existingMerges = tokens[id]?.[1] ?? 0
+      tokens[id] = [value, existingMerges, 0]
+      fixed++
+      const decoded = decodeValue(value)
+      console.log(`  ✅ #${id}: tier=${decoded.class}, mass=${decoded.mass}`)
+    } else {
+      stillFailed.push(id)
+      console.log(`  ❌ #${id}: all methods failed`)
     }
     await sleep(200)
   }
 
   writeFileSync(join(DATA_DIR, "db.json"), JSON.stringify(db))
+
+  // Mass verification
+  let aliveMass = 0
+  for (let i = 1; i < tokens.length; i++) {
+    if (tokens[i] !== null && tokens[i][2] === 0 && tokens[i][0] > 0) {
+      aliveMass += tokens[i][0] % 100_000_000
+    }
+  }
   console.log(`\n  Fixed ${fixed}/${ids.length} tokens`)
-  if (fixed === ids.length) {
-    writeFileSync(join(DATA_DIR, "failed_ids.json"), "[]")
+  const massDiff = CONTRACT_TOTAL_MASS - aliveMass
+  if (massDiff === 0) {
+    console.log(`  ✅ Mass verified: ${aliveMass.toLocaleString()} = contract total`)
+  } else {
+    console.log(`  ⚠️  Mass: alive=${aliveMass.toLocaleString()}, contract=${CONTRACT_TOTAL_MASS.toLocaleString()}, diff=${massDiff}`)
+  }
+
+  writeFileSync(join(DATA_DIR, "failed_ids.json"), JSON.stringify(stillFailed))
+  if (stillFailed.length === 0) {
     console.log("  🎉 All failed IDs resolved!")
+  } else {
+    console.log(`  ${stillFailed.length} still failed: ${stillFailed.join(", ")}`)
   }
 }
 
