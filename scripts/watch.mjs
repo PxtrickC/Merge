@@ -2,7 +2,7 @@ import { ethers } from "ethers"
 import { readFileSync, writeFileSync } from "fs"
 import { join, dirname } from "path"
 import { fileURLToPath } from "url"
-import { MERGE_CONTRACT_ADDRESS, MERGE_ABI, decodeValue } from "../utils/contract.mjs"
+import { MERGE_CONTRACT_ADDRESS, MERGE_ABI, NIFTY_OMNIBUS_ADDRESS, decodeValue } from "../utils/contract.mjs"
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const DATA_DIR = join(__dirname, "..", "public", "data")
@@ -104,7 +104,7 @@ async function handleMassUpdate(tokenIdBurned, tokenIdPersist, newMass, blockNum
 
     while (history.data.length <= dayIndex) {
       const prev = history.data[history.data.length - 1]
-      history.data.push([prev[0], prev[1], prev[2], prev[3], prev[4], prev[5], 0])
+      history.data.push([prev[0], prev[1], prev[2], prev[3], prev[4], prev[5], 0, prev[7] ?? 0])
     }
 
     const row = history.data[dayIndex]
@@ -113,6 +113,14 @@ async function handleMassUpdate(tokenIdBurned, tokenIdPersist, newMass, blockNum
     if (burnedTier >= 1 && burnedTier <= 4) row[burnedTier]--
     if (newMass > row[5]) row[5] = newMass // alpha mass
     row[6]++ // merge count
+
+    // Update omnibus count via balanceOf
+    try {
+      const contract = new ethers.Contract(MERGE_CONTRACT_ADDRESS, MERGE_ABI, rpcProvider)
+      const bal = await contract.balanceOf(NIFTY_OMNIBUS_ADDRESS)
+      row[7] = Number(bal)
+    } catch {}
+
 
     writeJSON("supply_history.json", history)
     log("  ✅ supply_history.json")

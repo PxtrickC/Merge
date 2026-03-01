@@ -10,6 +10,7 @@ useHead({ title: 'Merge' })
     <section-chart-merge-rate />
     <section-chart-tier-survival />
     <section-chart-alpha />
+    <section-chart-omnibus />
     <section-chart-concentration />
     <section-mass-distribution />
   </div>

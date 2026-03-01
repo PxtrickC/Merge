@@ -25,7 +25,8 @@ watch([dates, tier1OverTime, viewMode], () => {
   function transform(tierData, tierNum) {
     return d.map((date, i) => {
       const val = tierData[i]
-      return [date, isPercent ? +(val / TIER_INITIAL[tierNum] * 100).toFixed(1) : val]
+      const pct = +(val / TIER_INITIAL[tierNum] * 100).toFixed(1)
+      return [date, isPercent ? pct : val, isPercent ? val : pct]
     })
   }
 
@@ -36,15 +37,20 @@ watch([dates, tier1OverTime, viewMode], () => {
       trigger: 'axis',
       formatter: (params) => {
         const date = params[0]?.value[0] || ''
-        const lines = params.map(p =>
-          `<span style="color:${p.color}">\u25CF</span> ${p.seriesName}: ${p.value[1]?.toLocaleString()}${isPercent ? '%' : ''}`
-        )
+        const lines = params.map(p => {
+          const main = p.value[1]
+          const alt = p.value[2]
+          const text = isPercent
+            ? `${main}% (${alt?.toLocaleString()})`
+            : `${main?.toLocaleString()} (${alt}%)`
+          return `<span style="color:${p.color}">\u25CF</span> ${p.seriesName}: ${text}`
+        })
         return `<span style="color:#555">${date}</span><br/>${lines.join('<br/>')}`
       },
     },
     legend: {
       data: [TIER_NAMES[1], TIER_NAMES[2], TIER_NAMES[3], TIER_NAMES[4]],
-      selected: { [TIER_NAMES[1]]: false },
+      selected: { [TIER_NAMES[1]]: isPercent ? true : false },
       textStyle: { color: '#fff', fontFamily: "'HND', sans-serif", fontSize: 11 },
       inactiveColor: '#555',
       top: 0,
@@ -88,7 +94,7 @@ watch([dates, tier1OverTime, viewMode], () => {
             class="cs__mode"
             :class="{ 'cs__mode--active': viewMode === mode }"
             @click="viewMode = mode"
-          >{{ mode === 'percent' ? '%' : mode }}</span>]</span>
+          >{{ mode === 'percent' ? 'percentage' : mode }}</span>]</span>
       </p>
     </div>
     <div ref="chartEl" class="cs__canvas"></div>

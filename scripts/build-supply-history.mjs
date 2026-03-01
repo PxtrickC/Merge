@@ -5,7 +5,7 @@
  * and produces daily snapshots of supply, tier counts, alpha mass, and merge count.
  *
  * Output format:
- *   { startDate: "2021-12-02", data: [[alive, t1, t2, t3, t4, alphaMass, mergeCount], ...] }
+ *   { startDate: "2021-12-02", data: [[alive, t1, t2, t3, t4, alphaMass, mergeCount, omnibusCount], ...] }
  *
  * Usage:
  *   node --env-file=.env scripts/build-supply-history.mjs
@@ -13,7 +13,7 @@
 import { readFileSync, writeFileSync } from "fs"
 import { join, dirname } from "path"
 import { fileURLToPath } from "url"
-import { MERGE_CONTRACT_ADDRESS } from "../utils/contract.mjs"
+import { MERGE_CONTRACT_ADDRESS, NIFTY_OMNIBUS_ADDRESS, TRANSFER_TOPIC } from "../utils/contract.mjs"
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const DATA_DIR = join(__dirname, "..", "public", "data")
@@ -96,8 +96,21 @@ async function fetchMergeEvents() {
     url.searchParams.set("offset", ETHERSCAN_PAGE_SIZE.toString())
     if (ETHERSCAN_API_KEY) url.searchParams.set("apikey", ETHERSCAN_API_KEY)
 
-    const res = await fetch(url)
-    const json = await res.json()
+    let json
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        const res = await fetch(url)
+        json = await res.json()
+        break
+      } catch (err) {
+        if (attempt < 2) {
+          console.warn(`\n  ⚠️  MassUpdate request failed, retrying in 3s...`)
+          await sleep(3000)
+        } else {
+          throw err
+        }
+      }
+    }
     requests++
 
     if (json.status !== "1" || !Array.isArray(json.result) || json.result.length === 0) {
@@ -148,7 +161,100 @@ async function fetchMergeEvents() {
 }
 
 // ---------------------------------------------------------------------------
-// 3. Build daily supply history
+// 3. Fetch all Transfer events involving NG Omnibus
+// ---------------------------------------------------------------------------
+async function fetchOmnibusTransfers() {
+  const OMNIBUS_PADDED = "0x" + NIFTY_OMNIBUS_ADDRESS.slice(2).padStart(64, "0")
+  console.log("\nFetching Omnibus Transfer events via Etherscan...")
+
+  async function fetchDirection(contractAddr, topicKey, topicVal, label, startBlock = 0) {
+    const events = []
+    let fromBlock = startBlock
+    let requests = 0
+
+    while (true) {
+      const url = new URL(ETHERSCAN_BASE)
+      url.searchParams.set("chainid", "1")
+      url.searchParams.set("module", "logs")
+      url.searchParams.set("action", "getLogs")
+      url.searchParams.set("address", contractAddr)
+      url.searchParams.set("topic0", TRANSFER_TOPIC)
+      url.searchParams.set(topicKey, topicVal)
+      url.searchParams.set("topic0_" + topicKey.slice(-1) + "_opr", "and")
+      url.searchParams.set("fromBlock", fromBlock.toString())
+      url.searchParams.set("toBlock", "latest")
+      url.searchParams.set("page", "1")
+      url.searchParams.set("offset", ETHERSCAN_PAGE_SIZE.toString())
+      if (ETHERSCAN_API_KEY) url.searchParams.set("apikey", ETHERSCAN_API_KEY)
+
+      let json
+      for (let attempt = 0; attempt < 3; attempt++) {
+        try {
+          const res = await fetch(url)
+          json = await res.json()
+          break
+        } catch (err) {
+          if (attempt < 2) {
+            console.warn(`\n  ⚠️  ${label} request failed, retrying in 3s...`)
+            await sleep(3000)
+          } else {
+            throw err
+          }
+        }
+      }
+      requests++
+
+      if (json.status !== "1" || !Array.isArray(json.result) || json.result.length === 0) {
+        if (json.message === "No records found") break
+        if (json.result?.length === 0) break
+        console.warn(`\n  ⚠️  Etherscan ${label} request ${requests}: ${json.message}`)
+        break
+      }
+
+      for (const log of json.result) {
+        events.push({
+          timestamp: parseInt(log.timeStamp, 16),
+          blockNumber: parseInt(log.blockNumber, 16),
+        })
+      }
+
+      process.stdout.write(`\r  ${label} request ${requests}: ${events.length} events`)
+
+      if (json.result.length >= ETHERSCAN_PAGE_SIZE) {
+        const lastBlock = parseInt(json.result[json.result.length - 1].blockNumber, 16)
+        fromBlock = lastBlock
+        if (fromBlock === parseInt(json.result[0].blockNumber, 16)) {
+          fromBlock = lastBlock + 1
+        }
+      } else {
+        break
+      }
+
+      await sleep(ETHERSCAN_DELAY_MS)
+    }
+
+    console.log(`\n  ${label}: ${events.length} events (${requests} requests)`)
+    return events
+  }
+
+  // Only use new contract transfers — migration mints already account for initial state
+  // (Old contract tokens were never explicitly transferred out during contract swap,
+  //  so including both would double-count tokens)
+  const newIn = await fetchDirection(MERGE_CONTRACT_ADDRESS, "topic2", OMNIBUS_PADDED, "IN", DEPLOY_BLOCK)
+  const newOut = await fetchDirection(MERGE_CONTRACT_ADDRESS, "topic1", OMNIBUS_PADDED, "OUT", DEPLOY_BLOCK)
+
+  const all = [
+    ...newIn.map(e => ({ ...e, delta: 1 })),
+    ...newOut.map(e => ({ ...e, delta: -1 })),
+  ]
+  all.sort((a, b) => a.timestamp - b.timestamp || a.blockNumber - b.blockNumber)
+
+  console.log(`  Total: ${all.length} omnibus transfer events`)
+  return all
+}
+
+// ---------------------------------------------------------------------------
+// 4. Build daily supply history
 // ---------------------------------------------------------------------------
 // Fix tierMap for null db.json entries: merge only happens within same tier,
 // so burned token's tier = persist token's tier
@@ -163,7 +269,7 @@ function fixNullTiers(events, tierMap, nullTokenIds) {
   }
 }
 
-function buildHistory(events, tierMap, tierCounts) {
+function buildHistory(events, tierMap, tierCounts, omnibusTransfers) {
   console.log("\nBuilding daily supply history...")
 
   // Sort events by timestamp, then by blockNumber for stability
@@ -202,6 +308,10 @@ function buildHistory(events, tierMap, tierCounts) {
   const alphaChanges = [] // { date, tokenId, mass }
   let dayMerges = 0
 
+  // Omnibus running count
+  let omnibusCount = 0
+  let omnibusIdx = 0 // pointer into sorted omnibusTransfers
+
   // Start one day before first event to show initial state
   const firstEventDay = dayKey(events[0].timestamp)
   const startD = new Date(firstEventDay + "T00:00:00Z")
@@ -211,8 +321,19 @@ function buildHistory(events, tierMap, tierCounts) {
 
   const data = []
 
+  // Apply omnibus transfers up to (and including) the given date
+  function applyOmnibusUntil(dateStr) {
+    while (omnibusIdx < omnibusTransfers.length) {
+      const t = omnibusTransfers[omnibusIdx]
+      if (dayKey(t.timestamp) > dateStr) break
+      omnibusCount += t.delta
+      omnibusIdx++
+    }
+  }
+
   function pushDay() {
-    data.push([alive, tiers[1], tiers[2], tiers[3], tiers[4], alphaMass, dayMerges])
+    applyOmnibusUntil(currentDay)
+    data.push([alive, tiers[1], tiers[2], tiers[3], tiers[4], alphaMass, dayMerges, omnibusCount])
   }
 
   // Push initial state (before any merges)
@@ -276,7 +397,7 @@ function buildHistory(events, tierMap, tierCounts) {
   }
 
   console.log(`  ${data.length} days (${startDate} → ${currentDay})`)
-  console.log(`  Final: alive=${alive}, T1=${tiers[1]}, T2=${tiers[2]}, T3=${tiers[3]}, T4=${tiers[4]}, alpha=${alphaMass} (#${alphaId})`)
+  console.log(`  Final: alive=${alive}, T1=${tiers[1]}, T2=${tiers[2]}, T3=${tiers[3]}, T4=${tiers[4]}, alpha=${alphaMass} (#${alphaId}), omnibus=${omnibusCount}`)
   console.log(`  Alpha changed hands ${alphaChanges.length} times`)
 
   return { startDate, data, alphaChanges }
@@ -297,7 +418,8 @@ async function main() {
   }
 
   fixNullTiers(events, tierMap, nullTokenIds)
-  const history = buildHistory(events, tierMap, tierCounts)
+  const omnibusTransfers = await fetchOmnibusTransfers()
+  const history = buildHistory(events, tierMap, tierCounts, omnibusTransfers)
 
   const json = JSON.stringify(history)
   writeFileSync(join(DATA_DIR, "supply_history.json"), json)
