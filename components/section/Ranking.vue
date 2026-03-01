@@ -11,6 +11,7 @@ const props = defineProps({
 })
 
 const { db } = useDB()
+const { trackEvent } = useAnalytics()
 const scrollEl = useDragScroll()
 const sortMode = ref('mass') // 'id' | 'mass' | 'merges'
 const filterMode = ref('alive') // 'all' | 'alive' | 'dead'
@@ -72,7 +73,14 @@ watch(sortedItems, (_new, old) => {
   prevRanks.value = map
 })
 
-watch(sortMode, () => { sortEpoch.value++ })
+watch(sortMode, (v) => { sortEpoch.value++; trackEvent('ranking_sort_changed', { sort_mode: v, section: props.title }) })
+watch(filterMode, (v) => { trackEvent('ranking_filter_changed', { filter_mode: v, section: props.title }) })
+
+let searchTimer = null
+watch(searchQuery, (v) => {
+  clearTimeout(searchTimer)
+  if (v) searchTimer = setTimeout(() => trackEvent('ranking_searched', { query: v, section: props.title }), 800)
+})
 
 function itemKey(token, index) {
   const prev = prevRanks.value.get(token.id)

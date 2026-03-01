@@ -4,6 +4,7 @@ useHead({ title: 'Merge - Market' })
 const { listings, loading, error, hasMore, fetchListings } = useMarket()
 const { alphaMass } = useDB()
 const { open: openDrawer } = useTokenDrawer()
+const { trackEvent } = useAnalytics()
 
 function openFromMarket(item) {
   openDrawer(item.id, {
@@ -79,7 +80,7 @@ const rows = computed(() => [
       <Loading :fullscreen="false" />
     </div>
 
-    <button v-if="hasMore && !loading" class="market__load-more" @click="fetchListings()">
+    <button v-if="hasMore && !loading" class="market__load-more" @click="trackEvent('market_load_more', { total_loaded: listings.length }); fetchListings()">
       Load more
     </button>
   </div>

@@ -55,6 +55,7 @@ export function useTrading() {
   const error = ref(null)
 
   const { address, isConnected, getSigner, getProvider } = useWallet()
+  const { trackEvent } = useAnalytics()
 
   // ------------------------------------------------------------------
   // BUY FLOW
@@ -65,6 +66,7 @@ export function useTrading() {
     buying.value = true
     error.value = null
     txHash.value = null
+    trackEvent('buy_initiated', { token_id: listing.tokenId, price_eth: listing.price })
 
     try {
       const signer = await getSigner()
@@ -129,11 +131,13 @@ export function useTrading() {
       txHash.value = tx.hash
       await tx.wait()
 
+      trackEvent('buy_completed', { token_id: listing.tokenId, price_eth: listing.price, tx_hash: tx.hash })
       return { success: true, txHash: tx.hash }
     } catch (err) {
       const msg = parseTradeError(err)
       if (msg) {
         error.value = msg
+        trackEvent('buy_failed', { token_id: listing.tokenId, error_message: msg })
       }
       throw err
     } finally {
@@ -149,6 +153,7 @@ export function useTrading() {
 
     selling.value = true
     error.value = null
+    trackEvent('sell_initiated', { token_id: tokenId, price_eth: priceInEth, duration_days: durationDays })
 
     try {
       const signer = await getSigner()
@@ -262,11 +267,13 @@ export function useTrading() {
         body: { parameters: orderParameters, signature, protocol_address: SEAPORT_ADDRESS },
       })
 
+      trackEvent('listing_created', { token_id: tokenId, price_eth: priceInEth })
       return { success: true, order: result }
     } catch (err) {
       const msg = parseTradeError(err)
       if (msg) {
         error.value = msg
+        trackEvent('listing_failed', { token_id: tokenId, error_message: msg })
       }
       throw err
     } finally {

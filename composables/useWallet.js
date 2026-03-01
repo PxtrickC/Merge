@@ -9,6 +9,7 @@ export function useWallet() {
   // Subscribe to AppKit account changes (client-side only)
   if (import.meta.client) {
     const { $appkit } = useNuxtApp()
+    const { trackEvent } = useAnalytics()
     if ($appkit) {
       $appkit.subscribeAccount((account) => {
         const newAddr = account?.address || null
@@ -17,8 +18,12 @@ export function useWallet() {
         isConnected.value = !!account?.isConnected
 
         if (account?.isConnected && newAddr) {
+          if (!wasConnected) {
+            trackEvent('wallet_connected', { address_short: newAddr.slice(0, 6) + '...' + newAddr.slice(-4) })
+          }
           fetchMyToken(newAddr)
         } else if (wasConnected && !account?.isConnected) {
+          trackEvent('wallet_disconnected')
           myTokenId.value = null
         }
       })

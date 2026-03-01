@@ -45,12 +45,16 @@ export function useNotifications() {
 
   async function subscribe() {
     if (!isSupported.value || loading.value) return
+    const { trackEvent } = useAnalytics()
 
     loading.value = true
     try {
       const perm = await Notification.requestPermission()
       permission.value = perm
-      if (perm !== 'granted') return
+      if (perm !== 'granted') {
+        trackEvent('notifications_denied')
+        return
+      }
 
       const reg = await registerServiceWorker()
       await navigator.serviceWorker.ready
@@ -69,6 +73,7 @@ export function useNotifications() {
       })
 
       isSubscribed.value = true
+      trackEvent('notifications_subscribed')
     } catch (err) {
       console.error('[Notifications] subscribe failed:', err)
     } finally {
@@ -78,6 +83,7 @@ export function useNotifications() {
 
   async function unsubscribe() {
     if (loading.value) return
+    const { trackEvent } = useAnalytics()
 
     loading.value = true
     try {
@@ -94,6 +100,7 @@ export function useNotifications() {
 
       await subscription.unsubscribe()
       isSubscribed.value = false
+      trackEvent('notifications_unsubscribed')
     } catch (err) {
       console.error('[Notifications] unsubscribe failed:', err)
     } finally {
