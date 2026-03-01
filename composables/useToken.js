@@ -123,48 +123,6 @@ export async function useToken(tokenId) {
   return { token, loading, error }
 }
 
-export async function useTokenMergeHistory(tokenId) {
-  const mergedTo = ref(null)
-  const mergedOn = ref(null)
-
-  try {
-    const config = useRuntimeConfig()
-    const esKey = config.public.ETHERSCAN_API_KEY
-    const topic1 = '0x' + tokenId.toString(16).padStart(64, '0')
-
-    const url = new URL(ETHERSCAN_BASE)
-    url.searchParams.set('chainid', '1')
-    url.searchParams.set('module', 'logs')
-    url.searchParams.set('action', 'getLogs')
-    url.searchParams.set('address', MERGE_CONTRACT_ADDRESS)
-    url.searchParams.set('topic0', MASS_UPDATE_TOPIC)
-    url.searchParams.set('topic1', topic1)
-    url.searchParams.set('topic0_1_opr', 'and')
-    url.searchParams.set('fromBlock', DEPLOY_BLOCK.toString())
-    url.searchParams.set('toBlock', 'latest')
-    url.searchParams.set('page', '1')
-    url.searchParams.set('offset', '10')
-    if (esKey) url.searchParams.set('apikey', esKey)
-
-    const res = await fetch(url)
-    const json = await res.json()
-    console.log('[MergeHistory] Etherscan response:', json.status, json.message, Array.isArray(json.result) ? json.result.length : json.result)
-
-    if (json.status === '1' && Array.isArray(json.result) && json.result.length > 0) {
-      const log = json.result[json.result.length - 1]
-      const persistId = parseInt(log.topics[2], 16)
-      const timestamp = parseInt(log.timeStamp, 16)
-
-      mergedTo.value = persistId
-      mergedOn.value = new Date(timestamp * 1000).toISOString()
-    }
-  } catch {
-    // Token was not merged or query failed
-  }
-
-  return { mergedTo, mergedOn }
-}
-
 export async function useTokenTransfers(tokenId) {
   const transfers = ref([])
 
@@ -229,27 +187,6 @@ export async function useTokenTransfers(tokenId) {
   }
 
   return { transfers }
-}
-
-export async function useTokensMergedInto(tokenId) {
-  const merges = ref([])
-
-  try {
-    const contract = getContract()
-    // Check MassUpdate events where this token persisted (received merges)
-    const filter = contract.filters.MassUpdate(null, tokenId)
-    const events = await contract.queryFilter(filter)
-
-    merges.value = events.map((event) => {
-      const burnedId = Number(event.args[0])
-      const mass = Number(event.args[2])
-      return { id: burnedId, mass, tier: 0 }
-    })
-  } catch {
-    merges.value = []
-  }
-
-  return merges
 }
 
 export async function useTokenMergeTimeline(tokenId) {

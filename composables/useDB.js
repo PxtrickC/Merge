@@ -55,23 +55,6 @@ export function useDB() {
   // ---------------------------------------------------------------------------
   // Rankings
   // ---------------------------------------------------------------------------
-  function massTop(n = 100) {
-    return computed(() => {
-      return [...aliveTokens.value]
-        .sort((a, b) => b.mass - a.mass)
-        .slice(0, n)
-    })
-  }
-
-  function mergesTop(n = 100) {
-    return computed(() => {
-      return [...aliveTokens.value]
-        .filter(t => t.merges > 0)
-        .sort((a, b) => b.merges - a.merges)
-        .slice(0, n)
-    })
-  }
-
   function byTier(tier) {
     return computed(() => {
       return aliveTokens.value.filter(t => t.tier === tier)
@@ -138,8 +121,6 @@ export function useDB() {
     stats,
     alphaToken,
     alphaMass,
-    massTop,
-    mergesTop,
     byTier,
     tierCount,
     tierTotal,
