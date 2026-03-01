@@ -94,7 +94,7 @@ onMounted(() => {
 /* First section on each page */
 .layout__container > div:not(.mobile-header):not(.ptr) > :first-child {
   border-top: none !important;
-  padding-top: 0.5rem !important;
+  padding-top: 48px !important;
 }
 
 /* Pull-to-refresh */

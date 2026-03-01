@@ -6,6 +6,12 @@
   </div>
 </template>
 
+<style>
+.layout__container > .about:not(.mobile-header):not(.ptr) > :first-child {
+  padding-top: 0 !important;
+}
+</style>
+
 <style lang="postcss" scoped>
 .about {
   @apply min-h-screen bg-black;
