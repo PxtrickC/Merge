@@ -127,16 +127,16 @@ async function main() {
   let payload
   if (newEvents.length === 1) {
     payload = {
-      title: mergeLine(e),
-      body: remain,
+      title: "merge event",
+      body: `${mergeLine(e)}\n${remain}`,
       tag: `merge-${e.id}`,
       url: `/${e.merged_to.id}`,
       ...(image && { image }),
     }
   } else {
     payload = {
-      title: `${mergeLine(e)} (+${newEvents.length - 1})`,
-      body: remain,
+      title: "merge event",
+      body: `${mergeLine(e)} (+${newEvents.length - 1})\n${remain}`,
       tag: "merge-batch",
       url: `/${e.merged_to.id}`,
       ...(image && { image }),
