@@ -5,6 +5,7 @@ useHead({ title: 'Merge' })
 <template>
   <div>
     <section-stats-bar />
+    <section-my-merge />
     <section-latest-merges />
     <section-chart-supply />
     <section-chart-merge-rate />

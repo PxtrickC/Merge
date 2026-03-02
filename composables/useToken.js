@@ -189,97 +189,104 @@ export async function useTokenTransfers(tokenId) {
   return { transfers }
 }
 
-export async function useTokenMergeTimeline(tokenId) {
+export async function useTokenMergeTimeline(tokenId, { dbRef, mergedIntoIndexRef, etherscanApiKey } = {}) {
   const timeline = ref([])
   const initialMass = ref(null)
 
   try {
-    const config = useRuntimeConfig()
-    const apiKey = config.public.ETHERSCAN_API_KEY
-    const topic2 = '0x' + tokenId.toString(16).padStart(64, '0')
+    const db = dbRef
+    const mergedIntoIdx = mergedIntoIndexRef
 
-    // Fetch all MassUpdate events where this token is the persist (topic2)
-    const allLogs = []
-    let fromBlock = DEPLOY_BLOCK
-    while (true) {
-      const url = new URL(ETHERSCAN_BASE)
-      url.searchParams.set('chainid', '1')
-      url.searchParams.set('module', 'logs')
-      url.searchParams.set('action', 'getLogs')
-      url.searchParams.set('address', MERGE_CONTRACT_ADDRESS)
-      url.searchParams.set('topic0', MASS_UPDATE_TOPIC)
-      url.searchParams.set('topic2', topic2)
-      url.searchParams.set('topic0_2_opr', 'and')
-      url.searchParams.set('fromBlock', fromBlock.toString())
-      url.searchParams.set('toBlock', 'latest')
-      url.searchParams.set('page', '1')
-      url.searchParams.set('offset', '1000')
-      if (apiKey) url.searchParams.set('apikey', apiKey)
+    if (!db) return { timeline, initialMass }
 
-      const res = await fetch(url)
-      const json = await res.json()
-
-      console.log('[MergeTimeline] Etherscan response:', json.status, json.message, 'results:', Array.isArray(json.result) ? json.result.length : json.result)
-
-      if (json.status !== '1' || !Array.isArray(json.result) || json.result.length === 0) break
-      allLogs.push(...json.result)
-
-      if (json.result.length < 1000) break
-      const lastBlock = parseInt(json.result[json.result.length - 1].blockNumber, 16)
-      if (lastBlock <= fromBlock) { fromBlock = lastBlock + 1 } else { fromBlock = lastBlock }
+    // Wait for db.json to load (uses passed-in ref, no Nuxt context needed)
+    if (!db.value?.tokens) {
+      await new Promise((resolve) => {
+        const stop = watch(db, (v) => {
+          if (v?.tokens) { stop(); resolve() }
+        }, { immediate: true })
+      })
     }
 
-    // Sort chronologically and calculate burned mass via diffs
-    allLogs.sort((a, b) => parseInt(a.blockNumber, 16) - parseInt(b.blockNumber, 16))
-
-    // Get initial mass via archive call (token's mass before first merge)
-    const contract = getContract()
-    if (allLogs.length > 0) {
-      const firstBlock = parseInt(allLogs[0].blockNumber, 16)
-      try {
-        const value = await contract.getValueOf(tokenId, { blockTag: firstBlock - 1 })
-        initialMass.value = decodeValue(value).mass
-      } catch {
-        initialMass.value = 1 // fallback if archive call fails
-      }
-    } else {
-      try {
-        const value = await contract.getValueOf(tokenId)
-        initialMass.value = decodeValue(value).mass
-      } catch {
-        initialMass.value = null
-      }
+    const burnedIds = mergedIntoIdx?.value?.get(tokenId) || []
+    if (burnedIds.length === 0) {
+      const entry = db.value.tokens[tokenId]
+      if (entry) initialMass.value = decodeValue(entry[0]).mass
+      return { timeline, initialMass }
     }
 
-    // Fetch class of each burned token via archive calls (batch of 5)
-    const burnedClasses = {}
-    for (let i = 0; i < allLogs.length; i += 5) {
-      const batch = allLogs.slice(i, i + 5)
-      const results = await Promise.allSettled(
-        batch.map(async (log) => {
-          const bid = parseInt(log.topics[1], 16)
-          const block = parseInt(log.blockNumber, 16)
-          const val = await contract.getValueOf(bid, { blockTag: block - 1 })
-          return { id: bid, class: decodeValue(val).class }
-        })
-      )
-      for (const r of results) {
-        if (r.status === 'fulfilled') burnedClasses[r.value.id] = r.value.class
-      }
+    // Read burned token data from db.json (class, mass) — zero RPC calls
+    const burnedTokens = []
+    let totalBurnedMass = 0
+    for (const bid of burnedIds) {
+      const entry = db.value.tokens[bid]
+      if (!entry) continue
+      const { class: tierClass, mass } = decodeValue(entry[0])
+      totalBurnedMass += mass
+      burnedTokens.push({ tokenId: bid, tierClass, mass })
     }
 
-    let runningMass = initialMass.value
-    timeline.value = allLogs.map((log) => {
-      const burnedId = parseInt(log.topics[1], 16)
-      const eventMass = parseInt(log.data, 16)
-      const burnedMass = Math.max(eventMass - runningMass, 1)
-      runningMass = eventMass
-      return {
-        tokenId: burnedId,
-        mass: burnedMass,
-        tierClass: burnedClasses[burnedId] || 1,
-        date: new Date(parseInt(log.timeStamp, 16) * 1000).toISOString(),
+    // Calculate initial mass from db.json
+    const persistEntry = db.value.tokens[tokenId]
+    if (persistEntry) {
+      const currentMass = decodeValue(persistEntry[0]).mass
+      initialMass.value = currentMass - totalBurnedMass
+      if (initialMass.value < 1) initialMass.value = 1
+    }
+
+    // Fetch timestamps from Etherscan (no archive RPC calls needed)
+    const timestampMap = new Map() // burnedId → ISO date string
+    try {
+      const apiKey = etherscanApiKey
+      const topic2 = '0x' + tokenId.toString(16).padStart(64, '0')
+
+      let fromBlock = DEPLOY_BLOCK
+      while (true) {
+        const url = new URL(ETHERSCAN_BASE)
+        url.searchParams.set('chainid', '1')
+        url.searchParams.set('module', 'logs')
+        url.searchParams.set('action', 'getLogs')
+        url.searchParams.set('address', MERGE_CONTRACT_ADDRESS)
+        url.searchParams.set('topic0', MASS_UPDATE_TOPIC)
+        url.searchParams.set('topic2', topic2)
+        url.searchParams.set('topic0_2_opr', 'and')
+        url.searchParams.set('fromBlock', fromBlock.toString())
+        url.searchParams.set('toBlock', 'latest')
+        url.searchParams.set('page', '1')
+        url.searchParams.set('offset', '1000')
+        if (apiKey) url.searchParams.set('apikey', apiKey)
+
+        const res = await fetch(url)
+        const json = await res.json()
+
+        if (json.status !== '1' || !Array.isArray(json.result) || json.result.length === 0) break
+
+        for (const log of json.result) {
+          const burnedId = parseInt(log.topics[1], 16)
+          const ts = parseInt(log.timeStamp, 16)
+          timestampMap.set(burnedId, new Date(ts * 1000).toISOString())
+        }
+
+        if (json.result.length < 1000) break
+        const lastBlock = parseInt(json.result[json.result.length - 1].blockNumber, 16)
+        if (lastBlock <= fromBlock) { fromBlock = lastBlock + 1 } else { fromBlock = lastBlock }
       }
+    } catch (err) {
+      console.warn('[useTokenMergeTimeline] Etherscan timestamp fetch failed, showing without dates:', err)
+    }
+
+    // Combine db.json data with Etherscan timestamps
+    timeline.value = burnedTokens.map((t) => ({
+      ...t,
+      date: timestampMap.get(t.tokenId) || null,
+    }))
+
+    // Sort: tokens with dates by date desc, tokens without dates at the end
+    timeline.value.sort((a, b) => {
+      if (a.date && b.date) return new Date(b.date) - new Date(a.date)
+      if (a.date) return -1
+      if (b.date) return 1
+      return b.tokenId - a.tokenId
     })
   } catch (err) {
     console.error('[useTokenMergeTimeline] failed:', err)

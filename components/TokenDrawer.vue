@@ -4,8 +4,9 @@ import { PLATFORM_FEE_BPS } from '~/utils/trading.mjs'
 
 const { tokenId, isOpen, listing: drawerListing, close } = useTokenDrawer()
 
-const { alphaMass } = useDB()
+const { alphaMass, aliveTokens, db, mergedIntoIndex } = useDB()
 const alpha_mass = computed(() => alphaMass.value || 0)
+const _etherscanApiKey = useRuntimeConfig().public.ETHERSCAN_API_KEY
 
 const { data: matterTokens } = useLazyFetch('/data/matter_tokens.json')
 const matterForToken = computed(() => {
@@ -24,6 +25,13 @@ const loading = ref(false)
 const tokenListing = ref(null)
 const showSellModal = ref(false)
 const buySuccess = ref(false)
+
+const TIER_LABELS = { 1: 'White', 2: 'Yellow', 3: 'Blue', 4: 'Red' }
+
+const drawerTierItems = computed(() => {
+  if (!tokenData.value || !aliveTokens.value?.length) return []
+  return aliveTokens.value.filter(x => x.tier === tokenData.value.tier)
+})
 
 const isOwnToken = computed(() => {
   if (!tokenData.value?.owner || !walletAddress.value) return false
@@ -76,7 +84,7 @@ watch(tokenId, async (id) => {
 
     const [transferResult, timelineResult] = await Promise.all([
       useTokenTransfers(id),
-      useTokenMergeTimeline(id),
+      useTokenMergeTimeline(id, { dbRef: db, mergedIntoIndexRef: mergedIntoIndex, etherscanApiKey: _etherscanApiKey }),
     ])
     transfers.value = transferResult.transfers.value
     mergeTimeline.value = timelineResult.timeline.value
@@ -160,7 +168,7 @@ onUnmounted(() => document.removeEventListener('keydown', onKeyDown))
   <Transition name="slide">
     <div v-if="isOpen" ref="panelRef" class="drawer__panel">
       <button class="drawer__close" @click="close">
-        <icon class="w-5" variant="return" />
+        <icon class="w-5 h-5" variant="return" />
       </button>
 
       <div v-if="loading && !tokenData" class="drawer__loading">
@@ -221,6 +229,40 @@ onUnmounted(() => document.removeEventListener('keydown', onKeyDown))
           </div>
         </div>
 
+        <!-- Ranking: 3 groups - scope [all] / [Tier] toggle inside section-ranking -->
+        <template v-if="aliveTokens?.length">
+          <section-ranking
+            title="Mass Rank"
+            :items="aliveTokens"
+            :scope-items="drawerTierItems"
+            :scope-label="`Tier${tokenData.tier}`"
+            :alpha-mass="alpha_mass"
+            :highlight-id="tokenData.id"
+            sort-default="mass"
+            compact
+          />
+          <section-ranking
+            title="Merges Rank"
+            :items="aliveTokens"
+            :scope-items="drawerTierItems"
+            :scope-label="`Tier${tokenData.tier}`"
+            :alpha-mass="alpha_mass"
+            :highlight-id="tokenData.id"
+            sort-default="merges"
+            compact
+          />
+          <section-ranking
+            title="ID Rank"
+            :items="aliveTokens"
+            :scope-items="drawerTierItems"
+            :scope-label="`Tier${tokenData.tier}`"
+            :alpha-mass="alpha_mass"
+            :highlight-id="tokenData.id"
+            sort-default="id"
+            compact
+          />
+        </template>
+
         <card-activity
           :id="+tokenData.id"
           :loading="loading"
@@ -279,8 +321,11 @@ onUnmounted(() => document.removeEventListener('keydown', onKeyDown))
   }
 }
 .drawer__close {
-  @apply mb-4 lg:mb-6 text-white;
+  @apply mb-4 lg:mb-6 text-white text-opacity-100;
+  @apply w-10 h-10 p-0 flex items-center justify-center;
+  line-height: 0;
 }
+
 .drawer__content {
   @apply flex flex-col gap-8 lg:gap-10;
 }

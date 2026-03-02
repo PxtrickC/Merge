@@ -8,13 +8,20 @@ const props = defineProps({
   searchable: Boolean,
   filterable: Boolean,
   tier: Number,
+  compact: Boolean,
+  highlightId: Number,
+  sortDefault: { type: String, default: 'mass' },
+  filterDefault: { type: String, default: 'alive' },
+  scopeItems: Array,
+  scopeLabel: String,
 })
 
 const { db } = useDB()
 const { trackEvent } = useAnalytics()
 const scrollEl = useDragScroll()
-const sortMode = ref('mass') // 'id' | 'mass' | 'merges'
-const filterMode = ref('alive') // 'all' | 'alive' | 'dead'
+const sortMode = ref(props.sortDefault)
+const filterMode = ref(props.filterDefault)
+const scopeMode = ref('all')
 const searchQuery = ref('')
 
 const DISPLAY_LIMIT = 100
@@ -27,7 +34,7 @@ const showFilter = computed(() => props.searchable || props.filterable)
 
 // Burned tokens decoded from db (filtered by tier if set)
 const burnedTokens = computed(() => {
-  if (!showFilter.value || !db.value?.tokens) return []
+  if (!db.value?.tokens) return []
   const tokens = db.value.tokens
   const results = []
   for (let id = 1; id < tokens.length; id++) {
@@ -40,13 +47,17 @@ const burnedTokens = computed(() => {
   return results
 })
 
+const effectiveItems = computed(() =>
+  scopeMode.value === 'tier' && props.scopeItems?.length ? props.scopeItems : props.items
+)
+
 const sortedItems = computed(() => {
-  if (!props.items) return []
+  if (!effectiveItems.value) return []
 
   // Filter by alive/dead
   let list
-  if (!showFilter.value || filterMode.value === 'alive') {
-    list = props.items
+  if (filterMode.value === 'alive') {
+    list = effectiveItems.value
   } else if (filterMode.value === 'dead') {
     list = burnedTokens.value
   } else {
@@ -63,7 +74,33 @@ const sortedItems = computed(() => {
   if (sortMode.value === 'mass') sorted.sort((a, b) => b.mass - a.mass || b.id - a.id)
   else if (sortMode.value === 'merges') sorted.sort((a, b) => (b.merges ?? 0) - (a.merges ?? 0) || b.id - a.id)
   else sorted.sort((a, b) => a.id - b.id)
+
+  // When highlightId is set (drawer), always show a ±5 window around the token
+  if (props.highlightId) {
+    const idx = sorted.findIndex(x => x.id === props.highlightId)
+    if (idx !== -1) {
+      const CONTEXT = 5
+      const start = Math.max(0, idx - CONTEXT)
+      const end = Math.min(sorted.length, idx + CONTEXT + 1)
+      return sorted.slice(start, end).map((item, wi) => ({ ...item, displayRank: start + wi + 1 }))
+    }
+  }
   return sorted.slice(0, DISPLAY_LIMIT)
+})
+
+// Current token's rank position and scope total
+const sortedTotal = computed(() => {
+  if (filterMode.value === 'dead') return burnedTokens.value.length
+  if (filterMode.value === 'all') return (effectiveItems.value?.length ?? 0) + burnedTokens.value.length
+  return effectiveItems.value?.length ?? 0
+})
+
+const highlightRank = computed(() => {
+  if (!props.highlightId || !sortedItems.value.length) return null
+  const token = sortedItems.value.find(x => x.id === props.highlightId)
+  if (!token) return null
+  const idx = sortedItems.value.indexOf(token)
+  return token.displayRank ?? idx + 1
 })
 
 watch(sortedItems, (_new, old) => {
@@ -82,6 +119,23 @@ watch(searchQuery, (v) => {
   if (v) searchTimer = setTimeout(() => trackEvent('ranking_searched', { query: v, section: props.title }), 800)
 })
 
+async function scrollToHighlight() {
+  if (!props.highlightId || !scrollEl.value) return
+  await nextTick()
+  await new Promise(resolve => requestAnimationFrame(resolve))
+  const el = scrollEl.value.querySelector(`[data-highlight-id="${props.highlightId}"]`)
+  if (!el) return
+  const containerRect = scrollEl.value.getBoundingClientRect()
+  const elRect = el.getBoundingClientRect()
+  // Move scrollLeft so the element center aligns with the container center
+  const elCenterX = elRect.left + elRect.width / 2
+  const containerCenterX = containerRect.left + containerRect.width / 2
+  scrollEl.value.scrollLeft += elCenterX - containerCenterX
+}
+
+watch([() => props.highlightId, sortedItems], scrollToHighlight, { immediate: true })
+onMounted(scrollToHighlight)
+
 function itemKey(token, index) {
   const prev = prevRanks.value.get(token.id)
   if (prev !== undefined && Math.abs(index - prev) > MOVE_THRESHOLD) {
@@ -96,8 +150,12 @@ function sphereSize(mass) {
 }
 
 const scrollHeight = computed(() => {
-  const alphaSphere = parseFloat(sphereSize(props.alphaMass || 1))
-  return (alphaSphere + 120) + 'px' // rank(~30px) + sphere + info(~50px) + padding
+  // Use the tallest ball in the visible window, not the global alpha mass
+  const maxMass = sortedItems.value.length
+    ? sortedItems.value.reduce((m, t) => Math.max(m, t.mass ?? 0), 0)
+    : (props.alphaMass || 1)
+  const tallest = parseFloat(sphereSize(maxMass))
+  return (tallest + 120) + 'px' // rank(~30px) + sphere + info(~50px) + padding
 })
 
 // Make circle fill the sphere-wrap; size difference is handled by container
@@ -112,10 +170,13 @@ function fillAlpha(tier, mass) {
 </script>
 
 <template>
-  <section class="ranking">
+  <section class="ranking" :class="{ 'ranking--compact': compact }">
     <div class="ranking__header">
-      <h2 class="ranking__title">{{ title }}</h2>
-      <p v-if="showFilter" class="ranking__toggle">show
+      <h2 v-if="title" class="ranking__title">
+        {{ title }}
+        <span v-if="highlightRank" class="ranking__title-stat">#{{ highlightRank }}/{{ sortedTotal }}</span>
+      </h2>
+      <p v-if="showFilter && !compact" class="ranking__toggle">show
         <span v-for="(mode, i) in ['all', 'alive', 'dead']" :key="mode"
           >{{ i > 0 ? ' ' : '' }}[<span
             class="ranking__mode"
@@ -123,7 +184,7 @@ function fillAlpha(tier, mass) {
             @click="filterMode = mode"
           >{{ mode }}</span>]</span>
       </p>
-      <p class="ranking__toggle">sort by
+      <p v-if="!compact" class="ranking__toggle">sort by
         <span v-for="(mode, i) in ['id', 'mass', 'merges']" :key="mode"
           >{{ i > 0 ? ' ' : '' }}[<span
             class="ranking__mode"
@@ -131,6 +192,15 @@ function fillAlpha(tier, mass) {
             @click="sortMode = mode"
           >{{ mode }}</span>]</span>
       </p>
+      <p v-if="scopeItems" class="ranking__toggle">[<span
+          class="ranking__mode"
+          :class="{ 'ranking__mode--active': scopeMode === 'all' }"
+          @click="scopeMode = 'all'"
+        >all</span>] [<span
+          class="ranking__mode"
+          :class="{ 'ranking__mode--active': scopeMode === 'tier' }"
+          @click="scopeMode = 'tier'"
+        >{{ scopeLabel || 'tier' }}</span>]</p>
       <input
         v-if="searchable"
         v-model="searchQuery"
@@ -148,9 +218,11 @@ function fillAlpha(tier, mass) {
         v-for="(token, i) in sortedItems"
         :key="itemKey(token, i)"
         :to="`/${token.id}`"
+        :data-highlight-id="token.id"
         class="ranking__item"
+        :class="{ 'ranking__item--highlight': token.id === highlightId }"
       >
-        <div class="ranking__rank">{{ i + 1 }}</div>
+        <div class="ranking__rank">{{ token.displayRank ?? i + 1 }}</div>
         <div
           class="sphere-wrap"
           :class="{ 'sphere-wrap--burned': token.burned }"
@@ -176,6 +248,22 @@ function fillAlpha(tier, mass) {
   @apply py-8 lg:py-12;
   border-top: 1px solid #1a1a1a;
 }
+.ranking--compact {
+  @apply py-4 lg:py-4;
+  border-top: none;
+}
+.ranking--compact .ranking__title {
+  font-size: 1.25rem;
+}
+.ranking--compact .ranking__header {
+  @apply mb-2 gap-1 px-0;
+}
+.ranking--compact .ranking__toggle {
+  @apply text-sm lg:text-sm;
+}
+.ranking--compact .ranking__scroll {
+  @apply px-0;
+}
 .ranking__header {
   @apply flex flex-col mb-3 lg:mb-6 gap-1 lg:gap-2 px-4 lg:px-8;
 }
@@ -188,6 +276,12 @@ function fillAlpha(tier, mass) {
   .ranking__title {
     @apply text-6xl;
   }
+}
+.ranking__title-stat {
+  font-family: 'HND', sans-serif;
+  font-size: 1em;
+  color: #fff;
+  margin-left: 0.4em;
 }
 .ranking__toggle {
   @apply text-base lg:text-3xl text-white;
@@ -245,6 +339,9 @@ function fillAlpha(tier, mass) {
 .rank-leave-to {
   opacity: 0;
 }
+.rank-move {
+  transition: none;
+}
 .ranking__scroll {
   @apply flex items-end gap-4 md:gap-6 lg:gap-8;
   @apply overflow-x-auto pb-4 px-4 lg:px-8;
@@ -257,10 +354,27 @@ function fillAlpha(tier, mass) {
   @apply flex flex-col items-center;
   @apply flex-shrink-0;
   @apply cursor-pointer;
-  transition: scale 0.2s ease, transform 2s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: scale 0.2s ease;
 }
 .ranking__item:hover {
   scale: 1.08;
+}
+.ranking__item--highlight .ranking__rank {
+  color: #fff;
+}
+.ranking__item--highlight {
+  position: relative;
+}
+.ranking__item--highlight::after {
+  content: '';
+  position: absolute;
+  bottom: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #fff;
 }
 .ranking__rank {
   @apply text-lg lg:text-xl font-medium mb-2;
