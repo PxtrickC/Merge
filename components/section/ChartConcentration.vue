@@ -27,7 +27,7 @@ const segments = computed(() => {
       { label: 'Top 10', mass: top10, pct: +(top10 / total * 100).toFixed(1), color: 'rgba(255,255,255,0.85)' },
       { label: 'Top 11–50', mass: top50, pct: +(top50 / total * 100).toFixed(1), color: 'rgba(255,255,255,0.4)' },
       { label: 'Top 51–100', mass: top100, pct: +(top100 / total * 100).toFixed(1), color: 'rgba(255,255,255,0.2)' },
-      { label: 'Others', mass: rest, pct: +(rest / total * 100).toFixed(1), color: 'rgba(255,255,255,0.08)' },
+      { label: 'Others', mass: rest, pct: +(rest / total * 100).toFixed(1), color: 'rgba(255,255,255,0.15)' },
     ]
   }
 
@@ -100,8 +100,8 @@ const arcs = computed(() => {
       <div class="cs__labels">
         <div v-for="d in segments" :key="d.label" class="cs__row">
           <span class="cs__dot" :style="{ backgroundColor: d.color }" />
-          <span class="cs__label">{{ d.label }}</span>
           <span class="cs__pct">{{ d.pct }}%</span>
+          <span class="cs__label" :style="{ color: d.color }">{{ d.label }}</span>
           <span class="cs__mass">{{ d.mass.toLocaleString() }}</span>
         </div>
       </div>
@@ -195,28 +195,32 @@ const arcs = computed(() => {
   transition: background-color 0.5s ease;
 }
 .cs__label {
-  color: #555;
   font-family: 'HND', sans-serif;
-  font-size: 0.95rem;
+  font-size: 1.5rem;
+  letter-spacing: -0.02em;
   min-width: 5.5rem;
 }
 @media (min-width: 768px) {
-  .cs__label { font-size: 1.1rem; }
+  .cs__label { font-size: 2rem; }
 }
 .cs__pct {
   color: #fff;
   font-family: 'HND', sans-serif;
   font-size: 1.5rem;
   letter-spacing: -0.02em;
-  min-width: 4.5rem;
+  width: 5.5rem;
+  text-align: right;
+  flex-shrink: 0;
 }
 @media (min-width: 768px) {
-  .cs__pct { font-size: 2rem; }
+  .cs__pct { font-size: 2rem; width: 6rem; }
 }
 .cs__mass {
   color: #333;
   font-family: 'HND', sans-serif;
   font-size: 0.8rem;
+  min-width: 4.5rem;
+  text-align: right;
 }
 @media (min-width: 768px) {
   .cs__mass { font-size: 0.9rem; }
