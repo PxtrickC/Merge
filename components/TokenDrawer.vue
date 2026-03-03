@@ -186,7 +186,7 @@ watch(tokenId, async (id) => {
   } finally {
     loading.value = false
   }
-})
+}, { immediate: true })
 
 async function fetchListing(id) {
   try {

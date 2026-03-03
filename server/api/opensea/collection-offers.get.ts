@@ -5,7 +5,7 @@ export default defineEventHandler(async (event) => {
 
     // https://docs.opensea.io/reference/get_all_offers_on_a_collection
     const res = await fetch(
-        `https://api.opensea.io/api/v2/offers/collection/merge-by-pxtrickc/all`,
+        `https://api.opensea.io/api/v2/offers/collection/m/all`,
         { headers: { 'x-api-key': apiKey, Accept: 'application/json' } }
     )
 
