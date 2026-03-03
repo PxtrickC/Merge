@@ -209,11 +209,9 @@ const scrollHeight = computed(() => {
 })
 
 // Make circle fill the sphere-wrap; size difference is handled by container
-function fillAlpha(tier, mass) {
+function fillAlpha(mass) {
   const am = props.alphaMass || 1
   if (mass >= am) return am
-  // Tier 3 (blue) / 4 (red): background is the distinctive color, keep circle small
-  if (tier >= 3) return am
   // Small offset so circle fills container without triggering alpha class
   return mass + 0.01
 }
@@ -277,7 +275,7 @@ function fillAlpha(tier, mass) {
           :class="{ 'sphere-wrap--burned': token.burned }"
           :style="{ width: sphereSize(token.mass), height: sphereSize(token.mass) }"
         >
-          <merge-svg :tier="token.tier" :mass="token.mass" :alpha_mass="fillAlpha(token.tier, token.mass)" />
+          <merge-svg :tier="token.tier" :mass="token.mass" :alpha_mass="fillAlpha(token.mass)" bordered />
         </div>
         <div class="ranking__info">
           <span class="ranking__value">m({{ token.mass }})</span>

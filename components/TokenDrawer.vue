@@ -741,7 +741,7 @@ onUnmounted(() => {
 
 /* Tier 2 — Black bg, Yellow text */
 .drawer__panel--tier2 {
-  --d-bg: #0a0a0a;
+  --d-bg: #000;
   --d-surface: #111;
   --d-close: #000;
   --d-border: #2a2200;
@@ -785,6 +785,7 @@ onUnmounted(() => {
   --d-input-bg: #2222aa;
   --d-scroll-track: #2929cc;
   --d-scroll-thumb: #1a1a88;
+  --tier-blue: #fff;
 }
 
 /* Tier 4 — Red (#f33) */
@@ -809,6 +810,7 @@ onUnmounted(() => {
   --d-input-bg: #aa2222;
   --d-scroll-track: #cc2929;
   --d-scroll-thumb: #881a1a;
+  --tier-red: #fff;
 }
 
 /* Alpha — White / Light */
@@ -834,6 +836,7 @@ onUnmounted(() => {
   --d-scroll-track: #f5f5f5;
   --d-scroll-thumb: #ccc;
   --d-icon-invert: 1;
+  --tier-white: #111;
 }
 
 @media (min-width: 1024px) {

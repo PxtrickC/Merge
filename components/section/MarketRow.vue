@@ -25,10 +25,9 @@ function fmtPrice(v) {
   return parseFloat(v.toFixed(4)).toString()
 }
 
-function fillAlpha(tier, mass) {
+function fillAlpha(mass) {
   const am = props.alphaMass || 1
   if (mass >= am) return am
-  if (tier >= 3) return am
   return mass + 0.01
 }
 </script>
@@ -48,7 +47,7 @@ function fillAlpha(tier, mass) {
           class="sphere-wrap"
           :style="{ width: sphereSize(item.mass), height: sphereSize(item.mass) }"
         >
-          <merge-svg :tier="item.tier" :mass="item.mass" :alpha_mass="fillAlpha(item.tier, item.mass)" />
+          <merge-svg :tier="item.tier" :mass="item.mass" :alpha_mass="fillAlpha(item.mass)" />
         </div>
         <div class="mrow__info">
           <span class="mrow__mass">m({{ item.mass }})</span>

@@ -286,10 +286,10 @@ const filteredTimeline = computed(() =>
   @apply text-xs;
   color: var(--d-text-3, #555);
 }
-.tier--red { color: var(--d-text, #f87171); }
-.tier--blue { color: var(--d-text, #60a5fa); }
-.tier--yellow { color: var(--d-text, #facc15); }
-.tier--white { color: var(--d-text, #e5e5e5); }
+.tier--red { color: var(--tier-red, #f87171); }
+.tier--blue { color: var(--tier-blue, #60a5fa); }
+.tier--yellow { color: var(--tier-yellow, #facc15); }
+.tier--white { color: var(--tier-white, #e5e5e5); }
 .activity__addr {
   @apply text-xs;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
