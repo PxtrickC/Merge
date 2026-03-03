@@ -50,12 +50,6 @@ try {
     <h2 class="stats-bar__title">Merge is a game of extinction.</h2>
     <div class="stats-bar__body">
       <p><NuxtLink to="/about" class="stats-bar__link"><span class="stats-bar__link-hl">Learn</span> how it works</NuxtLink></p>
-      <br />
-      <p>Total Mass: {{ total_mass }}</p>
-      <p>Tokens Remain: {{ token_count }}</p>
-      <p>Alpha: m({{ alpha_mass }}) #{{ alphaToken?.id ?? '' }}</p>
-      <p>Merged: {{ merged_count }}</p>
-      <p>In NG Omnibus: {{ omnibus_count }}</p>
     </div>
   </section>
 </template>

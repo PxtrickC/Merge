@@ -46,15 +46,20 @@ export function useWallet() {
 
   async function getSigner() {
     if (!import.meta.client) throw new Error('Client-side only')
-    if (!window.ethereum) throw new Error('No wallet detected')
-    const provider = new BrowserProvider(window.ethereum)
+    const { $appkit } = useNuxtApp()
+    // 優先用 Reown AppKit 管理的 provider（支援 WalletConnect、Coinbase 等）
+    const walletProvider = $appkit?.getWalletProvider?.()
+    if (!walletProvider && !window.ethereum) throw new Error('No wallet detected')
+    const provider = new BrowserProvider(walletProvider || window.ethereum)
     return provider.getSigner()
   }
 
   async function getProvider() {
     if (!import.meta.client) throw new Error('Client-side only')
-    if (!window.ethereum) throw new Error('No wallet detected')
-    return new BrowserProvider(window.ethereum)
+    const { $appkit } = useNuxtApp()
+    const walletProvider = $appkit?.getWalletProvider?.()
+    if (!walletProvider && !window.ethereum) throw new Error('No wallet detected')
+    return new BrowserProvider(walletProvider || window.ethereum)
   }
 
   function openModal() {

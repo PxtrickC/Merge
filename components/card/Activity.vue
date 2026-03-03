@@ -95,6 +95,15 @@ function shortAddr(addr) {
   return addr.slice(0, 6) + '…' + addr.slice(-4)
 }
 
+function displayName(name, addr) {
+  if (!name) return shortAddr(addr)
+  if (name.length <= 20) return name
+  const dotIdx = name.lastIndexOf('.')
+  const suffix = dotIdx >= 0 ? name.slice(dotIdx) : ''
+  const base = dotIdx >= 0 ? name.slice(0, dotIdx) : name
+  return base.slice(0, 6) + '…' + base.slice(-4) + suffix
+}
+
 const { open: openDrawer } = useTokenDrawer()
 </script>
 
@@ -128,17 +137,17 @@ const { open: openDrawer } = useTokenDrawer()
         </span>
         <span v-else-if="event.type === 'mint'" class="activity__detail">
           <span v-if="initialMass" class="link">m({{ initialMass }})</span>
-          <a class="activity__addr" :href="`https://etherscan.io/address/${event.to}`" target="_blank">{{ event.toName || shortAddr(event.to) }}</a>
+          <a class="activity__addr" :href="`https://etherscan.io/address/${event.to}`" target="_blank">{{ displayName(event.toName, event.to) }}</a>
         </span>
         <span v-else-if="event.type === 'burned'" class="activity__detail">
-          <a class="activity__addr" :href="`https://etherscan.io/address/${event.from}`" target="_blank">{{ event.fromName || shortAddr(event.from) }}</a>
+          <a class="activity__addr" :href="`https://etherscan.io/address/${event.from}`" target="_blank">{{ displayName(event.fromName, event.from) }}</a>
           <span class="activity__arrow">→</span>
           <span class="activity__addr" style="color: #f87171;">0x…dead</span>
         </span>
         <span v-else-if="event.type === 'transfer'" class="activity__detail">
-          <a class="activity__addr" :href="`https://etherscan.io/address/${event.from}`" target="_blank">{{ event.fromName || shortAddr(event.from) }}</a>
+          <a class="activity__addr" :href="`https://etherscan.io/address/${event.from}`" target="_blank">{{ displayName(event.fromName, event.from) }}</a>
           <span class="activity__arrow">→</span>
-          <a class="activity__addr" :href="`https://etherscan.io/address/${event.to}`" target="_blank">{{ event.toName || shortAddr(event.to) }}</a>
+          <a class="activity__addr" :href="`https://etherscan.io/address/${event.to}`" target="_blank">{{ displayName(event.toName, event.to) }}</a>
         </span>
       </div>
     </div>

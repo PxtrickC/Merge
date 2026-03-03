@@ -37,6 +37,26 @@ export function useDB() {
   })
 
   // ---------------------------------------------------------------------------
+  // Decode all burned tokens
+  // ---------------------------------------------------------------------------
+  const burnedTokens = computed(() => {
+    if (!db.value?.tokens) return []
+    const tokens = db.value.tokens
+    const results = []
+    for (let id = 1; id < tokens.length; id++) {
+      const entry = tokens[id]
+      if (!entry || entry[2] === 0) continue
+      const { class: tier, mass } = entry[0] > 0 ? decodeValue(entry[0]) : { class: 0, mass: 0 }
+      results.push({ id, tier, mass, merges: entry[1] || 0, burned: true, mergedTo: entry[2] })
+    }
+    return results
+  })
+
+  const allTokens = computed(() => {
+    return [...(aliveTokens.value || []), ...(burnedTokens.value || [])]
+  })
+
+  // ---------------------------------------------------------------------------
   // Stats
   // ---------------------------------------------------------------------------
   const stats = computed(() => {
@@ -118,6 +138,8 @@ export function useDB() {
     db,
     loading,
     aliveTokens,
+    burnedTokens,
+    allTokens,
     stats,
     alphaToken,
     alphaMass,

@@ -14,6 +14,15 @@ function shortAddr(addr) {
   if (!addr) return ''
   return addr.slice(0, 6) + '…' + addr.slice(-4)
 }
+
+function displayOwner(name, addr) {
+  if (!name) return shortAddr(addr)
+  if (name.length <= 20) return name
+  const dotIdx = name.lastIndexOf('.')
+  const suffix = dotIdx >= 0 ? name.slice(dotIdx) : ''
+  const base = dotIdx >= 0 ? name.slice(0, dotIdx) : name
+  return base.slice(0, 6) + '…' + base.slice(-4) + suffix
+}
 </script>
 
 <template>
@@ -29,7 +38,7 @@ function shortAddr(addr) {
             <template v-if="owner">
               <span class="token-card__own-by">own by</span>
               <a class="token-card__id token-card__owner" :href="`https://etherscan.io/address/${owner}`" target="_blank">
-                {{ ownerName || shortAddr(owner) }}
+                {{ displayOwner(ownerName, owner) }}
               </a>
             </template>
           </div>

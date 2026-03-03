@@ -2,6 +2,8 @@
 import { TOOLTIP, DATA_ZOOM, AXIS_STYLE } from '~/composables/useChart'
 
 const { dates, alphaMassOverTime, alphaChanges } = useSupplyHistory()
+const { stats, alphaToken } = useDB()
+const alpha_mass = computed(() => stats.value?.alpha_mass ?? 0)
 const chartEl = ref(null)
 const { setOption } = useChart(chartEl)
 
@@ -105,6 +107,7 @@ watch([dates, alphaMassOverTime, alphaChanges], () => {
 <template>
   <section class="cs">
     <h2 class="cs__title">Alpha Mass Growth</h2>
+    <p v-if="alpha_mass" class="cs__stat">m({{ alpha_mass.toLocaleString() }}) #{{ alphaToken?.id ?? '' }}</p>
     <div ref="chartEl" class="cs__canvas"></div>
   </section>
 </template>
@@ -115,12 +118,16 @@ watch([dates, alphaMassOverTime, alphaChanges], () => {
   border-top: 1px solid #1a1a1a;
 }
 .cs__title {
-  @apply text-white mb-6;
+  @apply text-white mb-2;
   font-family: 'HND', sans-serif;
   font-size: 2em;
 }
 @media (min-width: 768px) {
   .cs__title { @apply text-6xl; }
+}
+.cs__stat {
+  @apply text-white mb-4 text-base lg:text-3xl;
+  font-family: 'HND', sans-serif;
 }
 .cs__canvas {
   width: 100%;

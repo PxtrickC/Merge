@@ -1,7 +1,12 @@
 <script setup>
 import { TOOLTIP, DATA_ZOOM, AXIS_STYLE, MASS_BLACK_AREA, MASS_BLACK_LINES } from '~/composables/useChart'
 
-const { dates, mergeCountOverTime } = useSupplyHistory()
+const { dates, mergeCountOverTime, aliveOverTime } = useSupplyHistory()
+const ORIGINAL_SUPPLY = 28990
+const mergedCount = computed(() => {
+  const a = aliveOverTime.value
+  return a.length ? ORIGINAL_SUPPLY - a[a.length - 1] : 0
+})
 const chartEl = ref(null)
 const { setOption } = useChart(chartEl)
 const granularity = ref('week')
@@ -78,6 +83,7 @@ watch([dates, mergeCountOverTime, granularity], () => {
   <section class="cs">
     <div class="cs__header">
       <h2 class="cs__title">Merge Rate</h2>
+      <p v-if="mergedCount" class="cs__stat">{{ mergedCount.toLocaleString() }} merged</p>
       <p class="cs__toggle">
         <span v-for="(mode, i) in ['day', 'week', 'month']" :key="mode"
           >{{ i > 0 ? ' ' : '' }}[<span
@@ -108,6 +114,10 @@ watch([dates, mergeCountOverTime, granularity], () => {
   .cs__title { @apply text-6xl; }
 }
 .cs__toggle {
+  @apply text-base lg:text-3xl text-white;
+  font-family: 'HND', sans-serif;
+}
+.cs__stat {
   @apply text-base lg:text-3xl text-white;
   font-family: 'HND', sans-serif;
 }

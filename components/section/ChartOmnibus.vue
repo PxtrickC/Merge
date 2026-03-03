@@ -3,6 +3,10 @@ import { TOOLTIP, DATA_ZOOM, AXIS_STYLE, MASS_BLACK_AREA, MASS_BLACK_LINES } fro
 
 const { dates, omnibusOverTime, omnibusMassOverTime } = useSupplyHistory()
 const { stats } = useDB()
+const omnibusCount = computed(() => {
+  const o = omnibusOverTime.value
+  return o.length ? o[o.length - 1] : 0
+})
 const chartEl = ref(null)
 const { setOption } = useChart(chartEl)
 const viewMode = ref('count')
@@ -106,6 +110,7 @@ watch([dates, omnibusOverTime, omnibusMassOverTime, viewMode, stats], () => {
   <section class="cs">
     <div class="cs__header">
       <h2 class="cs__title">NG Omnibus</h2>
+      <p v-if="omnibusCount" class="cs__stat">{{ omnibusCount.toLocaleString() }} tokens</p>
       <p class="cs__toggle">
         <span v-for="(mode, i) in [['count', 'count'], ['mass', 'Total mass']]" :key="mode[0]"
           >{{ i > 0 ? ' ' : '' }}[<span
@@ -136,6 +141,10 @@ watch([dates, omnibusOverTime, omnibusMassOverTime, viewMode, stats], () => {
   .cs__title { @apply text-6xl; }
 }
 .cs__toggle {
+  @apply text-base lg:text-3xl text-white;
+  font-family: 'HND', sans-serif;
+}
+.cs__stat {
   @apply text-base lg:text-3xl text-white;
   font-family: 'HND', sans-serif;
 }

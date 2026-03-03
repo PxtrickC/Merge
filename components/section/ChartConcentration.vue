@@ -67,6 +67,7 @@ const arcs = computed(() => {
   <section class="cs">
     <div class="cs__header">
       <h2 class="cs__title">Mass Concentration</h2>
+      <p v-if="totalMass" class="cs__stat">{{ totalMass.toLocaleString() }} total mass</p>
       <p class="cs__toggle">
         <span v-for="(mode, i) in ['rank', 'tier']" :key="mode"
           >{{ i > 0 ? ' ' : '' }}[<span
@@ -126,6 +127,10 @@ const arcs = computed(() => {
   .cs__title { @apply text-6xl; }
 }
 .cs__toggle {
+  @apply text-base lg:text-3xl text-white;
+  font-family: 'HND', sans-serif;
+}
+.cs__stat {
   @apply text-base lg:text-3xl text-white;
   font-family: 'HND', sans-serif;
 }

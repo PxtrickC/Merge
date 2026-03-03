@@ -51,6 +51,7 @@ const SEAPORT_ABI = [
 export function useTrading() {
   const buying = ref(false)
   const selling = ref(false)
+  const transferring = ref(false)
   const txHash = ref(null)
   const error = ref(null)
 
@@ -281,13 +282,53 @@ export function useTrading() {
     }
   }
 
+  // ------------------------------------------------------------------
+  // TRANSFER (SEND) FLOW
+  // ------------------------------------------------------------------
+  async function transferToken(tokenId, toAddress) {
+    if (!isConnected.value) throw new Error('Connect wallet first')
+    if (!toAddress) throw new Error('Address required')
+
+    transferring.value = true
+    error.value = null
+    txHash.value = null
+    trackEvent('transfer_initiated', { token_id: tokenId, to: toAddress })
+
+    try {
+      const signer = await getSigner()
+      const nftContract = new ethers.Contract(
+        MERGE_CONTRACT_ADDRESS,
+        [
+          'function safeTransferFrom(address from, address to, uint256 tokenId)',
+        ],
+        signer
+      )
+      const tx = await nftContract.safeTransferFrom(address.value, toAddress, tokenId)
+      txHash.value = tx.hash
+      await tx.wait()
+      trackEvent('transfer_completed', { token_id: tokenId, to: toAddress, tx_hash: tx.hash })
+      return { success: true, txHash: tx.hash }
+    } catch (err) {
+      const msg = parseTradeError(err)
+      if (msg) {
+        error.value = msg
+        trackEvent('transfer_failed', { token_id: tokenId, error_message: msg })
+      }
+      throw err
+    } finally {
+      transferring.value = false
+    }
+  }
+
   return {
     buying,
     selling,
+    transferring,
     txHash,
     error,
     buyToken,
     sellToken,
+    transferToken,
   }
 }
 

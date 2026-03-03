@@ -23,6 +23,9 @@ const MAX_TOKEN_ID = 28990
 const DEPLOY_BLOCK = 13_755_675
 const CONTRACT_TOTAL_MASS = 312_712 // from contract _massTotal
 
+const OLD_CONTRACT = "0x27d270b7d58d15d455c85c02286413075f3c8a31"
+const OLD_CONTRACT_START_BLOCK = 13_700_000
+
 const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY || ""
 const ETHERSCAN_BASE = "https://api.etherscan.io/v2/api"
 const ETHERSCAN_PAGE_SIZE = 1000
@@ -32,16 +35,13 @@ const MASS_UPDATE_TOPIC = "0x7ba170514e8ea35827dbbd10c6d3376ca77ff64b62e4b0a395b
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)) }
 
 // ---------------------------------------------------------------------------
-// 1. Fetch all MassUpdate events via Etherscan
+// 1. Fetch MassUpdate events from a contract via Etherscan
 // ---------------------------------------------------------------------------
-async function fetchMergeEvents() {
-  console.log("Fetching MassUpdate events via Etherscan...")
-  if (!ETHERSCAN_API_KEY) {
-    console.log("  ⚠️  No ETHERSCAN_API_KEY, using free tier (1 req/5s)")
-  }
+async function fetchEventsFromContract(contractAddress, startBlock, label) {
+  console.log(`  [${label}] Fetching from block ${startBlock}...`)
 
   const events = []
-  let fromBlock = DEPLOY_BLOCK
+  let fromBlock = startBlock
   let requests = 0
 
   while (true) {
@@ -49,7 +49,7 @@ async function fetchMergeEvents() {
     url.searchParams.set("chainid", "1")
     url.searchParams.set("module", "logs")
     url.searchParams.set("action", "getLogs")
-    url.searchParams.set("address", MERGE_CONTRACT_ADDRESS)
+    url.searchParams.set("address", contractAddress)
     url.searchParams.set("topic0", MASS_UPDATE_TOPIC)
     url.searchParams.set("fromBlock", fromBlock.toString())
     url.searchParams.set("toBlock", "latest")
@@ -64,7 +64,7 @@ async function fetchMergeEvents() {
     if (json.status !== "1" || !Array.isArray(json.result) || json.result.length === 0) {
       if (json.message === "No records found") break
       if (json.result?.length === 0) break
-      console.warn(`\n  ⚠️  Etherscan request ${requests}: ${json.message}`)
+      console.warn(`\n  ⚠️  [${label}] request ${requests}: ${json.message}`)
       break
     }
 
@@ -75,10 +75,11 @@ async function fetchMergeEvents() {
         mass: parseInt(log.data, 16),
         blockNumber: parseInt(log.blockNumber, 16),
         timestamp: parseInt(log.timeStamp, 16),
+        contract: contractAddress,
       })
     }
 
-    process.stdout.write(`\r  Request ${requests}: ${events.length} events (from block ${fromBlock})`)
+    process.stdout.write(`\r  [${label}] Request ${requests}: ${events.length} events (from block ${fromBlock})`)
 
     if (json.result.length >= ETHERSCAN_PAGE_SIZE) {
       const lastBlock = parseInt(json.result[json.result.length - 1].blockNumber, 16)
@@ -104,7 +105,33 @@ async function fetchMergeEvents() {
     }
   }
 
-  console.log(`\n  ${unique.length} unique events (${requests} requests)`)
+  console.log(`\n  [${label}] ${unique.length} unique events (${requests} requests)`)
+  return unique
+}
+
+async function fetchMergeEvents() {
+  console.log("Fetching MassUpdate events via Etherscan...")
+  if (!ETHERSCAN_API_KEY) {
+    console.log("  ⚠️  No ETHERSCAN_API_KEY, using free tier (1 req/5s)")
+  }
+
+  const oldEvents = await fetchEventsFromContract(OLD_CONTRACT, OLD_CONTRACT_START_BLOCK, "old")
+  const newEvents = await fetchEventsFromContract(MERGE_CONTRACT_ADDRESS, DEPLOY_BLOCK, "new")
+
+  // Merge and deduplicate across contracts (same burnedId = same event)
+  const combined = [...oldEvents, ...newEvents]
+  const seen = new Set()
+  const unique = []
+  for (const e of combined) {
+    // Old contract events take priority for tokens burned there
+    const key = `${e.burnedId}-${e.persistId}`
+    if (!seen.has(key)) {
+      seen.add(key)
+      unique.push(e)
+    }
+  }
+
+  console.log(`  Total: ${unique.length} unique events (old: ${oldEvents.length}, new: ${newEvents.length})`)
   return unique
 }
 
@@ -112,7 +139,7 @@ async function fetchMergeEvents() {
 // 2. Build maps from events
 // ---------------------------------------------------------------------------
 function buildMaps(events) {
-  // burnedMap: burnedId → { persistId, blockNumber }
+  // burnedMap: burnedId → { persistId, blockNumber, contract }
   const burnedMap = new Map()
   // mergeCountMap: persistId → count (how many tokens merged into it)
   const mergeCountMap = new Map()
@@ -121,7 +148,7 @@ function buildMaps(events) {
     // persistId === 0 means burned without merge target (sent to dead address)
     // Use self-ID as persistId so mergedTo !== 0 in db (0 = alive)
     const effectivePersistId = e.persistId || e.burnedId
-    burnedMap.set(e.burnedId, { persistId: effectivePersistId, blockNumber: e.blockNumber })
+    burnedMap.set(e.burnedId, { persistId: effectivePersistId, blockNumber: e.blockNumber, contract: e.contract })
     if (e.persistId !== 0) {
       mergeCountMap.set(e.persistId, (mergeCountMap.get(e.persistId) || 0) + 1)
     }
@@ -228,9 +255,14 @@ async function fetchBurnedTokenValues(burnedMap) {
   const provider = new ethers.JsonRpcProvider(RPC_URL, undefined, {
     batchMaxCount: ARCHIVE_BATCH,
   })
-  const contract = new ethers.Contract(MERGE_CONTRACT_ADDRESS, MERGE_ABI, provider)
 
-  const entries = [...burnedMap.entries()] // [id, { persistId, blockNumber }]
+  // Create contract instances for both old and new contracts
+  const contracts = {
+    [MERGE_CONTRACT_ADDRESS]: new ethers.Contract(MERGE_CONTRACT_ADDRESS, MERGE_ABI, provider),
+    [OLD_CONTRACT]: new ethers.Contract(OLD_CONTRACT, MERGE_ABI, provider),
+  }
+
+  const entries = [...burnedMap.entries()] // [id, { persistId, blockNumber, contract }]
   const burnedValues = new Map() // id → rawValue
   const failedIds = []
 
@@ -238,11 +270,12 @@ async function fetchBurnedTokenValues(burnedMap) {
     const batch = entries.slice(i, i + ARCHIVE_BATCH)
 
     const results = await Promise.all(
-      batch.map(([id, { blockNumber }]) =>
-        contract.getValueOf(id, { blockTag: blockNumber - 1 })
+      batch.map(([id, { blockNumber, contract: contractAddr }]) => {
+        const c = contracts[contractAddr] || contracts[MERGE_CONTRACT_ADDRESS]
+        return c.getValueOf(id, { blockTag: blockNumber - 1 })
           .then(value => ({ id, value: Number(value) }))
           .catch(() => ({ id, value: null }))
-      )
+      })
     )
 
     for (const r of results) {
