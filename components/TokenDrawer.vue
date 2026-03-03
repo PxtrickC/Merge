@@ -27,6 +27,7 @@ const mergeTimeline = ref([])
 const initialMass = ref(null)
 const loading = ref(false)
 const tokenListing = ref(null)
+const cancelledOrderHashes = new Set() // survive drawer reopen, filter stale OpenSea data
 const showSellModal = ref(false)
 const showOfferModal = ref(false)
 const buySuccess = ref(false)
@@ -194,6 +195,8 @@ async function fetchListing(id) {
     const orders = data?.orders
     if (orders?.length) {
       const order = orders[0]
+      // Skip listings we already cancelled locally (OpenSea API lags behind chain)
+      if (cancelledOrderHashes.has(order.order_hash)) return
       const priceWei = order.current_price
       tokenListing.value = {
         orderHash: order.order_hash,
@@ -275,6 +278,7 @@ async function handleDrawerBuy() {
   if (!tokenListing.value) return
   try {
     await buyToken(tokenListing.value)
+    if (tokenListing.value?.orderHash) cancelledOrderHashes.add(tokenListing.value.orderHash)
     buySuccess.value = true
     tokenListing.value = null
   } catch {
@@ -307,7 +311,8 @@ async function handleCancelListing() {
   if (!isConnected.value) { openModal(); return }
   if (!listingOrderComponents.value) return
   try {
-    await cancelListingFn(listingOrderComponents.value)
+    await cancelListingFn(listingOrderComponents.value, tokenListing.value?.protocolAddress)
+    if (tokenListing.value?.orderHash) cancelledOrderHashes.add(tokenListing.value.orderHash)
     cancelListingSuccess.value = true
     tokenListing.value = null
     listingOrderComponents.value = null

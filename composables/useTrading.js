@@ -567,7 +567,7 @@ export function useTrading() {
   // ------------------------------------------------------------------
   // CANCEL LISTING FLOW
   // ------------------------------------------------------------------
-  async function cancelListing(orderComponents) {
+  async function cancelListing(orderComponents, protocolAddress) {
     if (!isConnected.value) throw new Error('Connect wallet first')
 
     cancellingListing.value = true
@@ -577,8 +577,28 @@ export function useTrading() {
 
     try {
       const signer = await getSigner()
-      const seaport = new ethers.Contract(SEAPORT_ADDRESS, SEAPORT_CANCEL_ABI, signer)
-      const tx = await seaport.cancel([orderComponents])
+      const contractAddr = protocolAddress || SEAPORT_ADDRESS
+
+      // Ensure counter is present (OpenSea may omit it)
+      if (orderComponents.counter === undefined || orderComponents.counter === null) {
+        const provider = await getProvider()
+        const seaportRead = new ethers.Contract(
+          contractAddr,
+          ['function getCounter(address offerer) view returns (uint256)'],
+          provider
+        )
+        orderComponents.counter = await seaportRead.getCounter(orderComponents.offerer)
+        console.log('[cancelListing] fetched counter:', orderComponents.counter.toString())
+      }
+
+      // Remove totalOriginalConsiderationItems (not part of OrderComponents)
+      const { totalOriginalConsiderationItems, ...cleanComponents } = orderComponents
+
+      console.log('[cancelListing] contract:', contractAddr)
+      console.log('[cancelListing] components:', JSON.stringify(cleanComponents, null, 2))
+
+      const seaport = new ethers.Contract(contractAddr, SEAPORT_CANCEL_ABI, signer)
+      const tx = await seaport.cancel([cleanComponents])
       txHash.value = tx.hash
       await tx.wait()
 
