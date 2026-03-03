@@ -47,7 +47,7 @@ function fillAlpha(mass) {
           class="sphere-wrap"
           :style="{ width: sphereSize(item.mass), height: sphereSize(item.mass) }"
         >
-          <merge-svg :tier="item.tier" :mass="item.mass" :alpha_mass="fillAlpha(item.mass)" />
+          <merge-svg :tier="item.tier" :mass="item.mass" :alpha_mass="fillAlpha(item.mass)" bordered />
         </div>
         <div class="mrow__info">
           <span class="mrow__mass">m({{ item.mass }})</span>
