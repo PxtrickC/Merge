@@ -1,7 +1,6 @@
 <script setup>
 import { ethers } from 'ethers'
 import { PLATFORM_FEE_BPS } from '~/utils/trading.mjs'
-import { MERGE_CONTRACT_ADDRESS } from '~/utils/contract.mjs'
 
 const { tokenId, isOpen, listing: drawerListing, close } = useTokenDrawer()
 
@@ -16,7 +15,11 @@ const matterForToken = computed(() => {
 })
 
 const { address: walletAddress, isConnected, openModal } = useWallet()
-const { buyToken, sellToken, transferToken, selling, buying, transferring, error: tradeError } = useTrading()
+const {
+  buyToken, sellToken, transferToken, makeOffer: makeOfferFn, acceptOffer: acceptOfferFn, cancelListing: cancelListingFn,
+  selling, buying, transferring, makingOffer, acceptingOffer, cancellingListing,
+  error: tradeError,
+} = useTrading()
 
 const tokenData = ref(null)
 const transfers = ref([])
@@ -25,8 +28,12 @@ const initialMass = ref(null)
 const loading = ref(false)
 const tokenListing = ref(null)
 const showSellModal = ref(false)
+const showOfferModal = ref(false)
 const buySuccess = ref(false)
 const transferSuccess = ref(false)
+const acceptOfferSuccess = ref(false)
+const cancelListingSuccess = ref(false)
+const listingOrderComponents = ref(null)
 
 // Offers
 const tokenOffer = ref(null)   // { price, currency, expiry }
@@ -134,7 +141,11 @@ watch(tokenId, async (id) => {
   tokenOffer.value = null
   collectionOffer.value = null
   showSellModal.value = false
+  showOfferModal.value = false
   buySuccess.value = false
+  acceptOfferSuccess.value = false
+  cancelListingSuccess.value = false
+  listingOrderComponents.value = null
   showSendPanel.value = false
   sendAddress.value = ''
   sendError.value = ''
@@ -189,6 +200,10 @@ async function fetchListing(id) {
         protocolAddress: order.protocol_address,
         price: Number(ethers.formatEther(priceWei)),
         expirationTime: order.expiration_time,
+      }
+      // Store full order components for cancel
+      if (order.protocol_data?.parameters) {
+        listingOrderComponents.value = order.protocol_data.parameters
       }
     }
   } catch {
@@ -272,13 +287,37 @@ async function handleSellComplete() {
 }
 
 function handleMakeOffer() {
-  const id = tokenData.value?.id
-  window.open(`https://opensea.io/assets/ethereum/${MERGE_CONTRACT_ADDRESS}/${id}`, '_blank')
+  if (!isConnected.value) { openModal(); return }
+  showOfferModal.value = true
 }
 
-function handleAcceptOffer() {
-  const id = tokenData.value?.id
-  window.open(`https://opensea.io/assets/ethereum/${MERGE_CONTRACT_ADDRESS}/${id}`, '_blank')
+async function handleAcceptOffer() {
+  if (!isConnected.value) { openModal(); return }
+  if (!tokenOffer.value?.orderHash) return
+  try {
+    await acceptOfferFn(tokenOffer.value)
+    acceptOfferSuccess.value = true
+    tokenOffer.value = null
+  } catch {
+    // error handled in useTrading
+  }
+}
+
+async function handleCancelListing() {
+  if (!isConnected.value) { openModal(); return }
+  if (!listingOrderComponents.value) return
+  try {
+    await cancelListingFn(listingOrderComponents.value)
+    cancelListingSuccess.value = true
+    tokenListing.value = null
+    listingOrderComponents.value = null
+  } catch {
+    // error handled in useTrading
+  }
+}
+
+function handleOfferComplete() {
+  showOfferModal.value = false
 }
 
 async function handleSend() {
@@ -367,6 +406,18 @@ onUnmounted(() => {
         />
       </div>
 
+      <!-- Offer Modal (replaces main content) -->
+      <div v-else-if="tokenData && showOfferModal" class="drawer__content">
+        <OfferModal
+          :token-id="+tokenData.id"
+          :tier="tokenData.tier"
+          :mass="tokenData.mass"
+          :alpha_mass="alpha_mass"
+          @close="showOfferModal = false"
+          @offered="handleOfferComplete"
+        />
+      </div>
+
       <!-- Token detail -->
       <div v-else-if="tokenData" class="drawer__content">
         <card-token v-bind="tokenData" :alpha_mass="alpha_mass" />
@@ -423,11 +474,12 @@ onUnmounted(() => {
               </div>
               <div class="trade-panel__buttons">
                 <button
-                  class="trade-panel__btn trade-panel__btn--primary"
+                  class="trade-panel__btn trade-panel__btn--primary trade-panel__btn--buy"
                   :disabled="buying"
                   @click="handleDrawerBuy"
                 >
-                  {{ buying ? 'Buying...' : 'Buy now' }}
+                  <span>{{ buying ? 'Buying...' : 'Buy now' }}</span>
+                  <span v-if="!buying" class="trade-panel__btn-fee">+{{ buyerFeeDisplay }} ETH platform fee (1%)</span>
                 </button>
                 <button class="trade-panel__btn trade-panel__btn--secondary" @click="handleMakeOffer">
                   Make offer
@@ -457,8 +509,12 @@ onUnmounted(() => {
                 <button class="trade-panel__btn trade-panel__btn--primary" @click="showSellModal = true">
                   Edit listing
                 </button>
-                <button class="trade-panel__btn trade-panel__btn--secondary">
-                  Cancel listing
+                <button
+                  class="trade-panel__btn trade-panel__btn--secondary"
+                  :disabled="cancellingListing"
+                  @click="handleCancelListing"
+                >
+                  {{ cancellingListing ? 'Cancelling...' : 'Cancel listing' }}
                 </button>
                 <button class="trade-panel__btn trade-panel__btn--secondary trade-panel__btn--icon" @click="showSendPanel = !showSendPanel">
                   Send
@@ -483,7 +539,13 @@ onUnmounted(() => {
               {{ tradeError }}
             </div>
             <div v-if="buySuccess" class="trade-panel__msg trade-panel__msg--success">
-              Purchase complete! 🎉
+              Purchase complete!
+            </div>
+            <div v-if="acceptOfferSuccess" class="trade-panel__msg trade-panel__msg--success">
+              Offer accepted!
+            </div>
+            <div v-if="cancelListingSuccess" class="trade-panel__msg trade-panel__msg--success">
+              Listing cancelled
             </div>
           </div>
 
@@ -528,8 +590,12 @@ onUnmounted(() => {
                   <span v-if="offerExpiry" class="trade-panel__badge">ENDING IN {{ offerExpiry }}</span>
                 </div>
               </div>
-              <button class="trade-panel__btn trade-panel__btn--secondary" @click="handleAcceptOffer">
-                Accept offer
+              <button
+                class="trade-panel__btn trade-panel__btn--secondary"
+                :disabled="acceptingOffer"
+                @click="handleAcceptOffer"
+              >
+                {{ acceptingOffer ? 'Accepting...' : 'Accept offer' }}
               </button>
             </div>
           </template>
@@ -806,6 +872,17 @@ onUnmounted(() => {
 }
 .trade-panel__btn--icon {
   padding: 0 0.875rem;
+}
+
+/* Buy button with fee sub-label */
+.trade-panel__btn--buy {
+  flex-direction: column;
+  gap: 0;
+}
+.trade-panel__btn-fee {
+  font-size: 0.5625rem;
+  opacity: 0.45;
+  line-height: 1;
 }
 
 /* Status messages */

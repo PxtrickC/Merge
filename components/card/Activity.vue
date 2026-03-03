@@ -149,7 +149,10 @@ const filteredTimeline = computed(() =>
       <Loading :fullscreen="false" />
     </div>
     <Transition name="fade" mode="out-in">
-    <div v-if="filteredTimeline.length && !loading" :key="activeFilter" class="activity__list">
+    <div v-if="!filteredTimeline.length && !loading" :key="activeFilter + '-empty'" class="activity__empty">
+      No activity
+    </div>
+    <div v-else-if="filteredTimeline.length && !loading" :key="activeFilter" class="activity__list">
       <div v-for="(event, i) in filteredTimeline" :key="i" class="activity__item">
         <div class="activity__left">
           <span v-if="event.type === 'merge_in'" class="activity__badge activity__badge--merge">merged in</span>
@@ -192,13 +195,20 @@ const filteredTimeline = computed(() =>
 </template>
 
 <style lang="postcss" scoped>
+.card__container {
+  font-family: 'HND', sans-serif;
+}
+.activity__empty {
+  @apply mt-4 flex items-start;
+  height: 24rem;
+  font-size: 0.8125rem;
+  color: #444;
+}
 .section__title {
   @apply text-3xl lg:text-6xl text-white mb-2 lg:mb-6;
-  font-family: 'HND', sans-serif;
 }
 .activity__filters {
   @apply text-sm text-white;
-  font-family: 'HND', sans-serif;
 }
 
 .activity__mode {

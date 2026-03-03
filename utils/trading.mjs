@@ -11,6 +11,9 @@ export const OPENSEA_CONDUIT_ADDRESS = '0x1E0049783F008A0085193E00003D00cd54003c
 // Merge collection on OpenSea
 export const COLLECTION_SLUG = 'm'
 
+// WETH on Ethereum mainnet (required for offers)
+export const WETH_ADDRESS = '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2'
+
 // MergeBuyWrapperV2 — atomic Seaport fulfillment + fee swapped to ASH
 export const WRAPPER_ADDRESS = '0xf84109d2D2C314aF28043c0AD03b48225E83eFb9'
 export const WRAPPER_ABI = [
