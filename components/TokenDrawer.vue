@@ -537,8 +537,9 @@ onUnmounted(() => {
         </div>
 
         <!-- Rankings -->
-        <div v-if="aliveTokens?.length" class="drawer__rankings">
+        <template v-if="aliveTokens?.length">
           <h2 class="drawer-section-title">Leaderboard</h2>
+          <div class="drawer__rankings">
           <section-ranking
             title="Mass Rank"
             :items="aliveTokens"
@@ -559,7 +560,8 @@ onUnmounted(() => {
             sort-default="merges"
             compact
           />
-        </div>
+          </div>
+        </template>
 
         <card-activity
           :id="+tokenData.id"
@@ -731,7 +733,7 @@ onUnmounted(() => {
 
 /* Leaderboard section title */
 .drawer-section-title {
-  @apply text-3xl lg:text-6xl text-white mb-2 lg:mb-6;
+  @apply text-3xl lg:text-6xl text-white mb-0;
   font-family: 'HND', sans-serif;
 }
 
@@ -896,7 +898,7 @@ onUnmounted(() => {
 .drawer__rankings {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 32px;
 }
 
 .drawer__matter {

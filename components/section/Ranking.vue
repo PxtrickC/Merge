@@ -222,10 +222,7 @@ function fillAlpha(tier, mass) {
 <template>
   <section class="ranking" :class="{ 'ranking--compact': compact }">
     <div class="ranking__header">
-      <h2 v-if="title" class="ranking__title">
-        {{ title }}
-        <span v-if="highlightRank" class="ranking__title-stat">#{{ highlightRank }}/{{ sortedTotal }}</span>
-      </h2>
+      <h2 v-if="title" class="ranking__title">{{ title }}<template v-if="highlightRank"> <span class="ranking__title-stat">#{{ highlightRank }}/{{ sortedTotal }}</span></template></h2>
       <p v-if="rankUpHint || subtitle" class="ranking__toggle">{{ rankUpHint || subtitle }}</p>
       <p v-if="showFilter && !compact" class="ranking__toggle">show
         <span v-for="(mode, i) in ['all', 'alive', 'dead']" :key="mode"

@@ -105,16 +105,52 @@ function displayName(name, addr) {
 }
 
 const { open: openDrawer } = useTokenDrawer()
+
+// Filter: multi-select, grouped by category
+const FILTER_MAP = {
+  merge: ['merge_in', 'merge_out'],
+  transfer: ['transfer', 'burned'],
+  mint: ['mint'],
+}
+const activeFilters = ref(new Set(['merge', 'transfer', 'mint']))
+
+function toggleFilter(key) {
+  const s = new Set(activeFilters.value)
+  if (s.has(key)) s.delete(key)
+  else s.add(key)
+  // prevent empty → reset to all
+  activeFilters.value = s.size ? s : new Set(['merge', 'transfer', 'mint'])
+}
+
+const allowedTypes = computed(() => {
+  const types = new Set()
+  for (const k of activeFilters.value) {
+    for (const t of FILTER_MAP[k]) types.add(t)
+  }
+  return types
+})
+
+const filteredTimeline = computed(() =>
+  timeline.value.filter(e => allowedTypes.value.has(e.type))
+)
 </script>
 
 <template>
   <div class="card__container">
     <div class="section__title">Activity</div>
+    <p class="activity__filters">
+      <span v-for="(label, key) in { merge: 'merged in', transfer: 'transfer', mint: 'minted' }" :key="key" class="activity__filter-wrap"
+        >[<span
+          class="activity__mode"
+          :class="{ 'activity__mode--active': activeFilters.has(key) }"
+          @click="toggleFilter(key)"
+        >{{ label }}</span>]</span>
+    </p>
     <div v-if="loading" class="activity__loading">
       <Loading :fullscreen="false" />
     </div>
-    <div v-else-if="timeline.length" class="activity__list">
-      <div v-for="(event, i) in timeline" :key="i" class="activity__item">
+    <div v-else-if="filteredTimeline.length" class="activity__list">
+      <div v-for="(event, i) in filteredTimeline" :key="i" class="activity__item">
         <div class="activity__left">
           <span v-if="event.type === 'merge_in'" class="activity__badge activity__badge--merge">merged in</span>
           <span v-else-if="event.type === 'merge_out'" class="activity__badge activity__badge--burn">merged into</span>
@@ -159,13 +195,36 @@ const { open: openDrawer } = useTokenDrawer()
   @apply text-3xl lg:text-6xl text-white mb-2 lg:mb-6;
   font-family: 'HND', sans-serif;
 }
+.activity__filters {
+  @apply text-sm;
+  color: #555;
+  font-family: 'HND', sans-serif;
+}
+.activity__filter-wrap {
+  color: #fff;
+}
+.activity__mode {
+  cursor: pointer;
+  color: #555;
+  transition: background-color 0.15s, color 0.15s;
+}
+.activity__mode:hover {
+  background: #fff;
+  color: #000;
+}
+.activity__mode--active {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  color: #fff;
+}
 .activity__loading {
   @apply flex justify-center py-12;
+  height: 24rem;
 }
 .activity__list {
   @apply mt-4 pr-2;
   @apply flex flex-col;
-  max-height: 24rem;
+  height: 24rem;
   overflow-y: auto;
 }
 .activity__item {
