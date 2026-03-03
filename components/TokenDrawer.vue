@@ -815,7 +815,7 @@ onUnmounted(() => {
 
 /* Alpha — White / Light */
 .drawer__panel--alpha {
-  --d-bg: #f5f5f5;
+  --d-bg: #fff;
   --d-surface: #eaeaea;
   --d-close: #e0e0e0;
   --d-border: #d0d0d0;
