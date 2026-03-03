@@ -1,5 +1,10 @@
 <script setup>
-useHead({ title: 'Merge - Market' })
+useHead({
+  title: 'Merge — Market',
+  meta: [
+    { name: 'description', content: 'Browse and trade Merge tokens. Buy, sell, make offers, and accept offers directly through Seaport.' },
+  ],
+})
 
 const { listings, loading, error, hasMore, fetchListings } = useMarket()
 const { alphaMass } = useDB()

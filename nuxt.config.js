@@ -80,6 +80,25 @@ export default defineNuxtConfig({
             script: [
                 { src: 'https://www.googletagmanager.com/gtag/js?id=G-QNXJ1ESRDL', async: true },
                 { innerHTML: "window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date());gtag('config','G-QNXJ1ESRDL')" },
+                {
+                    type: 'application/ld+json',
+                    innerHTML: JSON.stringify({
+                        "@context": "https://schema.org",
+                        "@type": "WebApplication",
+                        "name": "Merge Dashboard",
+                        "url": "https://merge.ppatrick.xyz",
+                        "description": "Live dashboard for Merge by Pak — a deflationary NFT collection. Track supply, alpha mass, tier survival, leaderboards, and trade tokens via Seaport.",
+                        "applicationCategory": "FinanceApplication",
+                        "operatingSystem": "Web",
+                        "author": { "@type": "Person", "name": "Tina Wang" },
+                        "about": {
+                            "@type": "CreativeWork",
+                            "name": "Merge",
+                            "creator": { "@type": "Person", "name": "Pak" },
+                            "description": "Merge is a deflationary NFT where tokens merge on transfer, reducing total supply over time. Started with 28,990 tokens."
+                        }
+                    }),
+                },
             ],
             link: [
                 { rel: 'icon', type: 'image/x-icon', href: '/favicon.png' },

@@ -1,5 +1,10 @@
 <script setup>
-useHead({ title: 'Merge - Leaderboard' })
+useHead({
+  title: 'Merge — Leaderboard',
+  meta: [
+    { name: 'description', content: 'Rankings of all Merge tokens by mass and merge count. Search any token to see its position.' },
+  ],
+})
 
 const { stats, alphaMass, aliveTokens, byTier, tierCount, tierTotal } = useDB()
 

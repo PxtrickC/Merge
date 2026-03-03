@@ -1,3 +1,12 @@
+<script setup>
+useHead({
+  title: 'Merge — About',
+  meta: [
+    { name: 'description', content: 'About Merge by Pak — a deflationary NFT where tokens merge on transfer, reducing total supply over time.' },
+  ],
+})
+</script>
+
 <template>
   <div class="about">
     <div class="about__img-wrapper">

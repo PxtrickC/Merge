@@ -1,10 +1,15 @@
 <script setup>
-useHead({ title: 'Merge' })
-
 const $route = useRoute()
-const { open, isOpen } = useTokenDrawer()
-
 const id = +$route.params.id
+
+useHead({
+  title: `Merge — Token #${id}`,
+  meta: [
+    { name: 'description', content: `Details for Merge token #${id} — view tier, mass, merge history, ranking, and trade.` },
+  ],
+})
+
+const { open, isOpen } = useTokenDrawer()
 if (!isNaN(id)) {
   open(id)
 }
