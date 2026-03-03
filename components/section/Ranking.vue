@@ -309,7 +309,10 @@ function fillAlpha(mass) {
   @apply text-sm lg:text-sm;
 }
 .ranking--compact .ranking__scroll {
-  @apply px-0;
+  margin-left: -2rem;
+  margin-right: -2rem;
+  padding-left: 2rem;
+  padding-right: 2rem;
 }
 .ranking__header {
   @apply flex flex-col mb-3 lg:mb-6 gap-1 lg:gap-2 px-4 lg:px-8;
