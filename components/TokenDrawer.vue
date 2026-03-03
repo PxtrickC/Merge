@@ -730,9 +730,7 @@ onUnmounted(() => {
   bottom: 0;
   width: 100%;
   max-width: 30rem;
-  background:
-    linear-gradient(var(--d-bg), var(--d-bg)) local,
-    #000;
+  background: var(--d-bg);
   border-left: 1px solid var(--d-border);
   z-index: 51;
   overflow-y: auto;
@@ -1134,7 +1132,7 @@ onUnmounted(() => {
 /* matter section */
 .drawer__matter-title {
   @apply text-3xl lg:text-6xl mb-2 lg:mb-6;
-  color: #fff;
+  color: var(--d-text);
   font-family: 'HND', sans-serif;
 }
 .drawer__rankings {
@@ -1145,10 +1143,6 @@ onUnmounted(() => {
 
 .drawer__matter {
   @apply flex flex-col;
-  background: #000;
-  color: #fff;
-  margin: 0 -1rem -1rem;
-  padding: 1.5rem 1rem 1rem;
 }
 .drawer__matter-grid {
   @apply grid grid-cols-2 gap-3;
@@ -1163,7 +1157,7 @@ onUnmounted(() => {
 }
 .drawer__matter-name {
   @apply text-xs truncate w-full text-center;
-  color: #fff;
+  color: var(--d-text);
 }
 
 /* transitions */
