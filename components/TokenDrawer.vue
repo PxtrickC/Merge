@@ -537,7 +537,7 @@ onUnmounted(() => {
         </div>
 
         <!-- Rankings -->
-        <template v-if="aliveTokens?.length">
+        <template v-if="!isBurned && aliveTokens?.length">
           <h2 class="drawer-section-title">Leaderboard</h2>
           <div class="drawer__rankings">
           <section-ranking
