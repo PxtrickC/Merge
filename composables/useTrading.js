@@ -49,9 +49,14 @@ const SEAPORT_ABI = [
   'function fulfillBasicOrder_efficient_6GL6yc((address,uint256,uint256,address,address,address,uint256,uint256,uint8,uint256,uint256,bytes32,uint256,bytes32,bytes32,uint256,(uint256,address)[],bytes)) payable returns (bool)',
 ]
 
-// Seaport cancel + fulfillOrder ABI
+// Seaport matchAdvancedOrders ABI (used for offer fulfillment)
+const SEAPORT_MATCH_ABI = [
+  'function matchAdvancedOrders(((address,address,(uint8,address,uint256,uint256,uint256)[],(uint8,address,uint256,uint256,uint256,address)[],uint8,uint256,uint256,bytes32,uint256,bytes32,uint256),uint120,uint120,bytes,bytes)[],(uint256,uint8,uint256,uint256,bytes32[])[],((uint256,uint256)[],(uint256,uint256)[])[],address) payable',
+]
+
+// Seaport cancel ABI (named fields so ethers.js can map OpenSea's JSON objects)
 const SEAPORT_CANCEL_ABI = [
-  'function cancel((address,address,(uint8,address,uint256,uint256,uint256)[],(uint8,address,uint256,uint256,uint256,address)[],uint8,uint256,uint256,bytes32,uint256,bytes32,uint256)[]) external returns (bool)',
+  'function cancel((address offerer, address zone, (uint8 itemType, address token, uint256 identifierOrCriteria, uint256 startAmount, uint256 endAmount)[] offer, (uint8 itemType, address token, uint256 identifierOrCriteria, uint256 startAmount, uint256 endAmount, address recipient)[] consideration, uint8 orderType, uint256 startTime, uint256 endTime, bytes32 zoneHash, uint256 salt, bytes32 conduitKey, uint256 counter)[] orders) external returns (bool)',
 ]
 
 export function useTrading() {
@@ -415,6 +420,7 @@ export function useTrading() {
       trackEvent('offer_created', { token_id: tokenId, price_eth: priceInEth })
       return { success: true, order: result }
     } catch (err) {
+      console.error('[makeOffer]', err)
       const msg = parseTradeError(err)
       if (msg) {
         error.value = msg
@@ -465,38 +471,74 @@ export function useTrading() {
         },
       })
 
-      // 3. Extract transaction data and encode calldata (same pattern as buyToken)
+      // 3. Extract transaction data and build calldata
       const txData = fulfillmentData.fulfillment_data?.transaction
       if (!txData) throw new Error('No transaction data received')
 
-      const params = txData.input_data?.parameters
-      if (!params) throw new Error('No fulfillment parameters received')
+      console.log('[acceptOffer] function:', txData.function)
+      console.log('[acceptOffer] input_data keys:', Object.keys(txData.input_data || {}))
 
-      const orderTuple = [
-        params.considerationToken,
-        params.considerationIdentifier,
-        params.considerationAmount,
-        params.offerer,
-        params.zone,
-        params.offerToken,
-        params.offerIdentifier,
-        params.offerAmount,
-        params.basicOrderType,
-        params.startTime,
-        params.endTime,
-        params.zoneHash,
-        params.salt,
-        params.offererConduitKey,
-        params.fulfillerConduitKey,
-        params.totalOriginalAdditionalRecipients,
-        (params.additionalRecipients || []).map(r => [r.amount, r.recipient]),
-        params.signature,
-      ]
+      let seaportCalldata
 
-      const seaportIface = new ethers.Interface(SEAPORT_ABI)
-      const seaportCalldata = seaportIface.encodeFunctionData(
-        'fulfillBasicOrder_efficient_6GL6yc', [orderTuple]
-      )
+      if (txData.input_data?.parameters) {
+        // Basic order path (fulfillBasicOrder_efficient_6GL6yc)
+        const params = txData.input_data.parameters
+        const orderTuple = [
+          params.considerationToken,
+          params.considerationIdentifier,
+          params.considerationAmount,
+          params.offerer,
+          params.zone,
+          params.offerToken,
+          params.offerIdentifier,
+          params.offerAmount,
+          params.basicOrderType,
+          params.startTime,
+          params.endTime,
+          params.zoneHash,
+          params.salt,
+          params.offererConduitKey,
+          params.fulfillerConduitKey,
+          params.totalOriginalAdditionalRecipients,
+          (params.additionalRecipients || []).map(r => [r.amount, r.recipient]),
+          params.signature,
+        ]
+        const seaportIface = new ethers.Interface(SEAPORT_ABI)
+        seaportCalldata = seaportIface.encodeFunctionData(
+          'fulfillBasicOrder_efficient_6GL6yc', [orderTuple]
+        )
+      } else if (txData.input_data?.orders) {
+        // matchAdvancedOrders path (used for offer fulfillment)
+        const d = txData.input_data
+        // Convert fulfillments from named objects to positional arrays
+        const fulfillments = (d.fulfillments || []).map(f => [
+          (f.offerComponents || []).map(c => [c.orderIndex, c.itemIndex]),
+          (f.considerationComponents || []).map(c => [c.orderIndex, c.itemIndex]),
+        ])
+        // Convert orders from named objects to positional arrays
+        const orders = d.orders.map(o => [
+          [
+            o.parameters.offerer, o.parameters.zone,
+            (o.parameters.offer || []).map(i => [i.itemType, i.token, i.identifierOrCriteria, i.startAmount, i.endAmount]),
+            (o.parameters.consideration || []).map(i => [i.itemType, i.token, i.identifierOrCriteria, i.startAmount, i.endAmount, i.recipient]),
+            o.parameters.orderType, o.parameters.startTime, o.parameters.endTime,
+            o.parameters.zoneHash, o.parameters.salt, o.parameters.conduitKey,
+            o.parameters.totalOriginalConsiderationItems,
+          ],
+          o.numerator, o.denominator, o.signature, o.extraData,
+        ])
+        const criteriaResolvers = (d.criteriaResolvers || []).map(r => [
+          r.orderIndex, r.side, r.index, r.identifier, r.criteriaProof,
+        ])
+
+        const seaportIface = new ethers.Interface(SEAPORT_MATCH_ABI)
+        seaportCalldata = seaportIface.encodeFunctionData(
+          'matchAdvancedOrders', [orders, criteriaResolvers, fulfillments, d.recipient]
+        )
+      } else {
+        console.error('[acceptOffer] Unknown input_data structure:', txData.input_data)
+        throw new Error('Unsupported fulfillment format')
+      }
 
       // 4. Execute the fulfillment transaction
       const tx = await signer.sendTransaction({
@@ -510,6 +552,7 @@ export function useTrading() {
       trackEvent('offer_accepted', { order_hash: offer.orderHash, tx_hash: tx.hash })
       return { success: true, txHash: tx.hash }
     } catch (err) {
+      console.error('[acceptOffer]', err)
       const msg = parseTradeError(err)
       if (msg) {
         error.value = msg
@@ -542,6 +585,7 @@ export function useTrading() {
       trackEvent('listing_cancelled', { tx_hash: tx.hash })
       return { success: true, txHash: tx.hash }
     } catch (err) {
+      console.error('[cancelListing]', err)
       const msg = parseTradeError(err)
       if (msg) {
         error.value = msg
@@ -611,14 +655,19 @@ export function useTrading() {
 
 function parseTradeError(err) {
   // User cancelled in wallet — not an error
-  if (err.code === 'ACTION_REJECTED') return null
+  // ethers.js uses ACTION_REJECTED, MetaMask raw uses 4001
+  if (err.code === 'ACTION_REJECTED' || err.code === 4001 ||
+      err.info?.error?.code === 4001 ||
+      err.message?.includes('denied') || err.message?.includes('rejected'))
+    return null
   // Insufficient ETH
   if (err.code === 'INSUFFICIENT_FUNDS' || err.message?.includes('insufficient funds'))
     return 'Insufficient ETH balance'
-  // Server returned error (listing expired, already sold, etc.)
-  if (err.statusCode === 400 || err.status === 400)
+  // Server returned error (from $fetch — listing expired, already sold, etc.)
+  const status = err.statusCode || err.status || err.data?.statusCode
+  if (status === 400 || status === 404)
     return 'Order no longer available'
-  if (err.statusCode >= 500 || err.status >= 500)
+  if (status >= 500)
     return 'Server error, please try again'
   // Seaport revert (already filled, expired, etc.)
   if (err.code === 'CALL_EXCEPTION')
@@ -626,8 +675,9 @@ function parseTradeError(err) {
   // Network issues
   if (err.code === 'NETWORK_ERROR' || err.code === 'TIMEOUT')
     return 'Network error, please retry'
-  // Fallback
-  return 'Transaction failed'
+  // Fallback — include actual message for debugging
+  console.warn('[parseTradeError] Unhandled error:', err.message || err)
+  return err.shortMessage || err.message || 'Transaction failed'
 }
 
 function generateSalt() {
