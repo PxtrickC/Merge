@@ -49,6 +49,19 @@ const sendSuccess = ref(false)
 // ETH/USD price
 const ethUsd = ref(null)
 
+// 複用 MergeSvg.vue 的圓形半徑公式（立方根比例）
+function getRadius(mass) {
+  return Math.pow(mass, 1 / 3) * 62035049089 / 1000000
+}
+
+const MATTER_MAX_MASS = 12143
+
+function matterClipPercent(mass) {
+  if (mass <= 0) return 5
+  const ratio = getRadius(mass) / getRadius(MATTER_MAX_MASS)
+  return Math.max(5, ratio * 50) // 50% = 滿圓（半徑 = 50% 邊長）
+}
+
 const drawerTierItems = computed(() => {
   if (!tokenData.value || !aliveTokens.value?.length) return []
   return aliveTokens.value.filter(x => x.tier === tokenData.value.tier)
@@ -682,7 +695,10 @@ onUnmounted(() => {
               :key="m.id"
               class="drawer__matter-item"
             >
-              <img :src="m.image_cdn" :alt="m.name" class="drawer__matter-img" width="512" height="512" />
+              <img
+                :src="m.image_cdn" :alt="m.name" class="drawer__matter-img"
+                :style="{ clipPath: `circle(${matterClipPercent(m.mass)}% at center)` }"
+              />
               <span class="drawer__matter-name">{{ m.name }}</span>
             </div>
           </div>
@@ -1154,7 +1170,7 @@ onUnmounted(() => {
   @apply flex flex-col items-center gap-1.5;
 }
 .drawer__matter-img {
-  @apply w-full h-auto block rounded;
+  @apply w-full h-auto block;
   aspect-ratio: 1;
   object-fit: cover;
 }
