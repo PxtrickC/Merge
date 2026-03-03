@@ -465,14 +465,43 @@ export function useTrading() {
         },
       })
 
-      // 3. Extract transaction data
+      // 3. Extract transaction data and encode calldata (same pattern as buyToken)
       const txData = fulfillmentData.fulfillment_data?.transaction
       if (!txData) throw new Error('No transaction data received')
 
-      // 4. Execute the fulfillment transaction directly
+      const params = txData.input_data?.parameters
+      if (!params) throw new Error('No fulfillment parameters received')
+
+      const orderTuple = [
+        params.considerationToken,
+        params.considerationIdentifier,
+        params.considerationAmount,
+        params.offerer,
+        params.zone,
+        params.offerToken,
+        params.offerIdentifier,
+        params.offerAmount,
+        params.basicOrderType,
+        params.startTime,
+        params.endTime,
+        params.zoneHash,
+        params.salt,
+        params.offererConduitKey,
+        params.fulfillerConduitKey,
+        params.totalOriginalAdditionalRecipients,
+        (params.additionalRecipients || []).map(r => [r.amount, r.recipient]),
+        params.signature,
+      ]
+
+      const seaportIface = new ethers.Interface(SEAPORT_ABI)
+      const seaportCalldata = seaportIface.encodeFunctionData(
+        'fulfillBasicOrder_efficient_6GL6yc', [orderTuple]
+      )
+
+      // 4. Execute the fulfillment transaction
       const tx = await signer.sendTransaction({
         to: txData.to,
-        data: txData.input_data ? (typeof txData.input_data === 'string' ? txData.input_data : txData.data) : txData.data,
+        data: seaportCalldata,
         value: BigInt(txData.value || '0'),
       })
       txHash.value = tx.hash
