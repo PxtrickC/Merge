@@ -1,6 +1,6 @@
 <script setup>
 import { ethers } from 'ethers'
-import { PLATFORM_FEE_BPS } from '~/utils/trading.mjs'
+import { PLATFORM_FEE_BPS, SEAPORT_ADDRESS } from '~/utils/trading.mjs'
 
 const { tokenId, isOpen, listing: drawerListing, close } = useTokenDrawer()
 
@@ -221,20 +221,21 @@ async function fetchOffers(id) {
       $fetch('/api/opensea/collection-offers').catch(() => null),
     ])
 
-    const tOffer = tokenData?.orders?.[0]
-    if (tOffer) {
-      const priceWei = tOffer.current_price
+    // Best Offer API returns the single best applicable offer for this token
+    if (tokenData?.price) {
+      const decimals = tokenData.price.decimals ?? 18
       tokenOffer.value = {
-        price: Number(ethers.formatEther(priceWei)),
-        currency: tOffer.taker_asset_bundle?.assets?.[0]?.asset_contract?.symbol || 'WETH',
-        expirationTime: tOffer.expiration_time,
-        orderHash: tOffer.order_hash,
-        protocolAddress: tOffer.protocol_address,
+        price: Number(tokenData.price.value) / Math.pow(10, decimals),
+        currency: tokenData.price.currency || 'WETH',
+        expirationTime: tokenData.expiration_time || null,
+        orderHash: tokenData.order_hash,
+        protocolAddress: tokenData.protocol_address,
       }
     }
 
+    // Collection offer as fallback (only if no token-specific offer)
     const cOffer = collData?.offers?.[0]
-    if (!tOffer && cOffer) {
+    if (!tokenOffer.value && cOffer) {
       const priceWei = cOffer.price?.value
       const decimals = cOffer.price?.decimals ?? 18
       if (priceWei) {
@@ -286,8 +287,23 @@ async function handleDrawerBuy() {
   }
 }
 
-async function handleSellComplete() {
+async function handleSellComplete(data) {
   showSellModal.value = false
+  if (data?.price) {
+    // Immediately reflect the new listing in UI
+    const startTime = Math.floor(Date.now() / 1000)
+    const endTime = startTime + (data.duration || 30) * 86400
+    tokenListing.value = {
+      orderHash: data.order?.order?.order_hash || null,
+      protocolAddress: data.order?.order?.protocol_address || SEAPORT_ADDRESS,
+      price: data.price,
+      expirationTime: endTime,
+    }
+    // Store order components for cancel if available
+    if (data.order?.order?.protocol_data?.parameters) {
+      listingOrderComponents.value = data.order.order.protocol_data.parameters
+    }
+  }
 }
 
 function handleMakeOffer() {

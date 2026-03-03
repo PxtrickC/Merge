@@ -42,9 +42,13 @@ const sellerReceives = computed(() => Math.max(0, price.value - totalFee.value))
 async function handleSell() {
   if (!price.value) return
   try {
-    await sellToken(props.tokenId, price.value, duration.value)
+    const result = await sellToken(props.tokenId, price.value, duration.value)
     listingSuccess.value = true
-    setTimeout(() => emit('listed'), 1500)
+    setTimeout(() => emit('listed', {
+      price: price.value,
+      duration: duration.value,
+      order: result?.order,
+    }), 1500)
   } catch {
     // error handled in useTrading
   }

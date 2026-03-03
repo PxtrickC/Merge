@@ -1,4 +1,4 @@
-const CONTRACT = '0xc3f8a0f5841abff777d3eefa5047e8d413a1c9ab'
+const COLLECTION_SLUG = 'm'
 
 export default defineEventHandler(async (event) => {
     const config = useRuntimeConfig()
@@ -9,8 +9,10 @@ export default defineEventHandler(async (event) => {
     const tokenId = query.tokenId
     if (!tokenId) throw createError({ statusCode: 400, statusMessage: 'tokenId required' })
 
+    // Use "Best Offer on NFT" endpoint — returns the actual best applicable offer
+    // (considers both direct and criteria-based offers)
     const res = await fetch(
-        `https://api.opensea.io/api/v2/orders/ethereum/seaport/offers?asset_contract_address=${CONTRACT}&token_ids=${tokenId}&order_by=eth_price&order_direction=desc&limit=1`,
+        `https://api.opensea.io/api/v2/offers/collection/${COLLECTION_SLUG}/nfts/${tokenId}/best`,
         { headers: { 'x-api-key': apiKey, Accept: 'application/json' } }
     )
 
