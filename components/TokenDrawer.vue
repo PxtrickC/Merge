@@ -57,8 +57,8 @@ function getRadius(mass) {
 const MATTER_MAX_MASS = 12143
 
 function matterClipPercent(mass) {
-  if (mass <= 0) return 5
-  const ratio = getRadius(mass) / getRadius(MATTER_MAX_MASS)
+  const absMass = Math.abs(mass) || 1
+  const ratio = getRadius(absMass) / getRadius(MATTER_MAX_MASS)
   return Math.max(5, ratio * 50) // 50% = 滿圓（半徑 = 50% 邊長）
 }
 
@@ -700,6 +700,7 @@ onUnmounted(() => {
                 :style="{ clipPath: `circle(${matterClipPercent(m.mass)}% at center)` }"
               />
               <span class="drawer__matter-name">{{ m.name }}</span>
+              <span class="drawer__matter-meta">{{ m.type }} · m({{ m.mass }})</span>
             </div>
           </div>
         </div>
@@ -1175,8 +1176,14 @@ onUnmounted(() => {
   object-fit: cover;
 }
 .drawer__matter-name {
-  @apply text-xs truncate w-full text-center;
+  @apply text-base lg:text-lg truncate w-full text-center;
   color: var(--d-text);
+  font-family: 'HND', sans-serif;
+}
+.drawer__matter-meta {
+  @apply text-base lg:text-lg w-full text-center;
+  color: var(--d-text-2);
+  font-family: 'HND', sans-serif;
 }
 
 /* transitions */
