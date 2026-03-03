@@ -14,9 +14,11 @@ const props = defineProps({
   filterDefault: { type: String, default: 'alive' },
   scopeItems: Array,
   scopeLabel: String,
+  subtitle: String,
 })
 
 const { db } = useDB()
+const { open: openDrawer } = useTokenDrawer()
 const { trackEvent } = useAnalytics()
 const scrollEl = useDragScroll()
 const sortMode = ref(props.sortDefault)
@@ -103,6 +105,54 @@ const highlightRank = computed(() => {
   return token.displayRank ?? idx + 1
 })
 
+// Rank-up hint: compute based on current scope/filter
+const rankUpHint = computed(() => {
+  if (!props.highlightId || !props.compact) return null
+  const items = effectiveItems.value
+  if (!items?.length) return null
+
+  const myToken = items.find(t => t.id === props.highlightId)
+  if (!myToken) return null
+
+  const isMass = sortMode.value === 'mass'
+  const myVal = isMass ? myToken.mass : (myToken.merges ?? 0)
+  const myId = myToken.id
+
+  const sorted = [...items].sort(isMass
+    ? (a, b) => b.mass - a.mass || b.id - a.id
+    : (a, b) => (b.merges ?? 0) - (a.merges ?? 0) || b.id - a.id
+  )
+  const myIdx = sorted.findIndex(t => t.id === myId)
+  if (myIdx <= 0) return null
+  const currentRank = myIdx + 1
+
+  const above = sorted[myIdx - 1]
+  const aboveVal = isMass ? above.mass : (above.merges ?? 0)
+  let needed
+  if (aboveVal === myVal) {
+    needed = 1
+  } else {
+    const diff = aboveVal - myVal
+    needed = myId > above.id ? diff : diff + 1
+  }
+
+  const newVal = myVal + needed
+  let aboveCount = 0
+  for (const t of items) {
+    if (t.id === myId) continue
+    const tv = isMass ? t.mass : (t.merges ?? 0)
+    if (tv > newVal || (tv === newVal && t.id > myId)) aboveCount++
+  }
+  const newRank = aboveCount + 1
+  const gain = currentRank - newRank
+  if (gain <= 0) return null
+
+  if (isMass) {
+    return `+${needed} mass to #${newRank} (↑${gain})`
+  }
+  return `${needed} more merge${needed > 1 ? 's' : ''} to #${newRank} (↑${gain})`
+})
+
 watch(sortedItems, (_new, old) => {
   if (!old) return
   const map = new Map()
@@ -176,6 +226,7 @@ function fillAlpha(tier, mass) {
         {{ title }}
         <span v-if="highlightRank" class="ranking__title-stat">#{{ highlightRank }}/{{ sortedTotal }}</span>
       </h2>
+      <p v-if="rankUpHint || subtitle" class="ranking__toggle">{{ rankUpHint || subtitle }}</p>
       <p v-if="showFilter && !compact" class="ranking__toggle">show
         <span v-for="(mode, i) in ['all', 'alive', 'dead']" :key="mode"
           >{{ i > 0 ? ' ' : '' }}[<span
@@ -214,13 +265,14 @@ function fillAlpha(tier, mass) {
     <Transition name="fade" mode="out-in">
     <div :key="filterMode" ref="scrollEl" class="ranking__scroll" :style="{ height: scrollHeight }">
       <TransitionGroup name="rank">
-      <NuxtLink
+      <a
         v-for="(token, i) in sortedItems"
         :key="itemKey(token, i)"
-        :to="`/${token.id}`"
+        :href="`/${token.id}`"
         :data-highlight-id="token.id"
         class="ranking__item"
         :class="{ 'ranking__item--highlight': token.id === highlightId }"
+        @click.prevent="openDrawer(token.id)"
       >
         <div class="ranking__rank">{{ token.displayRank ?? i + 1 }}</div>
         <div
@@ -236,7 +288,7 @@ function fillAlpha(tier, mass) {
           <span v-if="token.burned" class="ranking__burned">merged → #{{ token.mergedTo }}</span>
           <span v-else class="ranking__merges">{{ (token.merges ?? 0).toLocaleString() }} merges</span>
         </div>
-      </NuxtLink>
+      </a>
       </TransitionGroup>
     </div>
     </Transition>
@@ -249,7 +301,7 @@ function fillAlpha(tier, mass) {
   border-top: 1px solid #1a1a1a;
 }
 .ranking--compact {
-  @apply py-4 lg:py-4;
+  @apply py-0;
   border-top: none;
 }
 .ranking--compact .ranking__title {

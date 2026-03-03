@@ -19,7 +19,14 @@ watch(isOpen, (val) => {
 <template>
   <div>
     <section-stats-bar />
+    <section-my-merge />
     <section-latest-merges />
+    <section-chart-supply />
+    <section-chart-merge-rate />
+    <section-chart-tier-survival />
+    <section-chart-alpha />
+    <section-chart-omnibus />
+    <section-chart-concentration />
     <section-mass-distribution />
   </div>
 </template>

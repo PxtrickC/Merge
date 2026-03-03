@@ -121,7 +121,6 @@ const tokenMergesRank = computed(() => {
   const idx = sorted.findIndex(t => t.id === tokenData.value.id)
   return idx >= 0 ? idx + 1 : null
 })
-
 const panelRef = ref(null)
 
 watch(tokenId, async (id) => {
@@ -328,7 +327,18 @@ function onKeyDown(e) {
 }
 
 onMounted(() => document.addEventListener('keydown', onKeyDown))
-onUnmounted(() => document.removeEventListener('keydown', onKeyDown))
+onUnmounted(() => {
+  document.removeEventListener('keydown', onKeyDown)
+  // Clean up body styles if drawer was open during unmount (e.g. route change)
+  if (isOpen.value) {
+    document.body.style.position = ''
+    document.body.style.top = ''
+    document.body.style.left = ''
+    document.body.style.right = ''
+    document.body.style.overflow = ''
+    window.scrollTo(0, savedScrollY)
+  }
+})
 </script>
 
 <template>
@@ -549,16 +559,6 @@ onUnmounted(() => document.removeEventListener('keydown', onKeyDown))
             sort-default="merges"
             compact
           />
-          <section-ranking
-            title="ID Rank"
-            :items="aliveTokens"
-            :scope-items="drawerTierItems"
-            :scope-label="`Tier${tokenData.tier}`"
-            :alpha-mass="alpha_mass"
-            :highlight-id="tokenData.id"
-            sort-default="id"
-            compact
-          />
         </div>
 
         <card-activity
@@ -731,7 +731,7 @@ onUnmounted(() => document.removeEventListener('keydown', onKeyDown))
 
 /* Leaderboard section title */
 .drawer-section-title {
-  @apply text-2xl lg:text-6xl text-white mb-4 lg:mb-6;
+  @apply text-3xl lg:text-6xl text-white mb-2 lg:mb-6;
   font-family: 'HND', sans-serif;
 }
 
@@ -890,15 +890,13 @@ onUnmounted(() => document.removeEventListener('keydown', onKeyDown))
 
 /* matter section */
 .drawer__matter-title {
-  @apply text-2xl lg:text-6xl text-white mb-4 lg:mb-6;
+  @apply text-3xl lg:text-6xl text-white mb-2 lg:mb-6;
+  font-family: 'HND', sans-serif;
 }
 .drawer__rankings {
   display: flex;
   flex-direction: column;
-  gap: 2rem;
-}
-@media (min-width: 1024px) {
-  .drawer__rankings { gap: 0rem; }
+  gap: 16px;
 }
 
 .drawer__matter {

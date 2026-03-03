@@ -143,6 +143,23 @@ const sphereStyle = computed(() => {
   flex-direction: column;
   gap: 1rem;
 }
+@media (max-width: 767px) {
+  .mymerge__sphere-col {
+    flex: 1;
+    flex-shrink: 1;
+    min-width: 0;
+  }
+  .mymerge__sphere {
+    width: 100% !important;
+    height: auto !important;
+    aspect-ratio: 1;
+  }
+  .mymerge__right {
+    flex: none;
+    flex-shrink: 0;
+    width: auto;
+  }
+}
 .mymerge__info {
   @apply flex flex-col gap-1;
 }

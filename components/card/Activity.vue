@@ -156,7 +156,8 @@ const { open: openDrawer } = useTokenDrawer()
 
 <style lang="postcss" scoped>
 .section__title {
-  @apply text-2xl lg:text-6xl text-white mb-4 lg:mb-6;
+  @apply text-3xl lg:text-6xl text-white mb-2 lg:mb-6;
+  font-family: 'HND', sans-serif;
 }
 .activity__loading {
   @apply flex justify-center py-12;
