@@ -61,6 +61,18 @@ const isOwnToken = computed(() => {
 
 const isBurned = computed(() => !!tokenData.value?.merged_to)
 
+const isAlpha = computed(() => tokenData.value && tokenData.value.mass === alphaMass.value && alphaMass.value > 0)
+const drawerTierClass = computed(() => {
+  if (!tokenData.value) return ''
+  if (isAlpha.value) return 'drawer__panel--alpha'
+  switch (tokenData.value.tier) {
+    case 2: return 'drawer__panel--tier2'
+    case 3: return 'drawer__panel--tier3'
+    case 4: return 'drawer__panel--tier4'
+    default: return ''
+  }
+})
+
 // ── ETH number formatting ─────────────────────────────────────────────────────
 // 最多4位小數，自動去掉尾隨零；15.0000 → "15"，1.5900 → "1.59"，0.0159 → "0.0159"
 function formatEth(val) {
@@ -406,7 +418,7 @@ onUnmounted(() => {
     <div v-if="isOpen" class="drawer__backdrop" @click="close" @touchmove.prevent />
   </Transition>
   <Transition name="slide">
-    <div v-if="isOpen" ref="panelRef" class="drawer__panel">
+    <div v-if="isOpen" ref="panelRef" class="drawer__panel" :class="drawerTierClass">
       <button class="drawer__close" @click="close">
         <icon class="w-5 h-5" variant="return" />
       </button>
@@ -687,21 +699,145 @@ onUnmounted(() => {
   background: rgba(0, 0, 0, 0.6);
   z-index: 50;
 }
+
+/* ── Tier Color System (CSS Custom Properties) ──────────────────────────── */
 .drawer__panel {
+  /* Default = Tier 1 (dark) */
+  --d-bg: #0a0a0a;
+  --d-surface: #0d0d0d;
+  --d-close: #000;
+  --d-border: #1a1a1a;
+  --d-border-2: #1f1f1f;
+  --d-border-3: #2a2a2a;
+  --d-border-hover: #444;
+  --d-text: #fff;
+  --d-text-2: #888;
+  --d-text-3: #555;
+  --d-text-4: #333;
+  --d-text-5: #aaa;
+  --d-badge-bg: #111;
+  --d-btn-bg: #fff;
+  --d-btn-color: #000;
+  --d-btn-hover: #e8e8e8;
+  --d-btn-sec-color: #fff;
+  --d-input-bg: #0a0a0a;
+  --d-scroll-track: #0a0a0a;
+  --d-scroll-thumb: #333;
+
   position: fixed;
   top: 0;
   right: 0;
   bottom: 0;
   width: 100%;
   max-width: 30rem;
-  background: #0a0a0a;
-  border-left: 1px solid #1a1a1a;
+  background:
+    linear-gradient(var(--d-bg), var(--d-bg)) local,
+    #000;
+  border-left: 1px solid var(--d-border);
   z-index: 51;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
   padding: calc(1rem + env(safe-area-inset-top)) 1rem 1rem;
 }
+
+/* Tier 2 — Black bg, Yellow text */
+.drawer__panel--tier2 {
+  --d-bg: #0a0a0a;
+  --d-surface: #111;
+  --d-close: #000;
+  --d-border: #2a2200;
+  --d-border-2: #332a00;
+  --d-border-3: #3d3200;
+  --d-border-hover: #665200;
+  --d-text: #fc3;
+  --d-text-2: #c99e20;
+  --d-text-3: #997515;
+  --d-text-4: #664e0e;
+  --d-text-5: #d4a825;
+  --d-badge-bg: #1a1400;
+  --d-btn-bg: #fc3;
+  --d-btn-color: #000;
+  --d-btn-hover: #e6b82e;
+  --d-btn-sec-color: #fc3;
+  --d-input-bg: #111;
+  --d-scroll-track: #0a0a0a;
+  --d-scroll-thumb: #3d3200;
+}
+
+/* Tier 3 — Blue (#33f) */
+.drawer__panel--tier3 {
+  --d-bg: #33f;
+  --d-surface: #2929cc;
+  --d-close: #2929cc;
+  --d-border: #2222aa;
+  --d-border-2: #1e1e99;
+  --d-border-3: #1a1a88;
+  --d-border-hover: #4444ff;
+  --d-text: #fff;
+  --d-text-2: rgba(255, 255, 255, 0.75);
+  --d-text-3: rgba(255, 255, 255, 0.55);
+  --d-text-4: rgba(255, 255, 255, 0.3);
+  --d-text-5: rgba(255, 255, 255, 0.65);
+  --d-badge-bg: #2222aa;
+  --d-btn-bg: #fff;
+  --d-btn-color: #1a1a88;
+  --d-btn-hover: #d0d0f5;
+  --d-btn-sec-color: #fff;
+  --d-input-bg: #2222aa;
+  --d-scroll-track: #2929cc;
+  --d-scroll-thumb: #1a1a88;
+}
+
+/* Tier 4 — Red (#f33) */
+.drawer__panel--tier4 {
+  --d-bg: #f33;
+  --d-surface: #cc2929;
+  --d-close: #cc2929;
+  --d-border: #aa2222;
+  --d-border-2: #991e1e;
+  --d-border-3: #881a1a;
+  --d-border-hover: #ff4444;
+  --d-text: #fff;
+  --d-text-2: rgba(255, 255, 255, 0.75);
+  --d-text-3: rgba(255, 255, 255, 0.55);
+  --d-text-4: rgba(255, 255, 255, 0.3);
+  --d-text-5: rgba(255, 255, 255, 0.65);
+  --d-badge-bg: #aa2222;
+  --d-btn-bg: #fff;
+  --d-btn-color: #881a1a;
+  --d-btn-hover: #f5d0d0;
+  --d-btn-sec-color: #fff;
+  --d-input-bg: #aa2222;
+  --d-scroll-track: #cc2929;
+  --d-scroll-thumb: #881a1a;
+}
+
+/* Alpha — White / Light */
+.drawer__panel--alpha {
+  --d-bg: #f5f5f5;
+  --d-surface: #eaeaea;
+  --d-close: #e0e0e0;
+  --d-border: #d0d0d0;
+  --d-border-2: #c5c5c5;
+  --d-border-3: #bbb;
+  --d-border-hover: #888;
+  --d-text: #111;
+  --d-text-2: #666;
+  --d-text-3: #888;
+  --d-text-4: #bbb;
+  --d-text-5: #666;
+  --d-badge-bg: #e5e5e5;
+  --d-btn-bg: #111;
+  --d-btn-color: #fff;
+  --d-btn-hover: #333;
+  --d-btn-sec-color: #111;
+  --d-input-bg: #f0f0f0;
+  --d-scroll-track: #f5f5f5;
+  --d-scroll-thumb: #ccc;
+  --d-icon-invert: 1;
+}
+
 @media (min-width: 1024px) {
   .drawer__panel {
     padding: 1.5rem;
@@ -711,9 +847,10 @@ onUnmounted(() => {
   position: sticky;
   top: 0;
   z-index: 50;
-  background: #000;
+  background: var(--d-close);
   border-radius: 50%;
-  @apply mb-4 lg:mb-6 text-white text-opacity-100;
+  color: var(--d-text);
+  @apply mb-4 lg:mb-6;
   @apply w-10 h-10 p-0 flex items-center justify-center;
   line-height: 0;
 }
@@ -727,9 +864,9 @@ onUnmounted(() => {
 
 /* ── Trade Panel ─────────────────────────────────────────────────────────── */
 .trade-panel {
-  border: 1px solid #1f1f1f;
+  border: 1px solid var(--d-border-2);
   border-radius: 8px;
-  background: #0d0d0d;
+  background: var(--d-surface);
   overflow: hidden;
 }
 
@@ -740,7 +877,7 @@ onUnmounted(() => {
 }
 .trade-panel__stat {
   padding: 0.75rem 0.875rem;
-  border-right: 1px solid #1a1a1a;
+  border-right: 1px solid var(--d-border);
 }
 .trade-panel__stat--last {
   border-right: none;
@@ -748,28 +885,28 @@ onUnmounted(() => {
 .trade-panel__stat-label {
   font-size: 9px;
   letter-spacing: 0.06em;
-  color: #555;
+  color: var(--d-text-3);
   font-family: 'HND', sans-serif;
   margin-bottom: 0.25rem;
   white-space: nowrap;
 }
 .trade-panel__stat-value {
   font-size: 13px;
-  color: #fff;
+  color: var(--d-text);
   font-family: 'HND', sans-serif;
   white-space: nowrap;
 }
 .trade-panel__stat-unit {
   font-size: 10px;
-  color: #888;
+  color: var(--d-text-2);
 }
 .trade-panel__stat-empty {
-  color: #333;
+  color: var(--d-text-4);
 }
 
 /* Divider */
 .trade-panel__divider {
-  border-top: 1px solid #1a1a1a;
+  border-top: 1px solid var(--d-border);
 }
 
 /* Main body */
@@ -789,7 +926,7 @@ onUnmounted(() => {
 .trade-panel__price-label {
   font-size: 10px;
   letter-spacing: 0.07em;
-  color: #555;
+  color: var(--d-text-3);
   font-family: 'HND', sans-serif;
   margin-bottom: -0.5rem;
 }
@@ -804,7 +941,7 @@ onUnmounted(() => {
 .trade-panel__price {
   font-size: 2rem;
   font-family: 'HND', sans-serif;
-  color: #fff;
+  color: var(--d-text);
   line-height: 1;
 }
 @media (min-width: 1024px) {
@@ -814,18 +951,19 @@ onUnmounted(() => {
 }
 .trade-panel__price-currency {
   font-size: 1.125rem;
-  color: #fff;
+  color: var(--d-text);
   font-family: 'HND', sans-serif;
 }
 .trade-panel__price-usd {
   font-size: 0.875rem;
-  color: #888;
+  color: var(--d-text-2);
   font-family: 'HND', sans-serif;
 }
 
 /* Leaderboard section title */
 .drawer-section-title {
-  @apply text-3xl lg:text-6xl text-white mb-0;
+  @apply text-3xl lg:text-6xl mb-0;
+  color: var(--d-text);
   font-family: 'HND', sans-serif;
 }
 
@@ -836,10 +974,10 @@ onUnmounted(() => {
   padding: 0.2rem 0.5rem;
   font-size: 9px;
   letter-spacing: 0.06em;
-  border: 1px solid #2a2a2a;
+  border: 1px solid var(--d-border-3);
   border-radius: 4px;
-  background: #111;
-  color: #aaa;
+  background: var(--d-badge-bg);
+  color: var(--d-text-5);
   font-family: 'HND', sans-serif;
   white-space: nowrap;
 }
@@ -865,12 +1003,12 @@ onUnmounted(() => {
 }
 .trade-panel__btn--primary {
   flex: 1;
-  background: #fff;
-  color: #000;
+  background: var(--d-btn-bg);
+  color: var(--d-btn-color);
   border: 1px solid transparent;
 }
 .trade-panel__btn--primary:hover:not(:disabled) {
-  background: #e8e8e8;
+  background: var(--d-btn-hover);
 }
 .trade-panel__btn--primary:disabled {
   opacity: 0.4;
@@ -878,11 +1016,11 @@ onUnmounted(() => {
 }
 .trade-panel__btn--secondary {
   background: transparent;
-  color: #fff;
-  border: 1px solid #2a2a2a;
+  color: var(--d-btn-sec-color);
+  border: 1px solid var(--d-border-3);
 }
 .trade-panel__btn--secondary:hover:not(:disabled) {
-  border-color: #444;
+  border-color: var(--d-border-hover);
 }
 .trade-panel__btn--secondary:disabled {
   opacity: 0.4;
@@ -937,18 +1075,18 @@ onUnmounted(() => {
   padding: 0 0.75rem;
   font-size: 0.8125rem;
   font-family: 'HND', sans-serif;
-  color: #fff;
-  background: #0a0a0a;
-  border: 1px solid #2a2a2a;
+  color: var(--d-text);
+  background: var(--d-input-bg);
+  border: 1px solid var(--d-border-3);
   border-radius: 6px;
   outline: none;
   transition: border-color 0.15s;
 }
 .trade-panel__send-input:focus {
-  border-color: #555;
+  border-color: var(--d-text-3);
 }
 .trade-panel__send-input::placeholder {
-  color: #333;
+  color: var(--d-text-4);
 }
 .trade-panel__send-input:disabled {
   opacity: 0.5;
@@ -978,7 +1116,7 @@ onUnmounted(() => {
   gap: 0.3rem;
   flex-wrap: wrap;
   font-size: 0.9375rem;
-  color: #fff;
+  color: var(--d-text);
   font-family: 'HND', sans-serif;
 }
 
@@ -995,7 +1133,8 @@ onUnmounted(() => {
 
 /* matter section */
 .drawer__matter-title {
-  @apply text-3xl lg:text-6xl text-white mb-2 lg:mb-6;
+  @apply text-3xl lg:text-6xl mb-2 lg:mb-6;
+  color: #fff;
   font-family: 'HND', sans-serif;
 }
 .drawer__rankings {
@@ -1006,6 +1145,10 @@ onUnmounted(() => {
 
 .drawer__matter {
   @apply flex flex-col;
+  background: #000;
+  color: #fff;
+  margin: 0 -1rem -1rem;
+  padding: 1.5rem 1rem 1rem;
 }
 .drawer__matter-grid {
   @apply grid grid-cols-2 gap-3;
@@ -1019,7 +1162,8 @@ onUnmounted(() => {
   object-fit: cover;
 }
 .drawer__matter-name {
-  @apply text-xs text-white truncate w-full text-center;
+  @apply text-xs truncate w-full text-center;
+  color: #fff;
 }
 
 /* transitions */
@@ -1041,10 +1185,10 @@ onUnmounted(() => {
   @apply w-1;
 }
 ::-webkit-scrollbar-track {
-  background: #0a0a0a;
+  background: var(--d-scroll-track);
 }
 ::-webkit-scrollbar-thumb {
-  background: #333;
+  background: var(--d-scroll-thumb);
   border-radius: 4px;
 }
 </style>

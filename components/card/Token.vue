@@ -82,19 +82,23 @@ function displayOwner(name, addr) {
   @apply flex flex-col gap-3;
 }
 .token-card__mass {
-  @apply text-3xl lg:text-6xl font-semibold text-white;
+  @apply text-3xl lg:text-6xl font-semibold;
+  color: var(--d-text, #fff);
 }
 .token-card__id {
-  @apply text-base lg:text-xl text-white;
+  @apply text-base lg:text-xl;
+  color: var(--d-text, #fff);
 }
 .token-card__sub {
   @apply flex items-baseline gap-1.5 flex-wrap;
 }
 .token-card__own-by {
-  @apply text-base lg:text-xl text-white;
+  @apply text-base lg:text-xl;
+  color: var(--d-text, #fff);
 }
 .token-card__owner {
-  @apply no-underline text-white;
+  @apply no-underline;
+  color: var(--d-text, #fff);
 }
 .token-card__owner:hover {
   @apply underline;
@@ -142,9 +146,11 @@ function displayOwner(name, addr) {
   @apply flex items-center gap-2;
 }
 .token-card__extlink {
-  @apply h-7 w-7 flex justify-center items-center text-white;
+  @apply h-7 w-7 flex justify-center items-center;
+  color: var(--d-text, #fff);
 }
 .token-card__extlink img {
   @apply w-full h-full;
+  filter: invert(var(--d-icon-invert, 0));
 }
 </style>

@@ -295,7 +295,7 @@ function fillAlpha(tier, mass) {
 <style lang="postcss" scoped>
 .ranking {
   @apply py-8 lg:py-12;
-  border-top: 1px solid #1a1a1a;
+  border-top: 1px solid var(--d-border, #1a1a1a);
 }
 .ranking--compact {
   @apply py-0;
@@ -317,7 +317,7 @@ function fillAlpha(tier, mass) {
   @apply flex flex-col mb-3 lg:mb-6 gap-1 lg:gap-2 px-4 lg:px-8;
 }
 .ranking__title {
-  @apply text-white;
+  color: var(--d-text, #fff);
   font-family: 'HND', sans-serif;
   font-size: 2em;
 }
@@ -329,11 +329,12 @@ function fillAlpha(tier, mass) {
 .ranking__title-stat {
   font-family: 'HND', sans-serif;
   font-size: 1em;
-  color: #fff;
+  color: var(--d-text, #fff);
   margin-left: 0.4em;
 }
 .ranking__toggle {
-  @apply text-base lg:text-3xl text-white;
+  @apply text-base lg:text-3xl;
+  color: var(--d-text, #fff);
   font-family: 'HND', sans-serif;
 }
 .ranking__mode {
@@ -341,18 +342,19 @@ function fillAlpha(tier, mass) {
   transition: background-color 0.15s, color 0.15s;
 }
 .ranking__mode:hover {
-  background: #fff;
-  color: #000;
+  background: var(--d-text, #fff);
+  color: var(--d-bg, #000);
 }
 .ranking__mode--active {
   text-decoration: underline;
   text-underline-offset: 3px;
 }
 .ranking__search {
-  @apply mt-3 px-4 py-2 rounded-lg text-base text-white;
+  @apply mt-3 px-4 py-2 rounded-lg text-base;
+  color: var(--d-text, #fff);
   max-width: 24rem;
-  background: #1a1a1a;
-  border: 1px solid #333;
+  background: var(--d-surface, #1a1a1a);
+  border: 1px solid var(--d-border-3, #333);
   outline: none;
   transition: border-color 0.2s;
   -moz-appearance: textfield;
@@ -363,10 +365,10 @@ function fillAlpha(tier, mass) {
   margin: 0;
 }
 .ranking__search:focus {
-  border-color: #555;
+  border-color: var(--d-text-3, #555);
 }
 .ranking__search::placeholder {
-  color: rgba(255, 255, 255, 0.3);
+  color: var(--d-text-4, rgba(255, 255, 255, 0.3));
 }
 .fade-enter-active,
 .fade-leave-active {
@@ -409,7 +411,7 @@ function fillAlpha(tier, mass) {
   scale: 1.08;
 }
 .ranking__item--highlight .ranking__rank {
-  color: #fff;
+  color: var(--d-text, #fff);
 }
 .ranking__item--highlight {
   position: relative;
@@ -423,29 +425,30 @@ function fillAlpha(tier, mass) {
   width: 4px;
   height: 4px;
   border-radius: 50%;
-  background: #fff;
+  background: var(--d-text, #fff);
 }
 .ranking__rank {
   @apply text-lg lg:text-xl font-medium mb-2;
-  color: #333;
+  color: var(--d-text-4, #333);
 }
 .ranking__info {
   @apply mt-2 flex flex-col items-center;
 }
 .ranking__id {
   @apply text-2xs lg:text-xs;
-  color: #555;
+  color: var(--d-text-3, #555);
 }
 .ranking__value {
-  @apply text-xs lg:text-sm text-white;
+  @apply text-xs lg:text-sm;
+  color: var(--d-text, #fff);
 }
 .ranking__merges {
   @apply text-2xs lg:text-xs;
-  color: #555;
+  color: var(--d-text-3, #555);
 }
 .ranking__burned {
   @apply text-2xs lg:text-xs;
-  color: #555;
+  color: var(--d-text-3, #555);
 }
 .sphere-wrap--burned {
   opacity: 0.5;

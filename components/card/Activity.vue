@@ -202,13 +202,15 @@ const filteredTimeline = computed(() =>
   @apply mt-4 flex items-start;
   height: 24rem;
   font-size: 0.8125rem;
-  color: #444;
+  color: var(--d-text-4, #444);
 }
 .section__title {
-  @apply text-3xl lg:text-6xl text-white mb-2 lg:mb-6;
+  @apply text-3xl lg:text-6xl mb-2 lg:mb-6;
+  color: var(--d-text, #fff);
 }
 .activity__filters {
-  @apply text-sm text-white;
+  @apply text-sm;
+  color: var(--d-text, #fff);
 }
 
 .activity__mode {
@@ -216,8 +218,8 @@ const filteredTimeline = computed(() =>
   transition: background-color 0.15s, color 0.15s;
 }
 .activity__mode:hover {
-  background: #fff;
-  color: #000;
+  background: var(--d-text, #fff);
+  color: var(--d-bg, #000);
 }
 .activity__mode--active {
   text-decoration: underline;
@@ -236,7 +238,7 @@ const filteredTimeline = computed(() =>
 .activity__item {
   @apply flex items-center gap-2 lg:gap-3;
   @apply py-3;
-  border-bottom: 1px solid #1a1a1a;
+  border-bottom: 1px solid var(--d-border, #1a1a1a);
 }
 .activity__left {
   @apply flex flex-col flex-shrink-0;
@@ -249,13 +251,20 @@ const filteredTimeline = computed(() =>
 }
 .activity__date {
   @apply text-xs whitespace-nowrap;
-  color: #555;
+  color: var(--d-text-3, #555);
 }
 .activity__thumb {
   @apply w-8 h-8 lg:w-10 lg:h-10 flex-shrink-0 rounded cursor-pointer overflow-hidden;
 }
 .activity__detail {
   @apply flex items-baseline gap-1.5 lg:gap-2 text-sm;
+  color: var(--d-text, #fff);
+}
+.link {
+  color: var(--d-text, #fff);
+}
+.card__content__label {
+  color: var(--d-text-3, #555);
 }
 .activity__badge {
   @apply text-xs py-0.5;
@@ -275,33 +284,33 @@ const filteredTimeline = computed(() =>
 }
 .activity__arrow {
   @apply text-xs;
-  color: #555;
+  color: var(--d-text-3, #555);
 }
-.tier--red { color: #f87171; }
-.tier--blue { color: #60a5fa; }
-.tier--yellow { color: #facc15; }
-.tier--white { color: #e5e5e5; }
+.tier--red { color: var(--d-text, #f87171); }
+.tier--blue { color: var(--d-text, #60a5fa); }
+.tier--yellow { color: var(--d-text, #facc15); }
+.tier--white { color: var(--d-text, #e5e5e5); }
 .activity__addr {
   @apply text-xs;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  color: #777;
+  color: var(--d-text-2, #777);
   transition: color 0.15s;
 }
 .activity__addr:hover {
-  color: #fff;
+  color: var(--d-text, #fff);
 }
 
 ::-webkit-scrollbar {
   @apply w-1;
 }
 ::-webkit-scrollbar-track {
-  background: #111;
+  background: var(--d-surface, #111);
 }
 ::-webkit-scrollbar-thumb {
-  background: #333;
+  background: var(--d-scroll-thumb, #333);
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #555;
+  background: var(--d-text-3, #555);
 }
 </style>
