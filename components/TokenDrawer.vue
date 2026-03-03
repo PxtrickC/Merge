@@ -621,6 +621,12 @@ onUnmounted(() => {
   }
 }
 .drawer__close {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: #0a0a0a;
+  border-radius: 50%;
+  box-shadow: 0 0 10px 8px #0a0a0a;
   @apply mb-4 lg:mb-6 text-white text-opacity-100;
   @apply w-10 h-10 p-0 flex items-center justify-center;
   line-height: 0;
