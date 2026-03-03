@@ -244,7 +244,7 @@ function fillAlpha(tier, mass) {
           class="ranking__mode"
           :class="{ 'ranking__mode--active': scopeMode === 'all' }"
           @click="scopeMode = 'all'"
-        >all</span>] [<span
+        >All</span>] [<span
           class="ranking__mode"
           :class="{ 'ranking__mode--active': scopeMode === 'tier' }"
           @click="scopeMode = 'tier'"

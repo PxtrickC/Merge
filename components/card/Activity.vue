@@ -114,12 +114,21 @@ const FILTER_MAP = {
 }
 const activeFilters = ref(new Set(['merge', 'transfer', 'mint']))
 
+const FILTER_OPTIONS = {
+  all: 'All',
+  merge: 'merged in',
+  transfer: 'transfer',
+  mint: 'minted',
+}
+
 function toggleFilter(key) {
-  const s = new Set(activeFilters.value)
-  if (s.has(key)) s.delete(key)
-  else s.add(key)
-  // prevent empty → reset to all
-  activeFilters.value = s.size ? s : new Set(['merge', 'transfer', 'mint'])
+  if (key === 'all') {
+    activeFilters.value = new Set(['merge', 'transfer', 'mint'])
+    return
+  }
+  
+  // If clicking a specific filter, only keep that filter active
+  activeFilters.value = new Set([key])
 }
 
 const allowedTypes = computed(() => {
@@ -139,10 +148,10 @@ const filteredTimeline = computed(() =>
   <div class="card__container">
     <div class="section__title">Activity</div>
     <p class="activity__filters">
-      <span v-for="(label, key) in { merge: 'merged in', transfer: 'transfer', mint: 'minted' }" :key="key" class="activity__filter-wrap"
+      <span v-for="(label, key) in FILTER_OPTIONS" :key="key" class="activity__filter-wrap"
         >[<span
           class="activity__mode"
-          :class="{ 'activity__mode--active': activeFilters.has(key) }"
+          :class="{ 'activity__mode--active': key === 'all' ? activeFilters.size === 3 : activeFilters.has(key) && activeFilters.size === 1 }"
           @click="toggleFilter(key)"
         >{{ label }}</span>]</span>
     </p>
