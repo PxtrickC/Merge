@@ -260,7 +260,7 @@ function fillAlpha(tier, mass) {
 
 
     <Transition name="fade" mode="out-in">
-    <div :key="filterMode" ref="scrollEl" class="ranking__scroll" :style="{ height: scrollHeight }">
+    <div :key="filterMode + '-' + scopeMode" ref="scrollEl" class="ranking__scroll" :style="{ height: scrollHeight }">
       <TransitionGroup name="rank">
       <a
         v-for="(token, i) in sortedItems"

@@ -112,30 +112,20 @@ const FILTER_MAP = {
   transfer: ['transfer', 'burned'],
   mint: ['mint'],
 }
-const activeFilters = ref(new Set(['merge', 'transfer', 'mint']))
-
 const FILTER_OPTIONS = {
   all: 'All',
   merge: 'merged in',
   transfer: 'transfer',
   mint: 'minted',
 }
-
-function toggleFilter(key) {
-  if (key === 'all') {
-    activeFilters.value = new Set(['merge', 'transfer', 'mint'])
-    return
-  }
-  
-  // If clicking a specific filter, only keep that filter active
-  activeFilters.value = new Set([key])
-}
+const activeFilter = ref('all')
 
 const allowedTypes = computed(() => {
-  const types = new Set()
-  for (const k of activeFilters.value) {
-    for (const t of FILTER_MAP[k]) types.add(t)
+  if (activeFilter.value === 'all') {
+    return new Set(['merge_in', 'merge_out', 'transfer', 'burned', 'mint'])
   }
+  const types = new Set()
+  for (const t of FILTER_MAP[activeFilter.value] || []) types.add(t)
   return types
 })
 
@@ -148,17 +138,18 @@ const filteredTimeline = computed(() =>
   <div class="card__container">
     <div class="section__title">Activity</div>
     <p class="activity__filters">
-      <span v-for="(label, key) in FILTER_OPTIONS" :key="key" class="activity__filter-wrap"
-        >[<span
+      <span v-for="(label, key, index) in FILTER_OPTIONS" :key="key" class="activity__filter-wrap"
+        >{{ index > 0 ? ' ' : '' }}[<span
           class="activity__mode"
-          :class="{ 'activity__mode--active': key === 'all' ? activeFilters.size === 3 : activeFilters.has(key) && activeFilters.size === 1 }"
-          @click="toggleFilter(key)"
+          :class="{ 'activity__mode--active': activeFilter === key }"
+          @click="activeFilter = key"
         >{{ label }}</span>]</span>
     </p>
     <div v-if="loading" class="activity__loading">
       <Loading :fullscreen="false" />
     </div>
-    <div v-else-if="filteredTimeline.length" class="activity__list">
+    <Transition name="fade" mode="out-in">
+    <div v-if="filteredTimeline.length && !loading" :key="activeFilter" class="activity__list">
       <div v-for="(event, i) in filteredTimeline" :key="i" class="activity__item">
         <div class="activity__left">
           <span v-if="event.type === 'merge_in'" class="activity__badge activity__badge--merge">merged in</span>
@@ -196,6 +187,7 @@ const filteredTimeline = computed(() =>
         </span>
       </div>
     </div>
+    </Transition>
   </div>
 </template>
 
@@ -205,16 +197,12 @@ const filteredTimeline = computed(() =>
   font-family: 'HND', sans-serif;
 }
 .activity__filters {
-  @apply text-sm;
-  color: #555;
+  @apply text-sm text-white;
   font-family: 'HND', sans-serif;
 }
-.activity__filter-wrap {
-  color: #fff;
-}
+
 .activity__mode {
   cursor: pointer;
-  color: #555;
   transition: background-color 0.15s, color 0.15s;
 }
 .activity__mode:hover {
@@ -224,7 +212,6 @@ const filteredTimeline = computed(() =>
 .activity__mode--active {
   text-decoration: underline;
   text-underline-offset: 3px;
-  color: #fff;
 }
 .activity__loading {
   @apply flex justify-center py-12;
