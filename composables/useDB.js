@@ -4,20 +4,46 @@ const TOTAL_MINTED = 28990
 // Tier counts from original mint (used for tier section titles)
 const TIER_TOTAL = { 2: 94, 3: 50, 4: 5 }
 
-let _loaded = false
+// Module-level cache for the preparation promise to handle concurrent component initialization
+let _prepare = null
 
 export function useDB() {
   const db = useState("db", () => null)
   const loading = useState("dbLoading", () => false)
 
-  // Load db.json once, globally shared via useState
-  if (!_loaded && !db.value && !loading.value) {
+  // Load db.json once per request (SSR) or once per session (Client)
+  let prepare = _prepare
+  if (!db.value && !loading.value) {
     loading.value = true
-    _loaded = true
-    useFetch("/data/db.json", { key: "db-json" }).then(({ data }) => {
-      if (data.value) db.value = data.value
-      loading.value = false
+    const { data } = useFetch("/data/db.json", {
+      key: "db-json",
+      server: true,
+      lazy: false
     })
+
+    _prepare = new Promise((resolve) => {
+      watch(data, (newVal) => {
+        if (newVal) {
+          db.value = newVal
+          loading.value = false
+          resolve(newVal)
+        }
+      }, { immediate: true })
+    })
+    prepare = _prepare
+  } else if (loading.value && !db.value) {
+    // If no promise exists yet but we're marked as loading, create one to wait for state
+    if (!_prepare) {
+      _prepare = new Promise((resolve) => {
+        const unwatch = watch(db, (val) => {
+          if (val) {
+            unwatch()
+            resolve(val)
+          }
+        }, { immediate: true })
+      })
+    }
+    prepare = _prepare
   }
 
   // ---------------------------------------------------------------------------
@@ -148,5 +174,6 @@ export function useDB() {
     tierTotal,
     massDistribution,
     mergedIntoIndex,
+    prepare,
   }
 }
