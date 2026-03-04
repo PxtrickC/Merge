@@ -1,6 +1,7 @@
 import { readFileSync } from 'fs'
 import { resolve } from 'path'
 import { decodeValue } from '~/utils/contract.mjs'
+import { Resvg } from '@resvg/resvg-js'
 
 type DbTokenEntry = [number, number, number?]
 
@@ -247,7 +248,17 @@ export default defineEventHandler(async (event) => {
 
 </svg>`
 
-  setHeader(event, 'Content-Type', 'image/svg+xml; charset=utf-8')
+  const resvg = new Resvg(svg, {
+    font: {
+      loadSystemFonts: true,
+      fontFiles: [resolve('server/assets/fonts/DMSans.ttf')],
+      defaultFontFamily: 'DM Sans',
+    },
+  })
+  const pngData = resvg.render()
+  const pngBuffer = pngData.asPng()
+
+  setHeader(event, 'Content-Type', 'image/png')
   setHeader(event, 'Cache-Control', 'public, max-age=3600, s-maxage=3600')
-  return svg
+  return pngBuffer
 })
