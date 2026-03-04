@@ -7,9 +7,20 @@ const TIER_TOTAL = { 2: 94, 3: 50, 4: 5 }
 export function useDB() {
   const { data: db, pending: loading } = useNuxtData('global-db-json')
 
+  // Fetch a lightweight summary for SSR to avoid 3MB payload and 504 timeouts
+  const { data: summary } = useFetch('/api/db-summary', {
+    key: 'db-summary',
+    server: true,
+    pick: ['token_count', 'merged_count', 'total_mass', 'alpha_mass', 'tier_counts']
+  })
+
+  // On client, if full DB is missing, trigger lazy fetch
+  if (process.client && !db.value && !loading.value) {
+    useFetch('/data/db.json', { key: 'global-db-json', server: false, lazy: true })
+  }
+
   const prepare = async () => {
-    if (db.value) return db.value
-    return null
+    return db.value || null
   }
 
   // ---------------------------------------------------------------------------
@@ -49,19 +60,19 @@ export function useDB() {
   })
 
   // ---------------------------------------------------------------------------
-  // Stats
+  // Stats - Falls back to summary during SSR
   // ---------------------------------------------------------------------------
   const stats = computed(() => {
-    const alive = aliveTokens.value
-    if (!alive.length) return null
-    const totalMass = alive.reduce((s, t) => s + t.mass, 0)
-    const alphaMass = alive.reduce((max, t) => Math.max(max, t.mass), 0)
-    return {
-      token_count: alive.length,
-      merged_count: TOTAL_MINTED - alive.length,
-      total_mass: totalMass,
-      alpha_mass: alphaMass,
+    if (db.value?.tokens && aliveTokens.value.length > 0) {
+      const alive = aliveTokens.value
+      return {
+        token_count: alive.length,
+        merged_count: TOTAL_MINTED - alive.length,
+        total_mass: alive.reduce((s, t) => s + t.mass, 0),
+        alpha_mass: alive.reduce((max, t) => Math.max(max, t.mass), 0),
+      }
     }
+    return summary.value || null
   })
 
   // ---------------------------------------------------------------------------
@@ -75,7 +86,10 @@ export function useDB() {
 
   function tierCount(tier) {
     return computed(() => {
-      return aliveTokens.value.filter(t => t.tier === tier).length
+      if (db.value?.tokens) {
+        return aliveTokens.value.filter(t => t.tier === tier).length
+      }
+      return summary.value?.tier_counts?.[tier] ?? 0
     })
   }
 

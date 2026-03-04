@@ -1,7 +1,5 @@
 <script setup>
-// Load db.json ONCE globally, blocking SSR rendering until it succeeds
-const baseUrl = process.server ? useRequestURL().origin : ''
-await useFetch(`${baseUrl}/data/db.json`, { key: 'global-db-json', server: true })
+// db.json is now handled lazily in useDB.js and db-summary API is used for SSR stats.
 
 const loading = ref(true)
 
