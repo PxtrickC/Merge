@@ -251,8 +251,8 @@ export default defineEventHandler(async (event) => {
   const resvg = new Resvg(svg, {
     font: {
       loadSystemFonts: true,
-      fontFiles: [resolve('server/assets/fonts/DMSans.ttf')],
-      defaultFontFamily: 'DM Sans',
+      fontFiles: [resolve('assets/fonts/HND.ttf')],
+      defaultFontFamily: 'HND',
     },
   })
   const pngData = resvg.render()
