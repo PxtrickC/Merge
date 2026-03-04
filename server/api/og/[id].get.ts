@@ -130,13 +130,10 @@ export default defineEventHandler(async (event) => {
   const baseBadge = isAlpha
     ? { bg: '#e5e5e5', fg: '#111', border: '#bbb' }
     : { bg: '#ffffff', fg: '#000000', border: '#ffffff' }
-  const classNum = !isNaN(id) ? String(id).slice(-2) : null
-
   const badges: Badge[] = []
   if (isAlpha) badges.push({ bg: '#000000', fg: '#ffffff', border: '#444444', label: 'ALPHA' })
   badges.push(tierBadge)
   if (merges > 0) badges.push({ ...baseBadge, label: `MERGES ${merges}` })
-  if (classNum !== null) badges.push({ ...baseBadge, label: `CLASS ${classNum}` })
 
   // ── Adaptive font size ──────────────────────────────────────────────────
   // Compute early so all Y positions derive from it
