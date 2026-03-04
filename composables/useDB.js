@@ -5,7 +5,8 @@ const TOTAL_MINTED = 28990
 const TIER_TOTAL = { 2: 94, 3: 50, 4: 5 }
 
 export function useDB() {
-  const { data: db, pending: loading } = useNuxtData('global-db-json')
+  const { data: db } = useNuxtData('global-db-json')
+  const loading = ref(false)
 
   // Fetch a lightweight summary for SSR to avoid 3MB payload and 504 timeouts
   const { data: summary } = useFetch('/api/db-summary', {
@@ -15,8 +16,9 @@ export function useDB() {
   })
 
   // On client, if full DB is missing, trigger lazy fetch
-  if (process.client && !db.value && !loading.value) {
-    useFetch('/data/db.json', { key: 'global-db-json', server: false, lazy: true })
+  if (process.client && !db.value) {
+    const { pending } = useFetch('/data/db.json', { key: 'global-db-json', server: false, lazy: true })
+    watch(pending, (p) => { loading.value = p }, { immediate: true })
   }
 
   const prepare = async () => {
