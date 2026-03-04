@@ -239,6 +239,10 @@ export default defineEventHandler(async (event) => {
   <!-- Left: sphere panel -->
   <rect x="0" y="0" width="${spherePanel}" height="${H}" fill="${sphereBg}"/>
   <circle cx="${cx}" cy="${cy}" r="${sphereR}" fill="${sphereFill}"/>
+  ${isMerged ? `
+  <line x1="0" y1="0" x2="${spherePanel}" y2="${H}" stroke="#f87171" stroke-width="4"/>
+  <line x1="${spherePanel}" y1="0" x2="0" y2="${H}" stroke="#f87171" stroke-width="4"/>
+  ` : ''}
 
   <!-- Right: info panel -->
   <rect x="${spherePanel}" y="0" width="${W - spherePanel}" height="${H}" fill="${panelBg}"/>
