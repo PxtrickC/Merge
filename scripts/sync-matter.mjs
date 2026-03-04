@@ -70,9 +70,9 @@ async function fetchAllTokens() {
         name: nft.name || nft.raw?.metadata?.name || `Matter #${id}`,
         description: nft.description || nft.raw?.metadata?.description || "",
         type: attrs.type ?? "unidentified",
-        mass: typeof attrs.mass === "number" ? attrs.mass : 0,
-        order: typeof attrs.order === "number" ? attrs.order : 0,
-        parent: typeof attrs.parent === "number" ? attrs.parent : 0,
+        mass: Number(attrs.mass ?? 0),
+        order: Number(attrs.order ?? 0),
+        parent: Number(attrs.parent ?? 0),
         image_cdn: imageCdn,
       })
     }
