@@ -129,11 +129,11 @@ export default defineNuxtConfig({
                 { hid: 'og:url', property: 'og:url', content: 'https://merge.ppatrick.xyz' },
                 { hid: 'keywords', name: 'keywords', content: 'Merge NFT pak dashboard meta data' },
 
-                { name: 'twitter:card', content: 'summary_large_image' },
-                { name: 'twitter:image', content: '/images/og-preview.jpg' },
-                { property: 'og:image', content: '/images/og-preview.jpg' },
-                { property: 'og:image:width', content: '1400' },
-                { property: 'og:image:height', content: '787' },
+                { hid: 'twitter:card', name: 'twitter:card', content: 'summary_large_image' },
+                { hid: 'twitter:image', name: 'twitter:image', content: '/images/og-preview.jpg' },
+                { hid: 'og:image', property: 'og:image', content: '/images/og-preview.jpg' },
+                { hid: 'og:image:width', property: 'og:image:width', content: '1400' },
+                { hid: 'og:image:height', property: 'og:image:height', content: '787' },
             ]
         }
     }
