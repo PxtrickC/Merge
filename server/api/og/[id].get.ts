@@ -248,10 +248,33 @@ export default defineEventHandler(async (event) => {
 
 </svg>`
 
+  // Convert SVG to PNG using resvg
+  let fontPath: string | undefined
+  try {
+    const tmpFontPath = '/tmp/HND.ttf'
+    const { existsSync, writeFileSync } = await import('fs')
+    if (existsSync(tmpFontPath)) {
+      fontPath = tmpFontPath
+    } else {
+      // Load from Nitro internal storage (bundled safely in Vercel)
+      const raw = await useStorage('assets:server').getItemRaw('fonts/HND.ttf')
+      if (raw) {
+        writeFileSync(tmpFontPath, Buffer.from(raw))
+        fontPath = tmpFontPath
+      } else {
+        // Fallback to local resolve for dev
+        const localPath = resolve('server/assets/fonts/HND.ttf')
+        if (existsSync(localPath)) fontPath = localPath
+      }
+    }
+  } catch (err) {
+    console.warn('Could not load HND.ttf font, falling back to system fonts:', err)
+  }
+
   const resvg = new Resvg(svg, {
     font: {
       loadSystemFonts: true,
-      fontFiles: [resolve('assets/fonts/HND.ttf')],
+      fontFiles: fontPath ? [fontPath] : [],
       defaultFontFamily: 'HND',
     },
   })
