@@ -751,6 +751,7 @@ onUnmounted(() => {
   border-left: none;
   z-index: 51;
   overflow-y: auto;
+  overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
   padding: calc(1rem + env(safe-area-inset-top)) 1rem 1rem;
