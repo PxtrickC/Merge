@@ -8,14 +8,16 @@ const baseUrl = computed(() => {
   return raw.replace(/\/$/, '') || 'https://merge.ppatrick.xyz'
 })
 
-useHead({
+useSeoMeta({
   title: `Merge — Token #${id}`,
-  meta: [
-    { name: 'description', content: `Details for Merge token #${id} — view tier, mass, merge history, ranking, and trade.` },
-    { hid: 'og:title', property: 'og:title', content: `Merge — Token #${id}` },
-    { hid: 'og:image', property: 'og:image', content: `${baseUrl.value}/api/og/${id}` },
-    { hid: 'twitter:image', name: 'twitter:image', content: `${baseUrl.value}/api/og/${id}` },
-  ],
+  description: `Details for Merge token #${id} — view tier, mass, merge history, ranking, and trade.`,
+  ogTitle: `Merge — Token #${id}`,
+  ogDescription: `Details for Merge token #${id} — view tier, mass, merge history, ranking, and trade.`,
+  ogImage: `${baseUrl.value}/api/og/${id}`,
+  twitterTitle: `Merge — Token #${id}`,
+  twitterDescription: `Details for Merge token #${id} — view tier, mass, merge history, ranking, and trade.`,
+  twitterImage: `${baseUrl.value}/api/og/${id}`,
+  twitterCard: 'summary_large_image',
 })
 
 const { open, isOpen } = useTokenDrawer()
