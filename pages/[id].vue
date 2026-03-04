@@ -1,11 +1,20 @@
 <script setup>
 const $route = useRoute()
+const config = useRuntimeConfig()
 const id = +$route.params.id
+
+const baseUrl = computed(() => {
+  const raw = config.public.API_URL || ''
+  return raw.replace(/\/$/, '') || 'https://merge.ppatrick.xyz'
+})
 
 useHead({
   title: `Merge — Token #${id}`,
   meta: [
     { name: 'description', content: `Details for Merge token #${id} — view tier, mass, merge history, ranking, and trade.` },
+    { hid: 'og:title', property: 'og:title', content: `Merge — Token #${id}` },
+    { hid: 'og:image', property: 'og:image', content: `${baseUrl.value}/api/og/${id}` },
+    { hid: 'twitter:image', name: 'twitter:image', content: `${baseUrl.value}/api/og/${id}` },
   ],
 })
 

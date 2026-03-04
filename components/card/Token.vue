@@ -3,6 +3,8 @@ const props = defineProps({
   id: Number,
   tier: Number,
   mass: Number,
+  mass_rank: { type: Number, default: null },
+  merges_rank: { type: Number, default: null },
   merges: Number,
   merged: Boolean,
   owner: { type: String, default: null },
@@ -133,6 +135,9 @@ function displayOwner(name, addr) {
   background: #000;
   color: #fff;
   border: 1px solid rgba(255, 255, 255, 0.5);
+}
+.token-card__badge--rank {
+  @apply uppercase tracking-wide;
 }
 .token-card__badge--merged {
   color: #f87171;

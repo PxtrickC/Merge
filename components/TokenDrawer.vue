@@ -466,7 +466,12 @@ onUnmounted(() => {
 
       <!-- Token detail -->
       <div v-else-if="tokenData" class="drawer__content">
-        <card-token v-bind="tokenData" :alpha_mass="alpha_mass" />
+        <card-token
+          v-bind="tokenData"
+          :alpha_mass="alpha_mass"
+          :mass_rank="tokenMassRank ?? undefined"
+          :merges_rank="tokenMergesRank ?? undefined"
+        />
 
         <!-- Trading Panel -->
         <div v-if="!isBurned" class="trade-panel">
