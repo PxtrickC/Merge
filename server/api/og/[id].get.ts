@@ -54,18 +54,17 @@ export default defineEventHandler(async (event) => {
   // ── Load db.json ────────────────────────────────────────────────────────
   let db: any
   try {
-    const host = getRequestHeader(event, 'host') || 'merge.ppatrick.xyz'
-    const protocol = host.includes('localhost') || host.includes('127.0.0.1') ? 'http' : 'https'
-    const url = `${protocol}://${host}/data/db.json`
-
-    db = await $fetch(url)
-    if (typeof db === 'string') db = JSON.parse(db)
-  } catch (e) {
-    console.warn('Could not fetch db.json via HTTP, falling back to fs...', e)
     const dbPath = resolve(process.cwd(), 'public/data/db.json')
+    db = JSON.parse(readFileSync(dbPath, 'utf-8'))
+  } catch (fsErr) {
+    console.warn('Could not read db.json from fs, falling back to HTTP...', fsErr)
     try {
-      db = JSON.parse(readFileSync(dbPath, 'utf-8'))
-    } catch (fsErr) {
+      const host = getRequestHeader(event, 'host') || 'merge.ppatrick.xyz'
+      const protocol = host.includes('localhost') || host.includes('127.0.0.1') ? 'http' : 'https'
+      const url = `${protocol}://${host}/data/db.json`
+      db = await $fetch(url)
+      if (typeof db === 'string') db = JSON.parse(db)
+    } catch (e) {
       db = { tokens: [] }
     }
   }

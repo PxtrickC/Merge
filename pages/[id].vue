@@ -12,8 +12,28 @@ const { allTokens, prepare } = useDB()
 if (prepare) await prepare()
 
 const { data: token } = await useAsyncData(`token-${id}`, async () => {
+  if (process.server) {
+    try {
+      const res = await $fetch(`/api/token/${id}`)
+      if (res && !res.error) {
+        return {
+          id: res.id,
+          mass: res.mass,
+          tier: res.tier,
+          class: res.tier,
+          merges: res.merges,
+          merged: res.isMerged,
+          owner: res.isMerged ? `Merged to #${res.mergedTo}` : null
+        }
+      }
+    } catch (e) {
+      console.error('SSR token fetch failed:', e)
+    }
+  }
+
   const found = allTokens.value?.find(t => t.id === id)
   if (found) return found
+  
   // If not in db, try RPC fallback
   const { token: rpcToken } = await useToken(id)
   return rpcToken.value
