@@ -157,7 +157,7 @@ export default defineEventHandler(async (event) => {
   //   badges       y = badgeY    (idY + 46)
   //   rank blocks  y = statStartY (badgeY + BADGE_H + 36)
   //   price block  y = PRICE_Y_LABEL (STAT_Y_DENOM + 18 + 44)
-  const idY = massFontSize + 100
+  const idY = massFontSize + 110
   const badgeY = idY + 30
   const statStartY = badgeY + BADGE_H + 60
   const STAT_Y_LABEL = statStartY
@@ -246,7 +246,7 @@ export default defineEventHandler(async (event) => {
 
 
   <!-- m(mass) — dominant headline -->
-  <text x="${rx}" y="${28 + massFontSize}" fill="${textPrimary}" ${F} font-size="${massFontSize}" font-weight="600" letter-spacing="-2">${massStr}</text>
+  <text x="${rx}" y="${38 + massFontSize}" fill="${textPrimary}" ${F} font-size="${massFontSize}" font-weight="600" letter-spacing="-2">${massStr}</text>
 
   <!-- #id -->
   <text x="${rx}" y="${idY}" fill="${textPrimary}" ${F} font-size="52" font-weight="400" letter-spacing="-1">#${isNaN(id) ? '\u2014' : id}</text>
