@@ -5,36 +5,26 @@ const TOTAL_MINTED = 28990
 const TIER_TOTAL = { 2: 94, 3: 50, 4: 5 }
 
 export function useDB() {
-  const db = useState("db", () => null)
-  const loading = useState("dbLoading", () => false)
+  const { data: db, status } = useAsyncData('global-db-cache', () => {
+    return $fetch('/data/db.json', { responseType: 'json' })
+  }, {
+    server: true,
+    lazy: false,
+    default: () => null
+  })
 
-  // Use a unique key for the Promise that works transparently between SSR and Client
-  const prepareTask = useState("dbPrepare", () => null)
+  const loading = computed(() => status.value === 'pending')
 
-  let prepare = null
-
-  if (!db.value && !loading.value) {
-    loading.value = true
-    prepare = useFetch("/data/db.json", {
-      key: "db-json",
-      server: true,
-      lazy: false
-    }).then(({ data, error }) => {
-      if (data.value) db.value = data.value
-      loading.value = false
-      return data.value
-    })
-
-    // Store the task for other usages across the app hydration boundary
-    if (!prepareTask.value) {
-      prepareTask.value = true
-    }
-  } else if (loading.value) {
-    // Other components calling this while loading should also use Fetch to await the result via the same key
-    prepare = useFetch("/data/db.json", { key: "db-json" }).then(({ data }) => data.value)
-  } else if (db.value) {
-    prepare = Promise.resolve(db.value)
-  }
+  // Export a promise that resolves when db.value is available for explicit awaiting
+  const prepare = new Promise((resolve) => {
+    if (db.value) return resolve(db.value)
+    const unwatch = watch(db, (val) => {
+      if (val) {
+        unwatch()
+        resolve(val)
+      }
+    }, { immediate: true })
+  })
 
   // ---------------------------------------------------------------------------
   // Decode all alive tokens
