@@ -8,10 +8,11 @@ const baseUrl = computed(() => {
   return raw.replace(/\/$/, '') || 'https://merge.ppatrick.xyz'
 })
 
+const { allTokens, prepare } = useDB()
+if (prepare) await prepare()
+
 const { data: token } = await useAsyncData(`token-${id}`, async () => {
-  const { aliveTokens, prepare } = useDB()
-  if (prepare) await prepare
-  const found = aliveTokens.value.find(t => t.id === id)
+  const found = allTokens.value?.find(t => t.id === id)
   if (found) return found
   // If not in db, try RPC fallback
   const { token: rpcToken } = await useToken(id)

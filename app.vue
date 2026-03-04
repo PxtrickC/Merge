@@ -1,4 +1,8 @@
 <script setup>
+// Load db.json ONCE globally, blocking SSR rendering until it succeeds
+const baseUrl = process.server ? useRequestURL().origin : ''
+await useFetch(`${baseUrl}/data/db.json`, { key: 'global-db-json', server: true })
+
 const loading = ref(true)
 
 function onPending() {
