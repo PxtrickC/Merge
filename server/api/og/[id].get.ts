@@ -133,7 +133,7 @@ export default defineEventHandler(async (event) => {
   const badges: Badge[] = []
   if (isAlpha) badges.push({ bg: '#000000', fg: '#ffffff', border: '#444444', label: 'ALPHA' })
   badges.push(tierBadge)
-  if (merges > 0) badges.push({ ...baseBadge, label: `MERGES ${merges}` })
+  badges.push({ ...baseBadge, label: `${merges} MERGES` })
 
   // ── Adaptive font size ──────────────────────────────────────────────────
   // Compute early so all Y positions derive from it
