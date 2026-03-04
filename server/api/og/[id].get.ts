@@ -258,11 +258,11 @@ export default defineEventHandler(async (event) => {
   ${badgesSvg}
 
   <!-- Rank stat blocks -->
-  ${massRankSvg}
-  ${mergesRankSvg}
+  ${!isMerged ? massRankSvg : ''}
+  ${!isMerged ? mergesRankSvg : ''}
 
   <!-- Price: BUY FOR / TOP OFFER -->
-  ${priceSvg}
+  ${!isMerged ? priceSvg : ''}
 
 </svg>`
 
