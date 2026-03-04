@@ -293,6 +293,7 @@ export default defineEventHandler(async (event) => {
         fontFiles: fontPath ? [fontPath] : [],
         defaultFontFamily: 'HND',
       },
+      fitTo: { mode: 'zoom', value: 2 },
     })
     const pngData = resvg.render()
     const pngBuffer = pngData.asPng()
