@@ -4,27 +4,47 @@ const TOTAL_MINTED = 28990
 // Tier counts from original mint (used for tier section titles)
 const TIER_TOTAL = { 2: 94, 3: 50, 4: 5 }
 
+// Module-level cache for the preparation promise to handle concurrent component initialization
+let _prepare = null
+
 export function useDB() {
-  const { data: db, status } = useAsyncData('global-db-cache', () => {
-    return $fetch('/data/db.json', { responseType: 'json' })
-  }, {
-    server: true,
-    lazy: false,
-    default: () => null
-  })
+  const db = useState("db", () => null)
+  const loading = useState("dbLoading", () => false)
 
-  const loading = computed(() => status.value === 'pending')
+  // Load db.json once per request (SSR) or once per session (Client)
+  let prepare = _prepare
+  if (!db.value && !loading.value) {
+    loading.value = true
+    const { data } = useFetch("/data/db.json", {
+      key: "db-json",
+      server: true,
+      lazy: false
+    })
 
-  // Export a promise that resolves when db.value is available for explicit awaiting
-  const prepare = new Promise((resolve) => {
-    if (db.value) return resolve(db.value)
-    const unwatch = watch(db, (val) => {
-      if (val) {
-        unwatch()
-        resolve(val)
-      }
-    }, { immediate: true })
-  })
+    _prepare = new Promise((resolve) => {
+      watch(data, (newVal) => {
+        if (newVal) {
+          db.value = newVal
+          loading.value = false
+          resolve(newVal)
+        }
+      }, { immediate: true })
+    })
+    prepare = _prepare
+  } else if (loading.value && !db.value) {
+    // If no promise exists yet but we're marked as loading, create one to wait for state
+    if (!_prepare) {
+      _prepare = new Promise((resolve) => {
+        const unwatch = watch(db, (val) => {
+          if (val) {
+            unwatch()
+            resolve(val)
+          }
+        }, { immediate: true })
+      })
+    }
+    prepare = _prepare
+  }
 
   // ---------------------------------------------------------------------------
   // Decode all alive tokens
