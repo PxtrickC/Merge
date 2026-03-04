@@ -30,6 +30,7 @@ function computeRanks(tokens: any[], id: number) {
 
   const { class: tier, mass } = decodeValue(entry[0])
   const merges = entry[1] || 0
+  const isMerged = !!entry[2]
   const total = alive.length
 
   const massSorted = [...alive].sort((a, b) => b.mass - a.mass || b.id - a.id)
@@ -40,7 +41,7 @@ function computeRanks(tokens: any[], id: number) {
   const alphaMass = massSorted[0]?.mass || 12143 // fallback to initial max
 
   return {
-    mass, tier, merges, total, alphaMass,
+    mass, tier, merges, total, alphaMass, isMerged,
     massRank: massRankIdx >= 0 ? massRankIdx + 1 : null,
     mergesRank: mergesRankIdx >= 0 ? mergesRankIdx + 1 : null,
   }
@@ -71,7 +72,7 @@ export default defineEventHandler(async (event) => {
   const tokens: any[] = db?.tokens ?? []
 
   // ── Token stats & ranks ─────────────────────────────────────────────────
-  const { mass, tier, merges, massRank, mergesRank, total, alphaMass } = computeRanks(tokens, id)
+  const { mass, tier, merges, massRank, mergesRank, total, alphaMass, isMerged } = computeRanks(tokens, id)
 
   // ── Canvas ──────────────────────────────────────────────────────────────
   const W = 1200
@@ -132,6 +133,7 @@ export default defineEventHandler(async (event) => {
     : { bg: '#ffffff', fg: '#000000', border: '#ffffff' }
   const badges: Badge[] = []
   if (isAlpha) badges.push({ bg: '#000000', fg: '#ffffff', border: '#444444', label: 'ALPHA' })
+  if (isMerged) badges.push({ bg: '#000000', fg: '#f87171', border: '#f87171', label: 'MERGED' })
   badges.push(tierBadge)
   badges.push({ ...baseBadge, label: `${merges} MERGES` })
 
