@@ -15,9 +15,13 @@ const stripImportAttributes = {
 }
 
 export default defineNuxtConfig({
-    ssr: false,
+    ssr: true,
     routeRules: {
-        '/[id]': { ssr: true },
+        '/': { ssr: false },
+        '/dashboard/**': { ssr: false },
+        '/leaderboard/**': { ssr: false },
+        '/market/**': { ssr: false },
+        '/about/**': { ssr: false },
     },
 
     nitro: { compressPublicAssets: true },
