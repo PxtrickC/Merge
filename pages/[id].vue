@@ -33,7 +33,7 @@ useServerSeoMeta({
 
 const { open, isOpen } = useTokenDrawer()
 if (!isNaN(id)) {
-  open(id)
+  open(id, null, token.value)
 }
 
 watch(isOpen, (val) => {

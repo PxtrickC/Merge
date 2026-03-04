@@ -2,7 +2,7 @@
 import { ethers } from 'ethers'
 import { PLATFORM_FEE_BPS, SEAPORT_ADDRESS } from '~/utils/trading.mjs'
 
-const { tokenId, isOpen, listing: drawerListing, close } = useTokenDrawer()
+const { tokenId, isOpen, listing: drawerListing, initialTokenData, close } = useTokenDrawer()
 
 const { alphaMass, aliveTokens, db, mergedIntoIndex } = useDB()
 const alpha_mass = computed(() => alphaMass.value || 0)
@@ -183,12 +183,21 @@ watch(tokenId, async (id) => {
   })
 
   try {
-    const { token } = await useToken(id)
-    if (token.value) {
+    if (initialTokenData.value && initialTokenData.value.id === id) {
+      const t = initialTokenData.value
       tokenData.value = {
-        ...token.value,
-        merged_to: token.value.mergedTo ?? null,
-        merged_on: token.value.mergedOn ?? null,
+        ...t,
+        merged_to: t.mergedTo ?? t.merged_to ?? null,
+        merged_on: t.mergedOn ?? t.merged_on ?? null,
+      }
+    } else {
+      const { token } = await useToken(id)
+      if (token.value) {
+        tokenData.value = {
+          ...token.value,
+          merged_to: token.value.mergedTo ?? null,
+          merged_on: token.value.mergedOn ?? null,
+        }
       }
     }
 

@@ -2,11 +2,13 @@ export function useTokenDrawer() {
   const tokenId = useState('drawerTokenId', () => null)
   const isOpen = useState('drawerIsOpen', () => false)
   const listing = useState('drawerListing', () => null)
+  const initialTokenData = useState('drawerInitialData', () => null)
   const _savedPath = useState('drawerSavedPath', () => null)
 
-  function open(id, listingData = null) {
+  function open(id, listingData = null, tokenData = null) {
     tokenId.value = +id
     listing.value = listingData
+    initialTokenData.value = tokenData
     isOpen.value = true
 
     // Update URL without navigation for shareability
@@ -24,6 +26,7 @@ export function useTokenDrawer() {
 
   function close() {
     isOpen.value = false
+    initialTokenData.value = null
 
     // Restore original URL
     if (import.meta.client && _savedPath.value) {
@@ -32,5 +35,5 @@ export function useTokenDrawer() {
     }
   }
 
-  return { tokenId, isOpen, listing, open, close }
+  return { tokenId, isOpen, listing, initialTokenData, open, close }
 }
