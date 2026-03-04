@@ -8,7 +8,7 @@ const baseUrl = computed(() => {
   return raw.replace(/\/$/, '') || 'https://merge.ppatrick.xyz'
 })
 
-useSeoMeta({
+useServerSeoMeta({
   title: `Merge — Token #${id}`,
   description: `Details for Merge token #${id} — view tier, mass, merge history, ranking, and trade.`,
   ogTitle: `Merge — Token #${id}`,
@@ -33,16 +33,18 @@ watch(isOpen, (val) => {
 </script>
 
 <template>
-  <div>
-    <section-stats-bar />
-    <section-my-merge />
-    <section-latest-merges />
-    <section-chart-supply />
-    <section-chart-merge-rate />
-    <section-chart-tier-survival />
-    <section-chart-alpha />
-    <section-chart-omnibus />
-    <section-chart-concentration />
-    <section-mass-distribution />
-  </div>
+  <ClientOnly>
+    <div>
+      <section-stats-bar />
+      <section-my-merge />
+      <section-latest-merges />
+      <section-chart-supply />
+      <section-chart-merge-rate />
+      <section-chart-tier-survival />
+      <section-chart-alpha />
+      <section-chart-omnibus />
+      <section-chart-concentration />
+      <section-mass-distribution />
+    </div>
+  </ClientOnly>
 </template>

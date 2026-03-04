@@ -16,6 +16,9 @@ const stripImportAttributes = {
 
 export default defineNuxtConfig({
     ssr: false,
+    routeRules: {
+        '/[id]': { ssr: true },
+    },
 
     nitro: { compressPublicAssets: true },
 
