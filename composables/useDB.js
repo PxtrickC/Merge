@@ -4,46 +4,36 @@ const TOTAL_MINTED = 28990
 // Tier counts from original mint (used for tier section titles)
 const TIER_TOTAL = { 2: 94, 3: 50, 4: 5 }
 
-// Module-level cache for the preparation promise to handle concurrent component initialization
-let _prepare = null
-
 export function useDB() {
   const db = useState("db", () => null)
   const loading = useState("dbLoading", () => false)
 
-  // Load db.json once per request (SSR) or once per session (Client)
-  let prepare = _prepare
+  // Use a unique key for the Promise that works transparently between SSR and Client
+  const prepareTask = useState("dbPrepare", () => null)
+
+  let prepare = null
+
   if (!db.value && !loading.value) {
     loading.value = true
-    const { data } = useFetch("/data/db.json", {
+    prepare = useFetch("/data/db.json", {
       key: "db-json",
       server: true,
       lazy: false
+    }).then(({ data, error }) => {
+      if (data.value) db.value = data.value
+      loading.value = false
+      return data.value
     })
 
-    _prepare = new Promise((resolve) => {
-      watch(data, (newVal) => {
-        if (newVal) {
-          db.value = newVal
-          loading.value = false
-          resolve(newVal)
-        }
-      }, { immediate: true })
-    })
-    prepare = _prepare
-  } else if (loading.value && !db.value) {
-    // If no promise exists yet but we're marked as loading, create one to wait for state
-    if (!_prepare) {
-      _prepare = new Promise((resolve) => {
-        const unwatch = watch(db, (val) => {
-          if (val) {
-            unwatch()
-            resolve(val)
-          }
-        }, { immediate: true })
-      })
+    // Store the task for other usages across the app hydration boundary
+    if (!prepareTask.value) {
+      prepareTask.value = true
     }
-    prepare = _prepare
+  } else if (loading.value) {
+    // Other components calling this while loading should also use Fetch to await the result via the same key
+    prepare = useFetch("/data/db.json", { key: "db-json" }).then(({ data }) => data.value)
+  } else if (db.value) {
+    prepare = Promise.resolve(db.value)
   }
 
   // ---------------------------------------------------------------------------
