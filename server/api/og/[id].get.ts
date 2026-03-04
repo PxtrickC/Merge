@@ -51,9 +51,24 @@ export default defineEventHandler(async (event) => {
   const id = parseInt(idStr ?? '', 10)
 
   // ── Load db.json ────────────────────────────────────────────────────────
-  const dbPath = resolve(process.cwd(), 'public/data/db.json')
-  const db = JSON.parse(readFileSync(dbPath, 'utf-8'))
-  const tokens: any[] = db.tokens ?? []
+  let db: any
+  try {
+    const host = getRequestHeader(event, 'host') || 'merge.ppatrick.xyz'
+    const protocol = host.includes('localhost') || host.includes('127.0.0.1') ? 'http' : 'https'
+    const url = `${protocol}://${host}/data/db.json`
+
+    db = await $fetch(url)
+    if (typeof db === 'string') db = JSON.parse(db)
+  } catch (e) {
+    console.warn('Could not fetch db.json via HTTP, falling back to fs...', e)
+    const dbPath = resolve(process.cwd(), 'public/data/db.json')
+    try {
+      db = JSON.parse(readFileSync(dbPath, 'utf-8'))
+    } catch (fsErr) {
+      db = { tokens: [] }
+    }
+  }
+  const tokens: any[] = db?.tokens ?? []
 
   // ── Token stats & ranks ─────────────────────────────────────────────────
   const { mass, tier, merges, massRank, mergesRank, total, alphaMass } = computeRanks(tokens, id)
@@ -271,17 +286,24 @@ export default defineEventHandler(async (event) => {
     console.warn('Could not load HND.ttf font, falling back to system fonts:', err)
   }
 
-  const resvg = new Resvg(svg, {
-    font: {
-      loadSystemFonts: true,
-      fontFiles: fontPath ? [fontPath] : [],
-      defaultFontFamily: 'HND',
-    },
-  })
-  const pngData = resvg.render()
-  const pngBuffer = pngData.asPng()
+  try {
+    const resvg = new Resvg(svg, {
+      font: {
+        loadSystemFonts: true,
+        fontFiles: fontPath ? [fontPath] : [],
+        defaultFontFamily: 'HND',
+      },
+    })
+    const pngData = resvg.render()
+    const pngBuffer = pngData.asPng()
 
-  setHeader(event, 'Content-Type', 'image/png')
-  setHeader(event, 'Cache-Control', 'public, max-age=3600, s-maxage=3600')
-  return pngBuffer
+    setHeader(event, 'Content-Type', 'image/png')
+    setHeader(event, 'Cache-Control', 'public, max-age=86400, s-maxage=31536000')
+    return pngBuffer
+  } catch (renderErr) {
+    console.error('Failed to render PNG via resvg, falling back to raw SVG:', renderErr)
+    setHeader(event, 'Content-Type', 'image/svg+xml')
+    setHeader(event, 'Cache-Control', 'public, max-age=86400, s-maxage=31536000')
+    return svg
+  }
 })
