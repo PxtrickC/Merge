@@ -5,7 +5,8 @@ const TOTAL_MINTED = 28990
 const TIER_TOTAL = { 2: 94, 3: 50, 4: 5 }
 
 export function useDB() {
-  const { data: db } = useNuxtData('global-db-json')
+  const nuxtData = useNuxtData('global-db-json')
+  const db = nuxtData?.data || ref(null)
   const loading = ref(false)
 
   // Fetch a lightweight summary for SSR to avoid 3MB payload and 504 timeouts
