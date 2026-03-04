@@ -101,16 +101,16 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  // ── Right panel colors ──────────────────────────────────────────────────
+  // ── Right panel colors (Synced with TokenDrawer.vue) ───────────────────
   let panelBg: string, textPrimary: string, textMuted: string
   if (isAlpha) {
-    panelBg = '#ffffff'; textPrimary = '#111111'; textMuted = '#888888'
+    panelBg = '#ffffff'; textPrimary = '#111111'; textMuted = '#666666'
   } else {
     switch (tier) {
       case 2: panelBg = '#000000'; textPrimary = '#ffcc33'; textMuted = '#c99e20'; break
       case 3: panelBg = '#3333ff'; textPrimary = '#ffffff'; textMuted = 'rgba(255, 255, 255, 0.75)'; break
       case 4: panelBg = '#ff3333'; textPrimary = '#ffffff'; textMuted = 'rgba(255, 255, 255, 0.75)'; break
-      default: panelBg = '#0a0a0a'; textPrimary = '#ffffff'; textMuted = '#666666'; break
+      default: panelBg = '#0a0a0a'; textPrimary = '#ffffff'; textMuted = '#888888'; break
     }
   }
 
@@ -122,18 +122,18 @@ export default defineEventHandler(async (event) => {
 
   let tierBadge: Badge
   switch (tier) {
-    case 2: tierBadge = { bg: '#000000', fg: '#ffcc33', border: '#ffffff', label: 'TIER 2' }; break
-    case 3: tierBadge = { bg: '#3333ff', fg: '#ffffff', border: '#ffffff', label: 'TIER 3' }; break
-    case 4: tierBadge = { bg: '#ff3333', fg: '#ffffff', border: '#ffffff', label: 'TIER 4' }; break
-    default: tierBadge = { bg: '#000000', fg: '#ffffff', border: 'rgba(255, 255, 255, 0.5)', label: 'TIER 1' }; break
+    case 2: tierBadge = { bg: '#1a1400', fg: '#fc3', border: '#3d3200', label: 'TIER 2' }; break
+    case 3: tierBadge = { bg: '#2222aa', fg: '#ffffff', border: '#1a1a88', label: 'TIER 3' }; break
+    case 4: tierBadge = { bg: '#aa2222', fg: '#ffffff', border: '#881a1a', label: 'TIER 4' }; break
+    default: tierBadge = { bg: '#111', fg: '#fff', border: '#2a2a2a', label: 'TIER 1' }; break
   }
   const baseBadge = isAlpha
-    ? { bg: '#eaeaea', fg: '#111111', border: '#d0d0d0' }
+    ? { bg: '#e5e5e5', fg: '#111', border: '#bbb' }
     : { bg: '#ffffff', fg: '#000000', border: '#ffffff' }
   const classNum = !isNaN(id) ? String(id).slice(-2) : null
 
   const badges: Badge[] = []
-  if (isAlpha) badges.push({ bg: '#000000', fg: '#ffffff', border: 'rgba(255, 255, 255, 0.5)', label: 'ALPHA' })
+  if (isAlpha) badges.push({ bg: '#000000', fg: '#ffffff', border: '#444444', label: 'ALPHA' })
   badges.push(tierBadge)
   if (merges > 0) badges.push({ ...baseBadge, label: `MERGES ${merges}` })
   if (classNum !== null) badges.push({ ...baseBadge, label: `CLASS ${classNum}` })
@@ -145,10 +145,10 @@ export default defineEventHandler(async (event) => {
 
   // ── Badge render constants ──────────────────────────────────────────────
   const BADGE_H = 46
-  const BADGE_PAD_X = 14
+  const BADGE_PAD_X = 22
   const BADGE_GAP = 8
   const BADGE_FONT = 22
-  const CHAR_W = 12.5
+  const CHAR_W = 12.8
 
   // ── Vertical layout anchors (top → bottom) ──────────────────────────────
   //   MERGE label  y = 28
@@ -185,8 +185,8 @@ export default defineEventHandler(async (event) => {
   let badgeX = rx
   const badgesSvg = badges.map((b) => {
     const bw = Math.ceil(b.label.length * CHAR_W) + BADGE_PAD_X * 2
-    const out = `<rect x="${badgeX}" y="${badgeY}" width="${bw}" height="${BADGE_H}" rx="0" fill="${b.bg}" stroke="${b.border}" stroke-width="2"/>
-    <text x="${badgeX + bw / 2}" y="${badgeY + BADGE_H / 2 + 6}" text-anchor="middle" fill="${b.fg}" ${F} font-size="${BADGE_FONT}" font-weight="600" letter-spacing="0.5">${b.label}</text>`
+    const out = `<rect x="${badgeX}" y="${badgeY}" width="${bw}" height="${BADGE_H}" rx="4" fill="${b.bg}" stroke="${b.border}" stroke-width="2"/>
+    <text x="${badgeX + bw / 2}" y="${badgeY + BADGE_H / 2}" dominant-baseline="central" text-anchor="middle" fill="${b.fg}" ${F} font-size="${BADGE_FONT}" font-weight="600" letter-spacing="0.5">${b.label}</text>`
     badgeX += bw + BADGE_GAP
     return out
   }).join('\n    ')
