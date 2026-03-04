@@ -144,11 +144,11 @@ export default defineEventHandler(async (event) => {
   const massFontSize = massStr.length <= 8 ? 108 : massStr.length <= 10 ? 96 : 80
 
   // ── Badge render constants ──────────────────────────────────────────────
-  const BADGE_H = 38
+  const BADGE_H = 46
   const BADGE_PAD_X = 14
   const BADGE_GAP = 8
-  const BADGE_FONT = 18
-  const CHAR_W = 10.2
+  const BADGE_FONT = 22
+  const CHAR_W = 12.5
 
   // ── Vertical layout anchors (top → bottom) ──────────────────────────────
   //   MERGE label  y = 28
@@ -161,16 +161,16 @@ export default defineEventHandler(async (event) => {
   const badgeY = idY + 30
   const statStartY = badgeY + BADGE_H + 60
   const STAT_Y_LABEL = statStartY
-  const STAT_Y_NUM = statStartY + 60
-  const STAT_Y_DENOM = STAT_Y_NUM + 30   // ~16px visual gap below rank number
-  const STAT_COL2_X = Math.round(W * 0.75)  // second column at 75% of total width
-  const PRICE_Y_LABEL = STAT_Y_DENOM + 60
-  const PRICE_Y_VAL = PRICE_Y_LABEL + 60
+  const STAT_Y_NUM = statStartY + 64
+  const STAT_Y_DENOM = STAT_Y_NUM + 32
+  const STAT_COL2_X = Math.round(W * 0.75)
+  const PRICE_Y_LABEL = STAT_Y_DENOM + 64
+  const PRICE_Y_VAL = PRICE_Y_LABEL + 64
 
   // ── Shared text style constants ────────────────────────────────────────
   const F = `font-family="'HND','DM Sans',system-ui,-apple-system,sans-serif"`
   // FL = label style — change here to update ALL four section labels at once
-  const FL = `${F} font-size="28" font-weight="600" letter-spacing="0"`
+  const FL = `${F} font-size="34" font-weight="600" letter-spacing="0"`
   const massRankSvg = massRank && total ? `
     <text x="${rx}" y="${STAT_Y_LABEL}" fill="${textPrimary}" ${FL}>Mass Rank</text>
     <text x="${rx}" y="${STAT_Y_NUM}" fill="${textPrimary}" ${F} font-size="44" font-weight="700" letter-spacing="-1">#${massRank}</text>
