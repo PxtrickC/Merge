@@ -461,6 +461,21 @@ function onKeyDown(e) {
   if (e.key === 'Escape' && isOpen.value) close()
 }
 
+// Prevent over-scroll / drag-down at the top of the drawer on mobile/PWA
+let _touchStartY = 0
+function onPanelTouchStart(e) {
+  _touchStartY = e.touches[0].clientY
+}
+function onPanelTouchMove(e) {
+  const el = panelRef.value
+  if (!el) return
+  const deltaY = e.touches[0].clientY - _touchStartY
+  // At the top and swiping down → block default (prevents PTR + elastic scroll)
+  if (el.scrollTop === 0 && deltaY > 0) {
+    e.preventDefault()
+  }
+}
+
 onMounted(() => document.addEventListener('keydown', onKeyDown))
 onUnmounted(() => {
   document.removeEventListener('keydown', onKeyDown)
@@ -482,7 +497,14 @@ onUnmounted(() => {
     <div v-if="isOpen" class="drawer__backdrop" @click="close" @touchmove.prevent />
   </Transition>
   <Transition name="slide">
-    <div v-if="isOpen" ref="panelRef" class="drawer__panel" :class="drawerTierClass">
+    <div
+      v-if="isOpen"
+      ref="panelRef"
+      class="drawer__panel"
+      :class="drawerTierClass"
+      @touchstart.passive="onPanelTouchStart"
+      @touchmove="onPanelTouchMove"
+    >
       <button class="drawer__close" @click="close">
         <icon class="w-5 h-5" variant="return" />
       </button>
