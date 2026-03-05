@@ -453,6 +453,15 @@ onUnmounted(() => {
         <icon class="w-5 h-5" variant="return" />
       </button>
 
+      <!-- Inline refresh indicator (same-token pull-to-refresh, no full animation) -->
+      <Transition name="drawer-refresh">
+        <div v-if="loading && tokenData" class="drawer__refresh-bar">
+          <span class="drawer__refresh-dot" />
+          <span class="drawer__refresh-dot" />
+          <span class="drawer__refresh-dot" />
+        </div>
+      </Transition>
+
       <div v-if="loading && !tokenData" class="drawer__loading">
         <Loading :fullscreen="false" />
       </div>
@@ -901,6 +910,44 @@ onUnmounted(() => {
 }
 .drawer__loading {
   @apply flex justify-center py-12;
+}
+
+/* ── Pull-to-refresh inline indicator ──────────────────────────────────────── */
+.drawer__refresh-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 40px;
+  margin-bottom: 0.75rem;
+  overflow: hidden;
+}
+.drawer__refresh-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--d-text-3);
+  animation: drawer-pulse 1.2s ease-in-out infinite;
+}
+.drawer__refresh-dot:nth-child(2) { animation-delay: 0.2s; }
+.drawer__refresh-dot:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes drawer-pulse {
+  0%, 100% { opacity: 0.3; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1); }
+}
+
+/* Transition: expand/collapse height */
+.drawer-refresh-enter-active,
+.drawer-refresh-leave-active {
+  transition: height 0.25s ease, opacity 0.2s ease, margin-bottom 0.25s ease;
+  overflow: hidden;
+}
+.drawer-refresh-enter-from,
+.drawer-refresh-leave-to {
+  height: 0 !important;
+  opacity: 0;
+  margin-bottom: 0;
 }
 
 /* ── Trade Panel ─────────────────────────────────────────────────────────── */
