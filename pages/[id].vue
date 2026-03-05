@@ -43,12 +43,12 @@ const massVal = computed(() => token.value?.mass ?? '\u2014')
 
 useServerSeoMeta({
   title: `Merge — m(${massVal.value}) #${id}`,
-  description: `Details for Merge m(${massVal.value}) #${id} — view tier, mass, merge history, ranking, and trade.`,
+  description: `Details for m(${massVal.value}) #${id} — view merge history, ranking, matters and trade.`,
   ogTitle: `Merge — m(${massVal.value}) #${id}`,
-  ogDescription: `Details for Merge m(${massVal.value}) #${id} — view tier, mass, merge history, ranking, and trade.`,
+  ogDescription: `Details for m(${massVal.value}) #${id} — view merge history, ranking, matters and trade.`,
   ogImage: `${baseUrl.value}/api/og/${id}`,
   twitterTitle: `Merge — m(${massVal.value}) #${id}`,
-  twitterDescription: `Details for Merge m(${massVal.value}) #${id} — view tier, mass, merge history, ranking, and trade.`,
+  twitterDescription: `Details for m(${massVal.value}) #${id} — view merge history, ranking, matters and trade.`,
   twitterImage: `${baseUrl.value}/api/og/${id}`,
   twitterCard: 'summary_large_image',
 })
