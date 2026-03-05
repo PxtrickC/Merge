@@ -444,12 +444,15 @@ watch(isOpen, (open) => {
     document.body.style.left = '0'
     document.body.style.right = '0'
     document.body.style.overflow = 'hidden'
+    // Block native pull-to-refresh so it never triggers a full page reload
+    document.documentElement.style.overscrollBehaviorY = 'none'
   } else {
     document.body.style.position = ''
     document.body.style.top = ''
     document.body.style.left = ''
     document.body.style.right = ''
     document.body.style.overflow = ''
+    document.documentElement.style.overscrollBehaviorY = ''
     window.scrollTo(0, savedScrollY)
   }
 })
@@ -468,6 +471,7 @@ onUnmounted(() => {
     document.body.style.left = ''
     document.body.style.right = ''
     document.body.style.overflow = ''
+    document.documentElement.style.overscrollBehaviorY = ''
     window.scrollTo(0, savedScrollY)
   }
 })
