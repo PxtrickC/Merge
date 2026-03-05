@@ -8,10 +8,11 @@ const baseUrl = computed(() => {
   return raw.replace(/\/$/, '') || 'https://merge.ppatrick.xyz'
 })
 
-const { allTokens, prepare } = useDB()
-if (prepare) await prepare()
+const { allTokens } = useDB()
 
-const { data: token } = await useAsyncData(`token-${id}`, async () => {
+// Use lazy (non-blocking) so this page never suspends the Suspense boundary,
+// which prevents the full-page loading animation from firing on PWA reload.
+const { data: token } = useLazyAsyncData(`token-${id}`, async () => {
   if (process.server) {
     try {
       const res = await $fetch(`/api/token/${id}`)
@@ -19,8 +20,8 @@ const { data: token } = await useAsyncData(`token-${id}`, async () => {
         return {
           id: res.id,
           mass: res.mass,
-          tier: res.tier,
-          class: res.tier,
+          tier: res.tier ?? res.class ?? 1,
+          class: res.tier ?? res.class ?? 1,
           merges: res.merges,
           merged: res.isMerged,
           owner: res.isMerged ? `Merged to #${res.mergedTo}` : null
@@ -33,7 +34,7 @@ const { data: token } = await useAsyncData(`token-${id}`, async () => {
 
   const found = allTokens.value?.find(t => t.id === id)
   if (found) return found
-  
+
   // If not in db, try RPC fallback
   const { token: rpcToken } = await useToken(id)
   return rpcToken.value
@@ -57,8 +58,20 @@ useServerSeoMeta({
 })
 
 const { open, isOpen } = useTokenDrawer()
+
+// Open drawer immediately if we already have token data (e.g. hydration from SSR),
+// otherwise wait for lazy fetch to complete so tier class is always correct.
 if (!isNaN(id)) {
-  open(id, null, token.value)
+  if (token.value) {
+    open(id, null, token.value)
+  } else {
+    const stop = watch(token, (val) => {
+      if (val) {
+        open(id, null, val)
+        stop()
+      }
+    }, { immediate: false })
+  }
 }
 
 watch(isOpen, (val) => {
