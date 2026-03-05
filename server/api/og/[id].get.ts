@@ -304,9 +304,7 @@ export default defineEventHandler(async (event) => {
     setHeader(event, 'Cache-Control', 'public, max-age=86400, s-maxage=31536000')
     return pngBuffer
   } catch (renderErr) {
-    console.error('Failed to render PNG via resvg, falling back to raw SVG:', renderErr)
-    setHeader(event, 'Content-Type', 'image/svg+xml')
-    setHeader(event, 'Cache-Control', 'public, max-age=86400, s-maxage=31536000')
-    return svg
+    console.error('[og] resvg render failed for id:', id, renderErr)
+    throw createError({ statusCode: 500, statusMessage: 'OG image render failed' })
   }
 })

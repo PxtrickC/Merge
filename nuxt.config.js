@@ -124,7 +124,7 @@ export default defineNuxtConfig({
                 { property: 'og:site_name', content: 'merge.' },
 
                 { name: 'author', content: 'Tina Wang' },
-                { name: 'twitter:creator', content: '@ItsTinaWang' },
+                { name: 'twitter:creator', content: '@pxtrickpin' },
 
                 { name: 'twitter:site', content: 'https://merge.ppatrick.xyz' },
                 { name: 'twitter:title', content: 'merge by pak' },
