@@ -1,17 +1,10 @@
-let _loaded = false
-
 export function useSupplyHistory() {
-  const history = useState('supplyHistory', () => null)
-  const loading = useState('supplyHistoryLoading', () => false)
-
-  if (!_loaded && !history.value && !loading.value) {
-    loading.value = true
-    _loaded = true
-    useFetch('/data/supply_history.json', { key: 'supply-history' }).then(({ data }) => {
-      if (data.value) history.value = data.value
-      loading.value = false
-    })
-  }
+  // Use useFetch at the top level of the composable
+  const { data: history, pending: loading } = useFetch('/data/supply_history.json', {
+    key: 'supply-history',
+    server: true, // Allow SSR to fetch it once
+    lazy: true    // Don't block navigation
+  })
 
   // Generate date strings from startDate + index
   const dates = computed(() => {

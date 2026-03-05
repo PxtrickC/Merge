@@ -52,7 +52,7 @@ watch([dates, omnibusOverTime, omnibusMassOverTime, viewMode, stats], () => {
     yAxis: {
       type: 'value',
       ...AXIS_STYLE,
-      max: isMass ? totalMass : TOTAL_MINTED,
+      max: isMass ? 400000 : 28990,
       axisLabel: {
         ...AXIS_STYLE.axisLabel,
         formatter: (v) => v >= 1000 ? (v / 1000).toFixed(0) + 'k' : v,
@@ -93,7 +93,7 @@ watch([dates, omnibusOverTime, omnibusMassOverTime, viewMode, stats], () => {
         markArea: MASS_BLACK_AREA,
         data: filtered.map(r => [r.date, r.val]),
       },
-      ...(isMass ? [{
+      ...(isMass && filtered.length > 0 ? [{
         name: 'Total Mass',
         type: 'line',
         showSymbol: false,
@@ -104,21 +104,24 @@ watch([dates, omnibusOverTime, omnibusMassOverTime, viewMode, stats], () => {
     ],
   }, { notMerge: true })
 }, { immediate: true })
+
 </script>
 
 <template>
   <section class="cs">
     <div class="cs__header">
       <h2 class="cs__title">NG Omnibus</h2>
-      <p v-if="omnibusCount" class="cs__stat">{{ omnibusCount.toLocaleString() }} tokens</p>
-      <p class="cs__toggle">
-        <span v-for="(mode, i) in [['count', 'count'], ['mass', 'Total mass']]" :key="mode[0]"
-          >{{ i > 0 ? ' ' : '' }}[<span
-            class="cs__mode"
-            :class="{ 'cs__mode--active': viewMode === mode[0] }"
-            @click="viewMode = mode[0]"
-          >{{ mode[1] }}</span>]</span>
-      </p>
+      <ClientOnly>
+        <p v-if="omnibusCount" class="cs__stat">{{ omnibusCount.toLocaleString() }} tokens</p>
+        <p class="cs__toggle">
+          <span v-for="(mode, i) in [['count', 'count'], ['mass', 'Total mass']]" :key="mode[0]"
+            >{{ i > 0 ? ' ' : '' }}[<span
+              class="cs__mode"
+              :class="{ 'cs__mode--active': viewMode === mode[0] }"
+              @click="viewMode = mode[0]"
+            >{{ mode[1] }}</span>]</span>
+        </p>
+      </ClientOnly>
     </div>
     <div ref="chartEl" class="cs__canvas"></div>
   </section>

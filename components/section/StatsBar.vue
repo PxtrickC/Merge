@@ -16,32 +16,20 @@ const omnibus_count = ref(0)
 // Query totalSupply + omnibus balanceOf via Etherscan eth_call proxy
 const iface = new ethers.Interface(MERGE_ABI)
 
-async function etherscanCall(to, data) {
-  const url = new URL('https://api.etherscan.io/v2/api')
-  url.searchParams.set('chainid', '1')
-  url.searchParams.set('module', 'proxy')
-  url.searchParams.set('action', 'eth_call')
-  url.searchParams.set('to', to)
-  url.searchParams.set('data', data)
-  url.searchParams.set('tag', 'latest')
-  url.searchParams.set('apikey', esKey)
-  const res = await fetch(url)
-  const json = await res.json()
-  return json.result
-}
+onMounted(async () => {
+  try {
+    const [supplyHex, omnibusHex] = await Promise.all([
+      etherscanCall(MERGE_CONTRACT_ADDRESS, iface.encodeFunctionData('totalSupply')),
+      etherscanCall(MERGE_CONTRACT_ADDRESS, iface.encodeFunctionData('balanceOf', [NIFTY_OMNIBUS_ADDRESS])),
+    ])
+    if (supplyHex) token_count.value = Number(BigInt(supplyHex))
+    if (omnibusHex) omnibus_count.value = Number(BigInt(omnibusHex))
+  } catch (e) {
+    console.warn('StatsBar fetch failed:', e)
+    token_count.value = stats.value?.token_count ?? 0
+  }
+})
 
-try {
-  const [supplyHex, omnibusHex] = await Promise.all([
-    etherscanCall(MERGE_CONTRACT_ADDRESS, iface.encodeFunctionData('totalSupply')),
-    etherscanCall(MERGE_CONTRACT_ADDRESS, iface.encodeFunctionData('balanceOf', [NIFTY_OMNIBUS_ADDRESS])),
-  ])
-  token_count.value = Number(BigInt(supplyHex))
-  omnibus_count.value = Number(BigInt(omnibusHex))
-} catch {
-  // fallback to db.json stats
-  token_count.value = stats.value?.token_count ?? 0
-  omnibus_count.value = 0
-}
 
 </script>
 

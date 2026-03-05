@@ -87,18 +87,20 @@ watch([dates, tier1OverTime, viewMode], () => {
 
 <template>
   <section class="cs">
-    <div class="cs__header">
-      <h2 class="cs__title">Tier Survival</h2>
-      <p class="cs__toggle">
-        <span v-for="(mode, i) in ['count', 'percent']" :key="mode"
-          >{{ i > 0 ? ' ' : '' }}[<span
-            class="cs__mode"
-            :class="{ 'cs__mode--active': viewMode === mode }"
-            @click="viewMode = mode"
-          >{{ mode === 'percent' ? 'percentage' : mode }}</span>]</span>
-      </p>
-    </div>
-    <div ref="chartEl" class="cs__canvas"></div>
+    <ClientOnly>
+      <div class="cs__header">
+        <h2 class="cs__title">Tier Survival</h2>
+        <p class="cs__toggle">
+          <span v-for="(mode, i) in ['count', 'percent']" :key="mode"
+            >{{ i > 0 ? ' ' : '' }}[<span
+              class="cs__mode"
+              :class="{ 'cs__mode--active': viewMode === mode }"
+              @click="viewMode = mode"
+            >{{ mode === 'percent' ? 'percentage' : mode }}</span>]</span>
+        </p>
+      </div>
+      <div ref="chartEl" class="cs__canvas"></div>
+    </ClientOnly>
   </section>
 </template>
 

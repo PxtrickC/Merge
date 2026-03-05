@@ -25,19 +25,23 @@ watch([dates, aliveOverTime], () => {
 
   // Future projection: average daily merge rate over last 90 days
   const last90 = merges.slice(-90)
-  const avgRate = last90.reduce((s, v) => s + v, 0) / last90.length
-  const currentAlive = alive[alive.length - 1]
+  const avgRate = last90.length ? last90.reduce((s, v) => s + v, 0) / last90.length : 0
+  const currentAlive = alive[alive.length - 1] || 0
   const lastDate = new Date(d[d.length - 1] + 'T00:00:00Z')
 
   const projDates = []
   const projValues = []
   let projected = currentAlive
-  for (let i = 1; i <= 365 * 3 && projected > 1; i++) {
-    const pd = new Date(lastDate)
-    pd.setUTCDate(pd.getUTCDate() + i)
-    projDates.push(pd.toISOString().slice(0, 10))
-    projected = Math.max(1, Math.round(currentAlive - avgRate * i))
-    projValues.push(projected)
+
+  // Only run projection if we have an avgRate and currentAlive > 1
+  if (avgRate > 0 && currentAlive > 1) {
+    for (let i = 1; i <= 365 * 3 && projected > 1; i++) {
+      const pd = new Date(lastDate)
+      pd.setUTCDate(pd.getUTCDate() + i)
+      projDates.push(pd.toISOString().slice(0, 10))
+      projected = Math.max(1, Math.round(currentAlive - avgRate * i))
+      projValues.push(projected)
+    }
   }
 
   setOption({
@@ -102,10 +106,12 @@ watch([dates, aliveOverTime], () => {
 <template>
   <section class="cs">
     <h2 class="cs__title">Supply Deflation</h2>
-    <p v-if="currentAliveCount" class="cs__stat">
-      {{ currentAliveCount.toLocaleString() }} remaining <span class="cs__pct">(-{{ deflationPct }}%)</span>
-    </p>
-    <div ref="chartEl" class="cs__canvas"></div>
+    <ClientOnly>
+      <p v-if="currentAliveCount" class="cs__stat">
+        {{ currentAliveCount.toLocaleString() }} remaining <span class="cs__pct">(-{{ deflationPct }}%)</span>
+      </p>
+      <div ref="chartEl" class="cs__canvas"></div>
+    </ClientOnly>
   </section>
 </template>
 

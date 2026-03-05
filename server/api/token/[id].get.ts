@@ -31,9 +31,10 @@ export default defineEventHandler(async (event) => {
     }
 
     const entry = cachedTokens![id]
-    if (!entry || entry[0] === 0) {
+    if (!entry || !entry[0]) {
         return { id, error: 'Not found or invalid' }
     }
+
 
     const { class: tier, mass } = decodeValue(entry[0])
     const merges = entry[1] || 0

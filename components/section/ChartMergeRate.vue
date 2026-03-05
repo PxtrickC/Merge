@@ -81,19 +81,21 @@ watch([dates, mergeCountOverTime, granularity], () => {
 
 <template>
   <section class="cs">
-    <div class="cs__header">
-      <h2 class="cs__title">Merge Rate</h2>
-      <p v-if="mergedCount" class="cs__stat">{{ mergedCount.toLocaleString() }} merged</p>
-      <p class="cs__toggle">
-        <span v-for="(mode, i) in ['day', 'week', 'month']" :key="mode"
-          >{{ i > 0 ? ' ' : '' }}[<span
-            class="cs__mode"
-            :class="{ 'cs__mode--active': granularity === mode }"
-            @click="granularity = mode"
-          >{{ mode }}</span>]</span>
-      </p>
-    </div>
-    <div ref="chartEl" class="cs__canvas"></div>
+    <ClientOnly>
+      <div class="cs__header">
+        <h2 class="cs__title">Merge Rate</h2>
+        <p v-if="mergedCount" class="cs__stat">{{ mergedCount.toLocaleString() }} merged</p>
+        <p class="cs__toggle">
+          <span v-for="(mode, i) in ['day', 'week', 'month']" :key="mode"
+            >{{ i > 0 ? ' ' : '' }}[<span
+              class="cs__mode"
+              :class="{ 'cs__mode--active': granularity === mode }"
+              @click="granularity = mode"
+            >{{ mode }}</span>]</span>
+        </p>
+      </div>
+      <div ref="chartEl" class="cs__canvas"></div>
+    </ClientOnly>
   </section>
 </template>
 

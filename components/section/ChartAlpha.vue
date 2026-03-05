@@ -107,8 +107,10 @@ watch([dates, alphaMassOverTime, alphaChanges], () => {
 <template>
   <section class="cs">
     <h2 class="cs__title">Alpha Mass Growth</h2>
-    <p v-if="alpha_mass" class="cs__stat">m({{ alpha_mass.toLocaleString() }}) #{{ alphaToken?.id ?? '' }}</p>
-    <div ref="chartEl" class="cs__canvas"></div>
+    <ClientOnly>
+      <p v-if="alpha_mass" class="cs__stat">m({{ alpha_mass.toLocaleString() }}) #{{ alphaToken?.id ?? '' }}</p>
+      <div ref="chartEl" class="cs__canvas"></div>
+    </ClientOnly>
   </section>
 </template>
 
