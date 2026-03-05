@@ -471,10 +471,27 @@ function onPanelTouchMove(e) {
   if (!el) return
   const deltaY = e.touches[0].clientY - _touchStartY
   // At the top and swiping down → block default (prevents PTR + elastic scroll)
-  if (el.scrollTop === 0 && deltaY > 0) {
-    e.preventDefault()
+  if (el.scrollTop <= 0 && deltaY > 0) {
+    if (e.cancelable) e.preventDefault()
   }
 }
+
+watch(isOpen, async (val) => {
+  if (!import.meta.client) return
+  if (val) {
+    await nextTick()
+    if (panelRef.value) {
+      panelRef.value.addEventListener('touchstart', onPanelTouchStart, { passive: true })
+      // CRITICAL: MUST be non-passive for preventDefault() to work on touchmove!
+      panelRef.value.addEventListener('touchmove', onPanelTouchMove, { passive: false })
+    }
+  } else {
+    if (panelRef.value) {
+      panelRef.value.removeEventListener('touchstart', onPanelTouchStart)
+      panelRef.value.removeEventListener('touchmove', onPanelTouchMove)
+    }
+  }
+})
 
 onMounted(() => document.addEventListener('keydown', onKeyDown))
 onUnmounted(() => {
@@ -502,8 +519,6 @@ onUnmounted(() => {
       ref="panelRef"
       class="drawer__panel"
       :class="drawerTierClass"
-      @touchstart.passive="onPanelTouchStart"
-      @touchmove="onPanelTouchMove"
     >
       <button class="drawer__close" @click="close">
         <icon class="w-5 h-5" variant="return" />
