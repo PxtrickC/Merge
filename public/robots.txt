@@ -1,5 +1,10 @@
 User-agent: *
 Allow: /
+Allow: /api/og/
 Disallow: /api/
+
+User-agent: facebookexternalhit
+Allow: /
+Allow: /api/og/
 
 Sitemap: https://merge.ppatrick.xyz/sitemap.xml
