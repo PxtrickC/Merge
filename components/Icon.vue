@@ -87,5 +87,9 @@ defineProps({
       <polyline points="16 18 22 12 16 6"></polyline>
       <polyline points="8 6 2 12 8 18"></polyline>
     </g>
+    <g v-else-if="variant == 'refresh'">
+      <polyline points="23 4 23 10 17 10"></polyline>
+      <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+    </g>
   </svg>
 </template>

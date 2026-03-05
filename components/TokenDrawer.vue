@@ -26,6 +26,7 @@ const transfers = ref([])
 const mergeTimeline = ref([])
 const initialMass = ref(null)
 const loading = ref(false)
+const refreshing = ref(false)
 const tokenListing = ref(null)
 const cancelledOrderHashes = new Set() // survive drawer reopen, filter stale OpenSea data
 const showSellModal = ref(false)
@@ -227,6 +228,39 @@ watch(tokenId, async (id, oldId) => {
   }
 }, { immediate: true })
 
+async function refreshData() {
+  const id = tokenId.value
+  if (!id || refreshing.value) return
+  refreshing.value = true
+  try {
+    const { token } = await useToken(id)
+    if (token.value) {
+      tokenData.value = {
+        ...token.value,
+        merged_to: token.value.mergedTo ?? null,
+        merged_on: token.value.mergedOn ?? null,
+      }
+    }
+    const [transferResult, timelineResult] = await Promise.all([
+      useTokenTransfers(id),
+      useTokenMergeTimeline(id, { dbRef: db, mergedIntoIndexRef: mergedIntoIndex, etherscanApiKey: _etherscanApiKey }),
+    ])
+    transfers.value = transferResult.transfers.value
+    mergeTimeline.value = timelineResult.timeline.value
+    initialMass.value = timelineResult.initialMass.value
+    await Promise.all([
+      fetchListing(id),
+      fetchOffers(id),
+      fetchCollectionData(),
+      fetchEthPrice(),
+    ])
+  } catch (err) {
+    console.error('[TokenDrawer] refreshData', err)
+  } finally {
+    refreshing.value = false
+  }
+}
+
 async function fetchListing(id) {
   try {
     const data = await $fetch('/api/opensea/nft-listing', { params: { tokenId: id } })
@@ -410,15 +444,12 @@ watch(isOpen, (open) => {
     document.body.style.left = '0'
     document.body.style.right = '0'
     document.body.style.overflow = 'hidden'
-    // Prevent native mobile pull-to-refresh from triggering full page reload
-    document.documentElement.style.overscrollBehaviorY = 'none'
   } else {
     document.body.style.position = ''
     document.body.style.top = ''
     document.body.style.left = ''
     document.body.style.right = ''
     document.body.style.overflow = ''
-    document.documentElement.style.overscrollBehaviorY = ''
     window.scrollTo(0, savedScrollY)
   }
 })
@@ -437,7 +468,6 @@ onUnmounted(() => {
     document.body.style.left = ''
     document.body.style.right = ''
     document.body.style.overflow = ''
-    document.documentElement.style.overscrollBehaviorY = ''
     window.scrollTo(0, savedScrollY)
   }
 })
@@ -452,15 +482,6 @@ onUnmounted(() => {
       <button class="drawer__close" @click="close">
         <icon class="w-5 h-5" variant="return" />
       </button>
-
-      <!-- Inline refresh indicator (same-token pull-to-refresh, no full animation) -->
-      <Transition name="drawer-refresh">
-        <div v-if="loading && tokenData" class="drawer__refresh-bar">
-          <span class="drawer__refresh-dot" />
-          <span class="drawer__refresh-dot" />
-          <span class="drawer__refresh-dot" />
-        </div>
-      </Transition>
 
       <div v-if="loading && !tokenData" class="drawer__loading">
         <Loading :fullscreen="false" />
@@ -497,6 +518,8 @@ onUnmounted(() => {
           :alpha_mass="alpha_mass"
           :mass_rank="tokenMassRank ?? undefined"
           :merges_rank="tokenMergesRank ?? undefined"
+          :refreshing="refreshing"
+          @refresh="refreshData"
         />
 
         <!-- Trading Panel -->
