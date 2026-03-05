@@ -108,8 +108,8 @@ export function useChart(containerRef) {
   let pendingOption = null
   let resizeHandler = null
 
-  onMounted(() => {
-    if (!containerRef.value) return
+  function initChart() {
+    if (chart || !containerRef.value) return
     chart = echarts.init(containerRef.value, null, { renderer: 'canvas' })
     resizeHandler = () => chart?.resize()
     window.addEventListener('resize', resizeHandler)
@@ -118,6 +118,16 @@ export function useChart(containerRef) {
       chart.setOption(pendingOption)
       pendingOption = null
     }
+  }
+
+  // Watch the ref so we catch when <ClientOnly> finally renders the element
+  watch(containerRef, (el) => {
+    if (el) initChart()
+  })
+
+  onMounted(() => {
+    // Try immediately in case the el is already in the DOM
+    initChart()
   })
 
   onBeforeUnmount(() => {
