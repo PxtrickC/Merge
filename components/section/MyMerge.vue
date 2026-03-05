@@ -38,24 +38,23 @@ const rightRef = ref(null)
 const infoHeight = ref(0)
 let _ro = null
 
-function updateHeight() {
-  if (rightRef.value) infoHeight.value = rightRef.value.offsetHeight
-}
-
-// 用 ResizeObserver 代替 window resize，任何尺寸變化都能捕捉到
 watch(rightRef, (el) => {
   _ro?.disconnect()
   if (!el) return
   _ro = new ResizeObserver(() => { infoHeight.value = el.offsetHeight })
   _ro.observe(el)
-  nextTick(updateHeight)  // 掛載後立刻量一次
+  nextTick(() => { infoHeight.value = el.offsetHeight })
 }, { immediate: true })
 
-onUnmounted(() => _ro?.disconnect())
+const windowWidth = ref(process.client ? window.innerWidth : 1200)
+function _onResize() { windowWidth.value = window.innerWidth }
+onMounted(() => window.addEventListener('resize', _onResize))
+onUnmounted(() => { window.removeEventListener('resize', _onResize); _ro?.disconnect() })
 
 const sphereStyle = computed(() => {
-  const size = infoHeight.value || 120
-  return { width: size + 'px', height: size + 'px', flexShrink: '0' }
+  const maxSize = windowWidth.value < 768 ? 150 : 280
+  const size = Math.min(infoHeight.value || 120, maxSize)
+  return { width: size + 'px', height: size + 'px' }
 })
 </script>
 
@@ -145,19 +144,11 @@ const sphereStyle = computed(() => {
 }
 @media (max-width: 767px) {
   .mymerge__sphere-col {
-    flex: 1;
-    flex-shrink: 1;
-    min-width: 0;
-  }
-  .mymerge__sphere {
-    width: 100% !important;
-    height: auto !important;
-    aspect-ratio: 1;
+    flex-shrink: 0;
   }
   .mymerge__right {
-    flex: none;
-    flex-shrink: 0;
-    width: auto;
+    flex: 1;
+    min-width: 0;
   }
 }
 .mymerge__info {

@@ -87,7 +87,7 @@ function mergeLine(e) {
   const be = TIER_EMOJI[e.tier] || '⚪'
   const pe = TIER_EMOJI[e.merged_to.tier] || '⚪'
   const pBefore = e.merged_to.mass - e.mass
-  return `${be} (${fmt(e.mass)}) #${e.id} → ${pe} (${fmt(pBefore)}) #${e.merged_to.id} = ${pe} (${fmt(e.merged_to.mass)}) #${e.merged_to.id}`
+  return `${be}(${fmt(e.mass)})#${e.id}→${pe}(${fmt(pBefore)})#${e.merged_to.id}=${pe}(${fmt(e.merged_to.mass)})#${e.merged_to.id}`
 }
 
 // ---------------------------------------------------------------------------
@@ -127,16 +127,16 @@ async function main() {
   let payload
   if (newEvents.length === 1) {
     payload = {
-      title: "merge event",
-      body: `${mergeLine(e)}\n${remain}`,
+      title: mergeLine(e),
+      body: remain,
       tag: `merge-${e.id}`,
       url: `/${e.merged_to.id}`,
       ...(image && { image }),
     }
   } else {
     payload = {
-      title: "merge event",
-      body: `${mergeLine(e)} (+${newEvents.length - 1})\n${remain}`,
+      title: `${mergeLine(e)} (+${newEvents.length - 1})`,
+      body: remain,
       tag: "merge-batch",
       url: `/${e.merged_to.id}`,
       ...(image && { image }),
