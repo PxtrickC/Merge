@@ -156,31 +156,35 @@ const tokenMergesRank = computed(() => {
 })
 const panelRef = ref(null)
 
-watch(tokenId, async (id) => {
+watch(tokenId, async (id, oldId) => {
   if (!id) return
+  const isSameToken = id === oldId
   loading.value = true
-  tokenData.value = null
-  transfers.value = []
-  mergeTimeline.value = []
-  initialMass.value = null
-  tokenListing.value = drawerListing.value || null
-  tokenOffer.value = null
-  collectionOffer.value = null
-  showSellModal.value = false
-  showOfferModal.value = false
-  buySuccess.value = false
-  acceptOfferSuccess.value = false
-  cancelListingSuccess.value = false
-  listingOrderComponents.value = null
-  showSendPanel.value = false
-  sendAddress.value = ''
-  sendError.value = ''
-  sendSuccess.value = false
-  transferSuccess.value = false
+  // Only clear data when switching to a different token
+  if (!isSameToken) {
+    tokenData.value = null
+    transfers.value = []
+    mergeTimeline.value = []
+    initialMass.value = null
+    tokenListing.value = drawerListing.value || null
+    tokenOffer.value = null
+    collectionOffer.value = null
+    showSellModal.value = false
+    showOfferModal.value = false
+    buySuccess.value = false
+    acceptOfferSuccess.value = false
+    cancelListingSuccess.value = false
+    listingOrderComponents.value = null
+    showSendPanel.value = false
+    sendAddress.value = ''
+    sendError.value = ''
+    sendSuccess.value = false
+    transferSuccess.value = false
 
-  nextTick(() => {
-    if (panelRef.value) panelRef.value.scrollTop = 0
-  })
+    nextTick(() => {
+      if (panelRef.value) panelRef.value.scrollTop = 0
+    })
+  }
 
   try {
     if (initialTokenData.value && initialTokenData.value.id === id) {
