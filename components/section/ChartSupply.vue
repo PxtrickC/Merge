@@ -6,15 +6,18 @@ const chartEl = ref(null)
 const { setOption } = useChart(chartEl)
 
 const ORIGINAL_SUPPLY = 28990
-const RANGES = [
+const RANGES_ROW1 = [
   { label: '2W', days: 14 },
   { label: '1M', days: 30 },
   { label: '3M', days: 90 },
   { label: '6M', days: 180 },
   { label: '1Y', days: 365 },
-  { label: 'mass.black', startDate: '2022-03-31', endDate: '2022-05-01' },
-  { label: 'All', days: null },
 ]
+const RANGES_ROW2 = [
+  { label: 'All', days: null },
+  { label: 'mass.black', startDate: '2022-03-31', endDate: '2022-05-01' },
+]
+const RANGES = [...RANGES_ROW1, ...RANGES_ROW2]
 const rangeMode = ref('3M')
 
 const currentAliveCount = computed(() => {
@@ -172,7 +175,14 @@ watch([dates, aliveOverTime, rangeMode], () => {
           <br/>{{ mergedCount.toLocaleString() }} merged <span class="cs__pct">(-{{ deflationPct }}%)</span>
         </p>
         <p class="cs__toggle">
-          <span v-for="(r, i) in RANGES" :key="r.label"
+          <span v-for="(r, i) in RANGES_ROW1" :key="r.label"
+            >{{ i > 0 ? ' ' : '' }}[<span
+              class="cs__mode"
+              :class="{ 'cs__mode--active': rangeMode === r.label }"
+              @click="rangeMode = r.label"
+            >{{ r.label }}</span>]</span>
+          <br/>
+          <span v-for="(r, i) in RANGES_ROW2" :key="r.label"
             >{{ i > 0 ? ' ' : '' }}[<span
               class="cs__mode"
               :class="{ 'cs__mode--active': rangeMode === r.label }"
