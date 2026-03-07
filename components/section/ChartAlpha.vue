@@ -47,10 +47,7 @@ watch([dates, alphaMassOverTime, alphaChanges, rangeMode], () => {
   let markLineData
 
   if (rangeMode.value === 'alpha' && currentAlphaStartDate.value) {
-    const startIdx = Math.max(0, d.findIndex(dd => dd >= currentAlphaStartDate.value))
-    chartDates = d.slice(startIdx)
-    chartAlpha = alpha.slice(startIdx)
-    // Only show "became alpha" marker
+    // Show full range from mint, mark when token became alpha
     markLineData = [{
       xAxis: currentAlphaStartDate.value,
       label: {
