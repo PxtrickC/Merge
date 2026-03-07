@@ -81,12 +81,14 @@ watch([dates, aliveOverTime, rangeMode], () => {
       type: 'value',
       ...AXIS_STYLE,
       min: (() => {
-        const allValues = [...aliveSliced, ...projValues]
-        const dataMin = Math.min(...allValues)
-        const dataMax = Math.max(...allValues)
+        const dataMin = Math.min(...aliveSliced)
+        const dataMax = Math.max(...aliveSliced)
         const minFloor = days === 7 ? 20 : days === 30 ? 50 : days === 180 ? 200 : days === 365 ? 500 : 1000
         const span = Math.max(dataMax - dataMin, minFloor)
-        return Math.max(0, dataMin - span * 0.2)
+        const histYMin = Math.max(0, dataMin - span * 0.2)
+        // Ensure projection line is not clipped below axis
+        const projMin = projValues.length ? Math.min(...projValues) : dataMin
+        return Math.max(0, Math.min(histYMin, projMin - span * 0.05))
       })(),
       axisLabel: {
         ...AXIS_STYLE.axisLabel,
