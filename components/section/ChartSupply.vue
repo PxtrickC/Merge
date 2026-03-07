@@ -11,6 +11,7 @@ const RANGES = [
   { label: '1M', days: 30 },
   { label: '6M', days: 180 },
   { label: '1Y', days: 365 },
+  { label: 'mass.black', startDate: '2022-03-20', endDate: '2022-05-10' },
   { label: 'All', days: null },
 ]
 const rangeMode = ref('All')
@@ -32,11 +33,20 @@ watch([dates, aliveOverTime, rangeMode], () => {
   if (!d.length) return
 
   // Slice data to selected range
-  const days = RANGES.find(r => r.label === rangeMode.value)?.days
-  const start = days ? Math.max(0, d.length - days) : 0
-  const dSliced = d.slice(start)
-  const aliveSliced = alive.slice(start)
-  const mergesSliced = merges.slice(start)
+  const range = RANGES.find(r => r.label === rangeMode.value)
+  const days = range?.days
+  let sliceStart = 0
+  let sliceEnd = d.length
+  if (range?.startDate) {
+    sliceStart = Math.max(0, d.findIndex(dd => dd >= range.startDate))
+    const ei = d.findIndex(dd => dd > range.endDate)
+    sliceEnd = ei === -1 ? d.length : ei
+  } else if (days) {
+    sliceStart = Math.max(0, d.length - days)
+  }
+  const dSliced = d.slice(sliceStart, sliceEnd)
+  const aliveSliced = alive.slice(sliceStart, sliceEnd)
+  const mergesSliced = merges.slice(sliceStart, sliceEnd)
 
   // Future projection: average daily merge rate over last 90 days (always from full data)
   const last90 = merges.slice(-90)
@@ -48,7 +58,7 @@ watch([dates, aliveOverTime, rangeMode], () => {
   const projValues = []
   let projected = currentAlive
 
-  if (avgRate > 0 && currentAlive > 1 && !days) {
+  if (avgRate > 0 && currentAlive > 1 && rangeMode.value === 'All') {
     for (let i = 1; i <= 500; i++) {
       const pd = new Date(lastDate)
       pd.setUTCDate(pd.getUTCDate() + i)
@@ -59,6 +69,7 @@ watch([dates, aliveOverTime, rangeMode], () => {
   }
 
   setOption({
+    animation: false,
     backgroundColor: 'transparent',
     tooltip: {
       ...TOOLTIP,
@@ -86,7 +97,7 @@ watch([dates, aliveOverTime, rangeMode], () => {
       min: (() => {
         const dataMin = Math.min(...aliveSliced)
         const dataMax = Math.max(...aliveSliced)
-        const minFloor = days === 7 ? 20 : days === 30 ? 50 : days === 180 ? 200 : days === 365 ? 500 : 1000
+        const minFloor = days === 7 ? 20 : days === 30 ? 50 : days === 180 ? 200 : days === 365 ? 500 : rangeMode.value === 'mass.black' ? 50 : 1000
         const span = Math.max(dataMax - dataMin, minFloor)
         const histYMin = Math.max(0, dataMin - span * 0.2)
         // Ensure projection line is not clipped below axis
