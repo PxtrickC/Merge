@@ -527,11 +527,11 @@ function buildHistory(events, tierMap, tierCounts, omnibusTransfers, migrationOm
   const alphaTokenInitialMass = initialMasses.get(alphaId) || 1
   const alphaTokenEvents = events
     .filter(e => e.persistId === alphaId)
-    .map(e => [dayKey(e.timestamp), e.mass])
+    .map(e => [dayKey(e.timestamp), e.mass, e.burnedId])
   const alphaTokenHistory = {
     tokenId: alphaId,
     initialMass: alphaTokenInitialMass,
-    events: alphaTokenEvents,
+    events: alphaTokenEvents, // [date, mass, burnedTokenId]
   }
 
   console.log(`  ${data.length} days (${startDate} → ${currentDay})`)

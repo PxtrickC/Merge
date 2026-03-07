@@ -53,11 +53,14 @@ watch([dates, alphaMassOverTime, alphaChanges, alphaTokenHistory, rangeMode], ()
     const events = history.events
     if (events.length) {
       chartData = []
-      // Build per-date merge list for tooltip
+      // Build per-date merge list for tooltip: [burnedMass, newMass, burnedId]
       mergesByDate = new Map()
+      let prev = events[0][1] // mint mass as baseline
       for (const e of events) {
         if (!mergesByDate.has(e[0])) mergesByDate.set(e[0], [])
-        mergesByDate.get(e[0]).push(e[1])
+        const gained = e[1] - prev
+        mergesByDate.get(e[0]).push({ newMass: e[1], burnedId: e[2], gained })
+        prev = e[1]
       }
       let ei = 0
       // First event mass = mint mass (initial state before further merges)
@@ -133,13 +136,17 @@ watch([dates, alphaMassOverTime, alphaChanges, alphaTokenHistory, rangeMode], ()
         const mass = p.value[1]
         if (rangeMode.value === 'alpha') {
           const dayMerges = mergesByDate?.get(date)
+          const tokenId = history.tokenId
           if (dayMerges && dayMerges.length) {
             const first = dayMerges[0]
             const last = dayMerges[dayMerges.length - 1]
-            let html = `<span style="color:#555">${date}</span><br/>Mass: ${first.toLocaleString()}→${last.toLocaleString()}`
-            html += `<br/><span style="color:#888">${dayMerges.length} merge${dayMerges.length > 1 ? 's' : ''}</span><br/>`
-            for (let i = 0; i < dayMerges.length - 1; i++) {
-              html += `<br/>m(${dayMerges[i].toLocaleString()}) → m(${dayMerges[i + 1].toLocaleString()})`
+            let html = `<span style="color:#555">${date}</span>`
+            html += `<br/>${dayMerges.length} merge${dayMerges.length > 1 ? 's' : ''}`
+            html += `<br/>Mass: ${(first.newMass - first.gained).toLocaleString()}→${last.newMass.toLocaleString()}`
+            html += '<br/>'
+            for (const m of dayMerges) {
+              const before = m.newMass - m.gained
+              html += `<br/>m(${m.gained.toLocaleString()})#${m.burnedId} → m(${m.newMass.toLocaleString()})#${tokenId} ↑${m.gained.toLocaleString()}`
             }
             return html
           }
