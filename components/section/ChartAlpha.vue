@@ -101,6 +101,7 @@ watch([dates, alphaMassOverTime, alphaChanges, rangeMode], () => {
     yAxis: {
       type: 'value',
       ...AXIS_STYLE,
+      min: Math.max(0, Math.min(...chartAlpha) - 100),
       axisLabel: {
         ...AXIS_STYLE.axisLabel,
         formatter: (v) => v >= 1000 ? (v / 1000).toFixed(0) + 'k' : v,
