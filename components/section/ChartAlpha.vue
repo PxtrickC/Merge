@@ -48,22 +48,29 @@ watch([dates, alphaMassOverTime, alphaChanges, alphaTokenHistory, rangeMode], ()
 
   if (rangeMode.value === 'alpha' && history) {
     // Expand sparse merge events into continuous daily data
+    // Each event is [date, massAfterMerge]; carry forward between events
     const events = history.events
     if (events.length) {
       chartData = []
       let ei = 0
+      // First event mass = mint mass (initial state before further merges)
       let mass = events[0][1]
       const start = new Date(events[0][0] + 'T00:00:00Z')
       const today = new Date()
       today.setUTCHours(0, 0, 0, 0)
       for (let cur = new Date(start); cur <= today; cur.setUTCDate(cur.getUTCDate() + 1)) {
         const ds = cur.toISOString().slice(0, 10)
-        // Apply all merge events on this date
+        // Push start-of-day mass first (preserves initial m(4) etc.)
+        chartData.push([ds, mass])
+        // Then apply all merge events on this date
         while (ei < events.length && events[ei][0] <= ds) {
           mass = events[ei][1]
           ei++
         }
-        chartData.push([ds, mass])
+        // If mass changed during this day, push end-of-day value too
+        if (mass !== chartData[chartData.length - 1][1]) {
+          chartData.push([ds, mass])
+        }
       }
     } else {
       chartData = []
