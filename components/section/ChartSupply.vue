@@ -64,11 +64,14 @@ watch([dates, aliveOverTime, rangeMode], () => {
       ...TOOLTIP,
       trigger: 'axis',
       formatter: (params) => {
-        return params.map(p => {
+        const date = params[0]?.value[0]
+        const header = date ? `<div style="color:#888;margin-bottom:4px">${date}</div>` : ''
+        const lines = params.map(p => {
           const val = p.value[1]
           const pct = (-(1 - val / ORIGINAL_SUPPLY) * 100).toFixed(1)
           return `<span style="color:${p.color}">\u25CF</span> ${p.seriesName}: ${val?.toLocaleString()} (${pct}%)`
         }).join('<br/>')
+        return header + lines
       },
     },
     grid: { left: 50, right: 16, top: 16, bottom: 16 },
