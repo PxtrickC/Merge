@@ -137,11 +137,11 @@ watch([dates, aliveOverTime, rangeMode], () => {
         <p v-if="currentAliveCount" class="cs__stat">
           {{ currentAliveCount.toLocaleString() }} remaining <span class="cs__pct">(-{{ deflationPct }}%)</span>
         </p>
-        <p class="cs__ranges">
+        <p class="cs__toggle">
           <span v-for="(r, i) in RANGES" :key="r.label"
             >{{ i > 0 ? ' ' : '' }}[<span
-              class="cs__range"
-              :class="{ 'cs__range--active': rangeMode === r.label }"
+              class="cs__mode"
+              :class="{ 'cs__mode--active': rangeMode === r.label }"
               @click="rangeMode = r.label"
             >{{ r.label }}</span>]</span>
         </p>
@@ -165,7 +165,7 @@ watch([dates, aliveOverTime, rangeMode], () => {
   .cs__title { @apply text-6xl; }
 }
 .cs__header {
-  @apply flex items-baseline justify-between mb-4 flex-wrap gap-2;
+  @apply flex flex-col mb-6 gap-2;
 }
 .cs__stat {
   @apply text-white text-base lg:text-3xl;
@@ -174,20 +174,19 @@ watch([dates, aliveOverTime, rangeMode], () => {
 .cs__pct {
   color: #888;
 }
-.cs__ranges {
-  @apply text-base lg:text-xl;
-  color: #fff;
+.cs__toggle {
+  @apply text-base lg:text-3xl text-white;
   font-family: 'HND', sans-serif;
 }
-.cs__range {
+.cs__mode {
   cursor: pointer;
   transition: background-color 0.15s, color 0.15s;
 }
-.cs__range:hover {
+.cs__mode:hover {
   background: #fff;
   color: #000;
 }
-.cs__range--active {
+.cs__mode--active {
   text-decoration: underline;
   text-underline-offset: 3px;
 }
