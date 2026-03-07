@@ -41,36 +41,50 @@ watch([dates, alphaMassOverTime, alphaChanges, rangeMode], () => {
     }
   }
 
-  // Add initial alpha #1 at the start
-  const markLineData = [{
-    xAxis: d[0],
-    label: {
-      formatter: '#1',
-      color: '#fff',
-      fontFamily: "'HND', sans-serif",
-      fontSize: 10,
-      position: 'end',
-    },
-    lineStyle: { color: '#333', type: 'dashed', width: 1 },
-  }, ...significantChanges.map(c => ({
-    xAxis: c.date,
-    label: {
-      formatter: `#${c.tokenId}`,
-      color: '#fff',
-      fontFamily: "'HND', sans-serif",
-      fontSize: 10,
-      position: 'end',
-    },
-    lineStyle: { color: '#333', type: 'dashed', width: 1 },
-  }))]
-
-  // Slice data for alpha range mode
+  // Slice data and build markLines based on range mode
   let chartDates = d
   let chartAlpha = alpha
+  let markLineData
+
   if (rangeMode.value === 'alpha' && currentAlphaStartDate.value) {
     const startIdx = Math.max(0, d.findIndex(dd => dd >= currentAlphaStartDate.value))
     chartDates = d.slice(startIdx)
     chartAlpha = alpha.slice(startIdx)
+    // Only show "became alpha" marker
+    markLineData = [{
+      xAxis: currentAlphaStartDate.value,
+      label: {
+        formatter: 'became alpha',
+        color: '#fff',
+        fontFamily: "'HND', sans-serif",
+        fontSize: 10,
+        position: 'end',
+      },
+      lineStyle: { color: '#333', type: 'dashed', width: 1 },
+    }]
+  } else {
+    // All mode: show all alpha changes
+    markLineData = [{
+      xAxis: d[0],
+      label: {
+        formatter: '#1',
+        color: '#fff',
+        fontFamily: "'HND', sans-serif",
+        fontSize: 10,
+        position: 'end',
+      },
+      lineStyle: { color: '#333', type: 'dashed', width: 1 },
+    }, ...significantChanges.map(c => ({
+      xAxis: c.date,
+      label: {
+        formatter: `#${c.tokenId}`,
+        color: '#fff',
+        fontFamily: "'HND', sans-serif",
+        fontSize: 10,
+        position: 'end',
+      },
+      lineStyle: { color: '#333', type: 'dashed', width: 1 },
+    }))]
   }
 
   setOption({
@@ -84,7 +98,9 @@ watch([dates, alphaMassOverTime, alphaChanges, rangeMode], () => {
         const p = params[0]
         const date = p.value[0]
         const mass = p.value[1]
-        // Find which token was alpha on this date (default: #1)
+        if (rangeMode.value === 'alpha') {
+          return `<span style="color:#555">${date}</span><br/>Mass: ${mass?.toLocaleString()}<br/>Token: #${alphaToken.value?.id ?? ''}`
+        }
         let tokenId = 1
         for (let i = changes.length - 1; i >= 0; i--) {
           if (changes[i].date <= date) { tokenId = changes[i].tokenId; break }
