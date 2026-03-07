@@ -80,7 +80,7 @@ watch([dates, aliveOverTime, rangeMode], () => {
     yAxis: {
       type: 'value',
       ...AXIS_STYLE,
-      min: Math.max(0, Math.min(...aliveSliced) - 500),
+      min: Math.max(0, Math.min(...aliveSliced) - (days === 7 ? 10 : 500)),
       axisLabel: {
         ...AXIS_STYLE.axisLabel,
         formatter: (v) => v >= 1000 ? (v / 1000).toFixed(0) + 'k' : v,
