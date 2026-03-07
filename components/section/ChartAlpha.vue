@@ -44,6 +44,7 @@ watch([dates, alphaMassOverTime, alphaChanges, alphaTokenHistory, rangeMode], ()
   // Build chart data and markLines based on range mode
   let chartData
   let markLineData
+  let mergesByDate = null // for tooltip in alpha mode
   const history = alphaTokenHistory.value
 
   if (rangeMode.value === 'alpha' && history) {
@@ -52,6 +53,12 @@ watch([dates, alphaMassOverTime, alphaChanges, alphaTokenHistory, rangeMode], ()
     const events = history.events
     if (events.length) {
       chartData = []
+      // Build per-date merge list for tooltip
+      mergesByDate = new Map()
+      for (const e of events) {
+        if (!mergesByDate.has(e[0])) mergesByDate.set(e[0], [])
+        mergesByDate.get(e[0]).push(e[1])
+      }
       let ei = 0
       // First event mass = mint mass (initial state before further merges)
       let mass = events[0][1]
@@ -125,7 +132,13 @@ watch([dates, alphaMassOverTime, alphaChanges, alphaTokenHistory, rangeMode], ()
         const date = p.value[0]
         const mass = p.value[1]
         if (rangeMode.value === 'alpha') {
-          return `<span style="color:#555">${date}</span><br/>Mass: ${mass?.toLocaleString()}<br/>Token: #${alphaToken.value?.id ?? ''}`
+          const dayMerges = mergesByDate?.get(date)
+          let html = `<span style="color:#555">${date}</span><br/>Mass: ${mass?.toLocaleString()}`
+          if (dayMerges && dayMerges.length) {
+            html += `<br/><span style="color:#888">${dayMerges.length} merge${dayMerges.length > 1 ? 's' : ''}:</span>`
+            html += '<br/>' + dayMerges.map(m => `→ m(${m.toLocaleString()})`).join('<br/>')
+          }
+          return html
         }
         let tokenId = 1
         for (let i = changes.length - 1; i >= 0; i--) {
