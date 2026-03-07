@@ -79,7 +79,7 @@ watch([dates, omnibusOverTime, omnibusMassOverTime, viewMode, stats], () => {
           silent: true,
           symbol: 'none',
           data: [{
-            xAxis: '2026-01-24',
+            xAxis: '2026-01-23',
             label: {
               formatter: 'NG shutdown',
               color: '#888',
