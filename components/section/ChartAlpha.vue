@@ -47,8 +47,27 @@ watch([dates, alphaMassOverTime, alphaChanges, alphaTokenHistory, rangeMode], ()
   const history = alphaTokenHistory.value
 
   if (rangeMode.value === 'alpha' && history) {
-    // Token mass history: each merge event [date, newMass]
-    chartData = history.events
+    // Expand sparse merge events into continuous daily data
+    const events = history.events
+    if (events.length) {
+      chartData = []
+      let ei = 0
+      let mass = events[0][1]
+      const start = new Date(events[0][0] + 'T00:00:00Z')
+      const today = new Date()
+      today.setUTCHours(0, 0, 0, 0)
+      for (let cur = new Date(start); cur <= today; cur.setUTCDate(cur.getUTCDate() + 1)) {
+        const ds = cur.toISOString().slice(0, 10)
+        // Apply all merge events on this date
+        while (ei < events.length && events[ei][0] <= ds) {
+          mass = events[ei][1]
+          ei++
+        }
+        chartData.push([ds, mass])
+      }
+    } else {
+      chartData = []
+    }
     // Mark when token became alpha
     markLineData = currentAlphaStartDate.value ? [{
       xAxis: currentAlphaStartDate.value,
