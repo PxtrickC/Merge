@@ -115,9 +115,9 @@ watch([dates, alphaMassOverTime, alphaChanges, alphaTokenHistory, rangeMode], ()
       splitLine: { show: false },
     },
     yAxis: {
-      type: 'value',
+      type: rangeMode.value === 'alpha' ? 'log' : 'value',
       ...AXIS_STYLE,
-      min: Math.max(0, Math.min(...chartData.map(d => d[1])) - 100),
+      ...(rangeMode.value !== 'alpha' ? { min: Math.max(0, Math.min(...chartData.map(d => d[1])) - 100) } : {}),
       axisLabel: {
         ...AXIS_STYLE.axisLabel,
         formatter: (v) => v >= 1000 ? (v / 1000).toFixed(0) + 'k' : v,
