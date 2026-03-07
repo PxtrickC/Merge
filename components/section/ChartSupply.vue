@@ -11,7 +11,7 @@ const RANGES = [
   { label: '1M', days: 30 },
   { label: '6M', days: 180 },
   { label: '1Y', days: 365 },
-  { label: 'mass.black', startDate: '2022-03-30', endDate: '2022-05-01' },
+  { label: 'mass.black', startDate: '2022-03-31', endDate: '2022-05-01' },
   { label: 'All', days: null },
 ]
 const rangeMode = ref('All')
@@ -70,6 +70,8 @@ watch([dates, aliveOverTime, rangeMode], () => {
 
   setOption({
     animation: false,
+    animationDuration: 0,
+    animationDurationUpdate: 0,
     backgroundColor: 'transparent',
     tooltip: {
       ...TOOLTIP,
@@ -94,16 +96,7 @@ watch([dates, aliveOverTime, rangeMode], () => {
     yAxis: {
       type: 'value',
       ...AXIS_STYLE,
-      min: (() => {
-        const dataMin = Math.min(...aliveSliced)
-        const dataMax = Math.max(...aliveSliced)
-        const minFloor = days === 7 ? 20 : days === 30 ? 50 : days === 180 ? 200 : days === 365 ? 500 : rangeMode.value === 'mass.black' ? 50 : 1000
-        const span = Math.max(dataMax - dataMin, minFloor)
-        const histYMin = Math.max(0, dataMin - span * 0.2)
-        // Ensure projection line is not clipped below axis
-        const projMin = projValues.length ? Math.min(...projValues) : dataMin
-        return Math.max(0, Math.min(histYMin, projMin - span * 0.05))
-      })(),
+      scale: true,
       axisLabel: {
         ...AXIS_STYLE.axisLabel,
         formatter: (v) => v >= 1000 ? (v / 1000).toFixed(0) + 'k' : v,
@@ -136,7 +129,7 @@ watch([dates, aliveOverTime, rangeMode], () => {
         data: projDates.map((date, i) => [date, projValues[i]]),
       },
     ],
-  })
+  }, { notMerge: true })
 }, { immediate: true })
 </script>
 
