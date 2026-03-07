@@ -7,12 +7,12 @@ const { setOption } = useChart(chartEl)
 
 const ORIGINAL_SUPPLY = 28990
 const RANGES = [
+  { label: 'All', days: null },
   { label: '7D', days: 7 },
   { label: '1M', days: 30 },
   { label: '6M', days: 180 },
   { label: '1Y', days: 365 },
   { label: 'mass.black', startDate: '2022-03-31', endDate: '2022-05-01' },
-  { label: 'All', days: null },
 ]
 const rangeMode = ref('All')
 
