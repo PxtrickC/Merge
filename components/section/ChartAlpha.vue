@@ -53,10 +53,15 @@ watch([dates, alphaMassOverTime, alphaChanges, alphaTokenHistory, rangeMode], ()
     const events = history.events
     if (events.length) {
       chartData = []
-      // Build per-date merge list for tooltip: [burnedMass, newMass, burnedId]
+      // Build per-date merge list for tooltip
+      // First event = mint record, rest = merge records
       mergesByDate = new Map()
-      let prev = events[0][1] // mint mass as baseline
-      for (const e of events) {
+      const firstDate = events[0][0]
+      if (!mergesByDate.has(firstDate)) mergesByDate.set(firstDate, [])
+      mergesByDate.get(firstDate).push({ type: 'mint', newMass: events[0][1] })
+      let prev = events[0][1]
+      for (let i = 1; i < events.length; i++) {
+        const e = events[i]
         if (!mergesByDate.has(e[0])) mergesByDate.set(e[0], [])
         const gained = e[1] - prev
         mergesByDate.get(e[0]).push({ newMass: e[1], burnedId: e[2], gained })
@@ -138,15 +143,21 @@ watch([dates, alphaMassOverTime, alphaChanges, alphaTokenHistory, rangeMode], ()
           const dayMerges = mergesByDate?.get(date)
           const tokenId = history.tokenId
           if (dayMerges && dayMerges.length) {
-            const first = dayMerges[0]
+            const merges = dayMerges.filter(m => !m.type)
             const last = dayMerges[dayMerges.length - 1]
+            const firstMass = dayMerges[0].type === 'mint' ? dayMerges[0].newMass : dayMerges[0].newMass - dayMerges[0].gained
             let html = `<span style="color:#555">${date}</span>`
-            html += `<br/>${dayMerges.length} merge${dayMerges.length > 1 ? 's' : ''}`
-            html += `<br/>Mass: ${(first.newMass - first.gained).toLocaleString()}→${last.newMass.toLocaleString()}`
+            if (merges.length) {
+              html += `<br/>${merges.length} merge${merges.length > 1 ? 's' : ''}`
+            }
+            html += `<br/>Mass: ${firstMass}→${last.newMass}`
             html += '<br/>'
             for (const m of dayMerges) {
-              const before = m.newMass - m.gained
-              html += `<br/>m(${m.gained.toLocaleString()})#${m.burnedId} → m(${m.newMass.toLocaleString()})#${tokenId} ↑${m.gained.toLocaleString()}`
+              if (m.type === 'mint') {
+                html += `<br/>mint m(${m.newMass})#${tokenId}`
+              } else {
+                html += `<br/>m(${m.gained})#${m.burnedId} → m(${m.newMass})#${tokenId} ↑${m.gained}`
+              }
             }
             return html
           }
