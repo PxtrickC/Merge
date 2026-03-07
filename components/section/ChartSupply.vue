@@ -49,7 +49,7 @@ watch([dates, aliveOverTime, rangeMode], () => {
   let projected = currentAlive
 
   if (avgRate > 0 && currentAlive > 1 && !days) {
-    for (let i = 1; i <= 365 * 3 && projected > 1; i++) {
+    for (let i = 1; i <= 365 * 2; i++) {
       const pd = new Date(lastDate)
       pd.setUTCDate(pd.getUTCDate() + i)
       projDates.push(pd.toISOString().slice(0, 10))
@@ -81,8 +81,9 @@ watch([dates, aliveOverTime, rangeMode], () => {
       type: 'value',
       ...AXIS_STYLE,
       min: (() => {
-        const dataMin = Math.min(...aliveSliced)
-        const dataMax = Math.max(...aliveSliced)
+        const allValues = [...aliveSliced, ...projValues]
+        const dataMin = Math.min(...allValues)
+        const dataMax = Math.max(...allValues)
         const minFloor = days === 7 ? 20 : days === 30 ? 50 : days === 180 ? 200 : days === 365 ? 500 : 1000
         const span = Math.max(dataMax - dataMin, minFloor)
         return Math.max(0, dataMin - span * 0.2)
