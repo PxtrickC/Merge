@@ -15,7 +15,7 @@ const RANGES = [
   { label: 'mass.black', startDate: '2022-03-31', endDate: '2022-05-01' },
   { label: 'All', days: null },
 ]
-const rangeMode = ref('1M')
+const rangeMode = ref('3M')
 
 const currentAliveCount = computed(() => {
   const a = aliveOverTime.value
