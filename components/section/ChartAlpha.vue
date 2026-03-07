@@ -133,12 +133,17 @@ watch([dates, alphaMassOverTime, alphaChanges, alphaTokenHistory, rangeMode], ()
         const mass = p.value[1]
         if (rangeMode.value === 'alpha') {
           const dayMerges = mergesByDate?.get(date)
-          let html = `<span style="color:#555">${date}</span><br/>Mass: ${mass?.toLocaleString()}`
           if (dayMerges && dayMerges.length) {
-            html += `<br/><span style="color:#888">${dayMerges.length} merge${dayMerges.length > 1 ? 's' : ''}:</span>`
-            html += '<br/>' + dayMerges.map(m => `→ m(${m.toLocaleString()})`).join('<br/>')
+            const first = dayMerges[0]
+            const last = dayMerges[dayMerges.length - 1]
+            let html = `<span style="color:#555">${date}</span><br/>Mass: ${first.toLocaleString()}→${last.toLocaleString()}`
+            html += `<br/><span style="color:#888">${dayMerges.length} merge${dayMerges.length > 1 ? 's' : ''}</span><br/>`
+            for (let i = 0; i < dayMerges.length - 1; i++) {
+              html += `<br/>m(${dayMerges[i].toLocaleString()}) → m(${dayMerges[i + 1].toLocaleString()})`
+            }
+            return html
           }
-          return html
+          return `<span style="color:#555">${date}</span><br/>Mass: ${mass?.toLocaleString()}`
         }
         let tokenId = 1
         for (let i = changes.length - 1; i >= 0; i--) {
