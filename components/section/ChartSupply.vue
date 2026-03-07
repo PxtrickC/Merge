@@ -1,11 +1,19 @@
 <script setup>
-import { TOOLTIP, DATA_ZOOM, AXIS_STYLE, MASS_BLACK_AREA, MASS_BLACK_LINES } from '~/composables/useChart'
+import { TOOLTIP, AXIS_STYLE, MASS_BLACK_AREA, MASS_BLACK_LINES } from '~/composables/useChart'
 
 const { dates, aliveOverTime, mergeCountOverTime } = useSupplyHistory()
 const chartEl = ref(null)
 const { setOption } = useChart(chartEl)
 
 const ORIGINAL_SUPPLY = 28990
+const RANGES = [
+  { label: '7D', days: 7 },
+  { label: '1M', days: 30 },
+  { label: '6M', days: 180 },
+  { label: '1Y', days: 365 },
+  { label: 'All', days: null },
+]
+const rangeMode = ref('All')
 
 const currentAliveCount = computed(() => {
   const a = aliveOverTime.value
@@ -17,13 +25,20 @@ const deflationPct = computed(() => {
   return ((1 - a[a.length - 1] / ORIGINAL_SUPPLY) * 100).toFixed(1)
 })
 
-watch([dates, aliveOverTime], () => {
+watch([dates, aliveOverTime, rangeMode], () => {
   const d = dates.value
   const alive = aliveOverTime.value
   const merges = mergeCountOverTime.value
   if (!d.length) return
 
-  // Future projection: average daily merge rate over last 90 days
+  // Slice data to selected range
+  const days = RANGES.find(r => r.label === rangeMode.value)?.days
+  const start = days ? Math.max(0, d.length - days) : 0
+  const dSliced = d.slice(start)
+  const aliveSliced = alive.slice(start)
+  const mergesSliced = merges.slice(start)
+
+  // Future projection: average daily merge rate over last 90 days (always from full data)
   const last90 = merges.slice(-90)
   const avgRate = last90.length ? last90.reduce((s, v) => s + v, 0) / last90.length : 0
   const currentAlive = alive[alive.length - 1] || 0
@@ -33,8 +48,7 @@ watch([dates, aliveOverTime], () => {
   const projValues = []
   let projected = currentAlive
 
-  // Only run projection if we have an avgRate and currentAlive > 1
-  if (avgRate > 0 && currentAlive > 1) {
+  if (avgRate > 0 && currentAlive > 1 && !days) {
     for (let i = 1; i <= 365 * 3 && projected > 1; i++) {
       const pd = new Date(lastDate)
       pd.setUTCDate(pd.getUTCDate() + i)
@@ -57,7 +71,7 @@ watch([dates, aliveOverTime], () => {
         }).join('<br/>')
       },
     },
-    grid: { left: 50, right: 16, top: 16, bottom: 48 },
+    grid: { left: 50, right: 16, top: 16, bottom: 16 },
     xAxis: {
       type: 'time',
       ...AXIS_STYLE,
@@ -66,12 +80,12 @@ watch([dates, aliveOverTime], () => {
     yAxis: {
       type: 'value',
       ...AXIS_STYLE,
+      min: Math.max(0, Math.min(...aliveSliced) - 500),
       axisLabel: {
         ...AXIS_STYLE.axisLabel,
         formatter: (v) => v >= 1000 ? (v / 1000).toFixed(0) + 'k' : v,
       },
     },
-    dataZoom: DATA_ZOOM,
     series: [
       {
         name: 'Alive',
@@ -89,7 +103,7 @@ watch([dates, aliveOverTime], () => {
         },
         markArea: MASS_BLACK_AREA,
         markLine: { silent: true, symbol: 'none', data: MASS_BLACK_LINES },
-        data: d.map((date, i) => [date, alive[i]]),
+        data: dSliced.map((date, i) => [date, aliveSliced[i]]),
       },
       {
         name: 'Projected',
@@ -107,9 +121,19 @@ watch([dates, aliveOverTime], () => {
   <section class="cs">
     <h2 class="cs__title">Supply Deflation</h2>
     <ClientOnly>
-      <p v-if="currentAliveCount" class="cs__stat">
-        {{ currentAliveCount.toLocaleString() }} remaining <span class="cs__pct">(-{{ deflationPct }}%)</span>
-      </p>
+      <div class="cs__header">
+        <p v-if="currentAliveCount" class="cs__stat">
+          {{ currentAliveCount.toLocaleString() }} remaining <span class="cs__pct">(-{{ deflationPct }}%)</span>
+        </p>
+        <p class="cs__ranges">
+          <span v-for="(r, i) in RANGES" :key="r.label"
+            >{{ i > 0 ? ' ' : '' }}[<span
+              class="cs__range"
+              :class="{ 'cs__range--active': rangeMode === r.label }"
+              @click="rangeMode = r.label"
+            >{{ r.label }}</span>]</span>
+        </p>
+      </div>
       <div ref="chartEl" class="cs__canvas"></div>
     </ClientOnly>
   </section>
@@ -128,12 +152,32 @@ watch([dates, aliveOverTime], () => {
 @media (min-width: 768px) {
   .cs__title { @apply text-6xl; }
 }
+.cs__header {
+  @apply flex items-baseline justify-between mb-4 flex-wrap gap-2;
+}
 .cs__stat {
-  @apply text-white mb-4 text-base lg:text-3xl;
+  @apply text-white text-base lg:text-3xl;
   font-family: 'HND', sans-serif;
 }
 .cs__pct {
   color: #888;
+}
+.cs__ranges {
+  @apply text-base lg:text-xl;
+  color: #fff;
+  font-family: 'HND', sans-serif;
+}
+.cs__range {
+  cursor: pointer;
+  transition: background-color 0.15s, color 0.15s;
+}
+.cs__range:hover {
+  background: #fff;
+  color: #000;
+}
+.cs__range--active {
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 .cs__canvas {
   width: 100%;
