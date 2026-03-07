@@ -29,6 +29,17 @@ const deflationPct = computed(() => {
   if (!a.length) return 0
   return ((1 - a[a.length - 1] / ORIGINAL_SUPPLY) * 100).toFixed(1)
 })
+const mergeStreak = computed(() => {
+  const m = mergeCountOverTime.value
+  if (!m.length) return 0
+  // Today might not have data yet, start from last entry
+  let streak = 0
+  for (let i = m.length - 1; i >= 0; i--) {
+    if (m[i] > 0) streak++
+    else break
+  }
+  return streak
+})
 const mergedCount = computed(() => {
   const a = aliveOverTime.value
   return a.length ? ORIGINAL_SUPPLY - a[a.length - 1] : 0
@@ -173,6 +184,7 @@ watch([dates, aliveOverTime, rangeMode], () => {
         <p v-if="currentAliveCount" class="cs__stat">
           {{ currentAliveCount.toLocaleString() }}/{{ ORIGINAL_SUPPLY.toLocaleString() }} remaining
           <br/>{{ mergedCount.toLocaleString() }} merged <span class="cs__pct">(-{{ deflationPct }}%)</span>
+          <br/>Merge streak: {{ mergeStreak }} day{{ mergeStreak !== 1 ? 's' : '' }}
         </p>
         <p class="cs__toggle">
           <span v-for="(r, i) in RANGES_ROW1" :key="r.label"
