@@ -1,7 +1,7 @@
 <script setup>
 import { TOOLTIP, DATA_ZOOM, AXIS_STYLE } from '~/composables/useChart'
 
-const { dates, alphaMassOverTime, alphaChanges } = useSupplyHistory()
+const { dates, alphaMassOverTime, alphaChanges, alphaTokenHistory } = useSupplyHistory()
 const { stats, alphaToken } = useDB()
 const alpha_mass = computed(() => stats.value?.alpha_mass ?? 0)
 const chartEl = ref(null)
@@ -24,7 +24,7 @@ const currentAlphaStartDate = computed(() => {
   return null
 })
 
-watch([dates, alphaMassOverTime, alphaChanges, rangeMode], () => {
+watch([dates, alphaMassOverTime, alphaChanges, alphaTokenHistory, rangeMode], () => {
   const d = dates.value
   const alpha = alphaMassOverTime.value
   const changes = alphaChanges.value
@@ -41,14 +41,16 @@ watch([dates, alphaMassOverTime, alphaChanges, rangeMode], () => {
     }
   }
 
-  // Slice data and build markLines based on range mode
-  let chartDates = d
-  let chartAlpha = alpha
+  // Build chart data and markLines based on range mode
+  let chartData
   let markLineData
+  const history = alphaTokenHistory.value
 
-  if (rangeMode.value === 'alpha' && currentAlphaStartDate.value) {
-    // Show full range from mint, mark when token became alpha
-    markLineData = [{
+  if (rangeMode.value === 'alpha' && history) {
+    // Token mass history: each merge event [date, newMass]
+    chartData = history.events
+    // Mark when token became alpha
+    markLineData = currentAlphaStartDate.value ? [{
       xAxis: currentAlphaStartDate.value,
       label: {
         formatter: 'became alpha',
@@ -58,9 +60,10 @@ watch([dates, alphaMassOverTime, alphaChanges, rangeMode], () => {
         position: 'end',
       },
       lineStyle: { color: '#333', type: 'dashed', width: 1 },
-    }]
+    }] : []
   } else {
-    // All mode: show all alpha changes
+    // All mode: global alpha mass daily
+    chartData = d.map((date, i) => [date, alpha[i]])
     markLineData = [{
       xAxis: d[0],
       label: {
@@ -114,7 +117,7 @@ watch([dates, alphaMassOverTime, alphaChanges, rangeMode], () => {
     yAxis: {
       type: 'value',
       ...AXIS_STYLE,
-      min: Math.max(0, Math.min(...chartAlpha) - 100),
+      min: Math.max(0, Math.min(...chartData.map(d => d[1])) - 100),
       axisLabel: {
         ...AXIS_STYLE.axisLabel,
         formatter: (v) => v >= 1000 ? (v / 1000).toFixed(0) + 'k' : v,
@@ -140,7 +143,7 @@ watch([dates, alphaMassOverTime, alphaChanges, rangeMode], () => {
         symbol: 'none',
         data: markLineData,
       },
-      data: chartDates.map((date, i) => [date, chartAlpha[i]]),
+      data: chartData,
     }],
   }, { notMerge: true })
 }, { immediate: true })

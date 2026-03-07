@@ -523,11 +523,23 @@ function buildHistory(events, tierMap, tierCounts, omnibusTransfers, migrationOm
     pushDay()
   }
 
+  // Build mass history for the final alpha token
+  const alphaTokenInitialMass = initialMasses.get(alphaId) || 1
+  const alphaTokenEvents = events
+    .filter(e => e.persistId === alphaId)
+    .map(e => [dayKey(e.timestamp), e.mass])
+  const alphaTokenHistory = {
+    tokenId: alphaId,
+    initialMass: alphaTokenInitialMass,
+    events: alphaTokenEvents,
+  }
+
   console.log(`  ${data.length} days (${startDate} → ${currentDay})`)
   console.log(`  Final: alive=${alive}, T1=${tiers[1]}, T2=${tiers[2]}, T3=${tiers[3]}, T4=${tiers[4]}, alpha=${alphaMass} (#${alphaId}), omnibus=${omnibusSet.size} (mass=${Math.round(runningOmnibusMass)})`)
   console.log(`  Alpha changed hands ${alphaChanges.length} times`)
+  console.log(`  Alpha token #${alphaId}: initial mass=${alphaTokenInitialMass}, ${alphaTokenEvents.length} merge events`)
 
-  return { startDate, data, alphaChanges }
+  return { startDate, data, alphaChanges, alphaTokenHistory }
 }
 
 // ---------------------------------------------------------------------------

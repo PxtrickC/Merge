@@ -28,6 +28,7 @@ export function useSupplyHistory() {
   const omnibusOverTime = computed(() => history.value?.data.map(r => r[7]) ?? [])
   const omnibusMassOverTime = computed(() => history.value?.data.map(r => r[8]) ?? [])
   const alphaChanges = computed(() => history.value?.alphaChanges ?? [])
+  const alphaTokenHistory = computed(() => history.value?.alphaTokenHistory ?? null)
 
   return {
     history,
@@ -43,5 +44,6 @@ export function useSupplyHistory() {
     omnibusOverTime,
     omnibusMassOverTime,
     alphaChanges,
+    alphaTokenHistory,
   }
 }
