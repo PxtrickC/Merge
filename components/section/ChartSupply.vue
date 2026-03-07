@@ -32,9 +32,11 @@ const deflationPct = computed(() => {
 const mergeStreak = computed(() => {
   const m = mergeCountOverTime.value
   if (!m.length) return 0
-  // Today might not have data yet, start from last entry
+  // Skip today if it has 0 merges (data might not be updated yet)
+  let start = m.length - 1
+  if (m[start] === 0) start--
   let streak = 0
-  for (let i = m.length - 1; i >= 0; i--) {
+  for (let i = start; i >= 0; i--) {
     if (m[i] > 0) streak++
     else break
   }
