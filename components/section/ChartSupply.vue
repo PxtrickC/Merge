@@ -168,8 +168,8 @@ watch([dates, aliveOverTime, rangeMode], () => {
     <ClientOnly>
       <div class="cs__header">
         <p v-if="currentAliveCount" class="cs__stat">
-          {{ currentAliveCount.toLocaleString() }} remaining <span class="cs__pct">(-{{ deflationPct }}%)</span>
-          <span class="cs__pct">&nbsp;·&nbsp;</span>{{ mergedCount.toLocaleString() }} merged
+          {{ currentAliveCount.toLocaleString() }}/{{ ORIGINAL_SUPPLY.toLocaleString() }} remaining
+          <br/>{{ mergedCount.toLocaleString() }} merged <span class="cs__pct">(-{{ deflationPct }}%)</span>
         </p>
         <p class="cs__toggle">
           <span v-for="(r, i) in RANGES" :key="r.label"
