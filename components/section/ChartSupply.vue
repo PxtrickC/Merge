@@ -49,7 +49,7 @@ watch([dates, aliveOverTime, rangeMode], () => {
   let projected = currentAlive
 
   if (avgRate > 0 && currentAlive > 1 && !days) {
-    for (let i = 1; i <= 365 * 2; i++) {
+    for (let i = 1; i <= 500; i++) {
       const pd = new Date(lastDate)
       pd.setUTCDate(pd.getUTCDate() + i)
       projDates.push(pd.toISOString().slice(0, 10))
