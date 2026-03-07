@@ -6,8 +6,25 @@ const { stats, alphaToken } = useDB()
 const alpha_mass = computed(() => stats.value?.alpha_mass ?? 0)
 const chartEl = ref(null)
 const { setOption } = useChart(chartEl)
+const rangeMode = ref('all')
 
-watch([dates, alphaMassOverTime, alphaChanges], () => {
+const alphaLabel = computed(() => {
+  if (!alpha_mass.value || !alphaToken.value) return ''
+  return `m(${alpha_mass.value}) #${alphaToken.value.id}`
+})
+
+// Find the date when current alpha token became alpha
+const currentAlphaStartDate = computed(() => {
+  const changes = alphaChanges.value
+  const id = alphaToken.value?.id
+  if (!id || !changes.length) return null
+  for (let i = changes.length - 1; i >= 0; i--) {
+    if (changes[i].tokenId === id) return changes[i].date
+  }
+  return null
+})
+
+watch([dates, alphaMassOverTime, alphaChanges, rangeMode], () => {
   const d = dates.value
   const alpha = alphaMassOverTime.value
   const changes = alphaChanges.value
@@ -47,7 +64,18 @@ watch([dates, alphaMassOverTime, alphaChanges], () => {
     lineStyle: { color: '#333', type: 'dashed', width: 1 },
   }))]
 
+  // Slice data for alpha range mode
+  let chartDates = d
+  let chartAlpha = alpha
+  if (rangeMode.value === 'alpha' && currentAlphaStartDate.value) {
+    const startIdx = Math.max(0, d.findIndex(dd => dd >= currentAlphaStartDate.value))
+    chartDates = d.slice(startIdx)
+    chartAlpha = alpha.slice(startIdx)
+  }
+
   setOption({
+    animation: false,
+    animationDuration: 0,
     backgroundColor: 'transparent',
     tooltip: {
       ...TOOLTIP,
@@ -98,9 +126,9 @@ watch([dates, alphaMassOverTime, alphaChanges], () => {
         symbol: 'none',
         data: markLineData,
       },
-      data: d.map((date, i) => [date, alpha[i]]),
+      data: chartDates.map((date, i) => [date, chartAlpha[i]]),
     }],
-  })
+  }, { notMerge: true })
 }, { immediate: true })
 </script>
 
@@ -108,7 +136,10 @@ watch([dates, alphaMassOverTime, alphaChanges], () => {
   <section class="cs">
     <h2 class="cs__title">Alpha Mass Growth</h2>
     <ClientOnly>
-      <p v-if="alpha_mass" class="cs__stat">[All] [m({{ alpha_mass.toLocaleString() }}) #{{ alphaToken?.id ?? '' }}]</p>
+      <p v-if="alpha_mass" class="cs__toggle">
+        [<span class="cs__mode" :class="{ 'cs__mode--active': rangeMode === 'all' }" @click="rangeMode = 'all'">All</span>]
+        [<span class="cs__mode" :class="{ 'cs__mode--active': rangeMode === 'alpha' }" @click="rangeMode = 'alpha'">{{ alphaLabel }}</span>]
+      </p>
       <div ref="chartEl" class="cs__canvas"></div>
     </ClientOnly>
   </section>
@@ -127,9 +158,21 @@ watch([dates, alphaMassOverTime, alphaChanges], () => {
 @media (min-width: 768px) {
   .cs__title { @apply text-6xl; }
 }
-.cs__stat {
+.cs__toggle {
   @apply text-white mb-4 text-base lg:text-3xl;
   font-family: 'HND', sans-serif;
+}
+.cs__mode {
+  cursor: pointer;
+  transition: background-color 0.15s, color 0.15s;
+}
+.cs__mode:hover {
+  background: #fff;
+  color: #000;
+}
+.cs__mode--active {
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 .cs__canvas {
   width: 100%;
