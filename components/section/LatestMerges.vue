@@ -1,10 +1,15 @@
 <script setup>
 import { useTimeAgo } from "@vueuse/core"
 const latest_merges = await useAPI("/latest_merges")
-const { alphaMass } = useDB()
+const { alphaMass, alphaToken } = useDB()
 const { open: openDrawer } = useTokenDrawer()
 
 const alpha_mass = computed(() => alphaMass.value || 1)
+
+function effectiveAlphaMass(tokenId, tokenMass) {
+  if (alphaToken.value?.id === tokenId) return tokenMass
+  return alpha_mass.value
+}
 const scrollEl = useDragScroll()
 
 const frameSizeValue = computed(() => {
@@ -39,7 +44,7 @@ function formatDate(merged_on) {
         <div class="latest__spheres">
           <div class="latest__col">
             <div class="latest__frame opacity-50 cursor-pointer" :style="{ width: frameSizeValue, height: frameSizeValue }" @click="openDrawer(merge.id)">
-              <merge-svg :tier="merge.tier" :mass="merge.mass" :alpha_mass="alpha_mass" />
+              <merge-svg :tier="merge.tier" :mass="merge.mass" :alpha_mass="effectiveAlphaMass(merge.id, merge.mass)" />
             </div>
             <span class="latest__mass">m({{ merge.mass }})</span>
             <span class="latest__id">#{{ merge.id }}</span>
@@ -47,7 +52,7 @@ function formatDate(merged_on) {
           <span class="latest__arrow" style="color: #fff">&rarr;</span>
           <div class="latest__col">
             <div class="latest__frame cursor-pointer" :style="{ width: frameSizeValue, height: frameSizeValue }" @click="openDrawer(merge.merged_to.id)">
-              <merge-svg :tier="merge.merged_to.tier" :mass="merge.merged_to.mass" :alpha_mass="alpha_mass" />
+              <merge-svg :tier="merge.merged_to.tier" :mass="merge.merged_to.mass" :alpha_mass="effectiveAlphaMass(merge.merged_to.id, merge.merged_to.mass)" />
             </div>
             <span class="latest__mass">m({{ merge.merged_to.mass }})</span>
             <span class="latest__id">#{{ merge.merged_to.id }}</span>
