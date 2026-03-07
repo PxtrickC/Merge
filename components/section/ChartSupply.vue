@@ -118,7 +118,11 @@ watch([dates, aliveOverTime, rangeMode], () => {
           },
         },
         markArea: MASS_BLACK_AREA,
-        markLine: { silent: true, symbol: 'none', data: MASS_BLACK_LINES },
+        markLine: { silent: true, symbol: 'none', data: [...MASS_BLACK_LINES, {
+          xAxis: '2026-01-24',
+          label: { formatter: 'NG shutdown', color: '#888', fontFamily: "'HND', sans-serif", fontSize: 10, position: 'end' },
+          lineStyle: { color: '#333', type: 'dashed', width: 1 },
+        }] },
         data: dSliced.map((date, i) => [date, aliveSliced[i]]),
       },
       {
