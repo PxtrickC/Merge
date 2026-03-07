@@ -80,7 +80,13 @@ watch([dates, aliveOverTime, rangeMode], () => {
     yAxis: {
       type: 'value',
       ...AXIS_STYLE,
-      min: Math.max(0, Math.min(...aliveSliced) - (days === 7 ? 50 : days === 30 ? 100 : 500)),
+      min: (() => {
+        const dataMin = Math.min(...aliveSliced)
+        const dataMax = Math.max(...aliveSliced)
+        const minFloor = days === 7 ? 20 : days === 30 ? 50 : days === 180 ? 200 : days === 365 ? 500 : 1000
+        const span = Math.max(dataMax - dataMin, minFloor)
+        return Math.max(0, dataMin - span * 0.2)
+      })(),
       axisLabel: {
         ...AXIS_STYLE.axisLabel,
         formatter: (v) => v >= 1000 ? (v / 1000).toFixed(0) + 'k' : v,
