@@ -26,6 +26,10 @@ const deflationPct = computed(() => {
   if (!a.length) return 0
   return ((1 - a[a.length - 1] / ORIGINAL_SUPPLY) * 100).toFixed(1)
 })
+const mergedCount = computed(() => {
+  const a = aliveOverTime.value
+  return a.length ? ORIGINAL_SUPPLY - a[a.length - 1] : 0
+})
 
 watch([dates, aliveOverTime, rangeMode], () => {
   const d = dates.value
@@ -82,27 +86,38 @@ watch([dates, aliveOverTime, rangeMode], () => {
         const header = date ? `<div style="color:#888;margin-bottom:4px">${date}</div>` : ''
         const lines = params.map(p => {
           const val = p.value[1]
+          if (p.seriesName === 'Merges') {
+            return `<span style="color:${p.color}">\u25CF</span> ${p.seriesName}: ${val?.toLocaleString()}`
+          }
           const pct = (-(1 - val / ORIGINAL_SUPPLY) * 100).toFixed(1)
           return `<span style="color:${p.color}">\u25CF</span> ${p.seriesName}: ${val?.toLocaleString()} (${pct}%)`
         }).join('<br/>')
         return header + lines
       },
     },
-    grid: { left: 50, right: 16, top: 16, bottom: 16 },
+    grid: { left: 50, right: 40, top: 16, bottom: 16 },
     xAxis: {
       type: 'time',
       ...AXIS_STYLE,
       splitLine: { show: false },
     },
-    yAxis: {
-      type: 'value',
-      ...AXIS_STYLE,
-      scale: true,
-      axisLabel: {
-        ...AXIS_STYLE.axisLabel,
-        formatter: (v) => v >= 1000 ? (v / 1000).toFixed(0) + 'k' : v,
+    yAxis: [
+      {
+        type: 'value',
+        ...AXIS_STYLE,
+        scale: true,
+        axisLabel: {
+          ...AXIS_STYLE.axisLabel,
+          formatter: (v) => v >= 1000 ? (v / 1000).toFixed(0) + 'k' : v,
+        },
       },
-    },
+      {
+        type: 'value',
+        ...AXIS_STYLE,
+        splitLine: { show: false },
+        axisLabel: { ...AXIS_STYLE.axisLabel },
+      },
+    ],
     series: [
       {
         name: 'Alive',
@@ -127,6 +142,15 @@ watch([dates, aliveOverTime, rangeMode], () => {
         data: dSliced.map((date, i) => [date, aliveSliced[i]]),
       },
       {
+        name: 'Merges',
+        type: 'bar',
+        yAxisIndex: 1,
+        barMaxWidth: 6,
+        itemStyle: { color: 'rgba(255,255,255,0.2)' },
+        emphasis: { itemStyle: { color: 'rgba(255,255,255,0.4)' } },
+        data: dSliced.map((date, i) => [date, mergesSliced[i]]),
+      },
+      {
         name: 'Projected',
         type: 'line',
         showSymbol: false,
@@ -145,6 +169,7 @@ watch([dates, aliveOverTime, rangeMode], () => {
       <div class="cs__header">
         <p v-if="currentAliveCount" class="cs__stat">
           {{ currentAliveCount.toLocaleString() }} remaining <span class="cs__pct">(-{{ deflationPct }}%)</span>
+          <span class="cs__pct">&nbsp;·&nbsp;</span>{{ mergedCount.toLocaleString() }} merged
         </p>
         <p class="cs__toggle">
           <span v-for="(r, i) in RANGES" :key="r.label"
