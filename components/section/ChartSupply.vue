@@ -7,7 +7,7 @@ const { setOption } = useChart(chartEl)
 
 const ORIGINAL_SUPPLY = 28990
 const RANGES = [
-  { label: '7D', days: 7 },
+  { label: '2W', days: 14 },
   { label: '1M', days: 30 },
   { label: '3M', days: 90 },
   { label: '6M', days: 180 },
