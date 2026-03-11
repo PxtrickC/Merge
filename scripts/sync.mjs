@@ -193,7 +193,7 @@ async function updateSupplyHistory(db, events) {
 
       while (history.data.length <= dayIndex) {
         const prev = history.data[history.data.length - 1]
-        history.data.push([prev[0], prev[1], prev[2], prev[3], prev[4], prev[5], 0, prev[7] ?? 0])
+        history.data.push([prev[0], prev[1], prev[2], prev[3], prev[4], prev[5], 0, prev[7] ?? 0, prev[8] ?? 0])
       }
 
       const row = history.data[dayIndex]
@@ -205,7 +205,7 @@ async function updateSupplyHistory(db, events) {
       row[6]++ // merge count
     }
 
-    // Update omnibus count once
+    // Update omnibus count (mass carried forward via push)
     try {
       const contract = new ethers.Contract(MERGE_CONTRACT_ADDRESS, MERGE_ABI, rpcProvider)
       const bal = await contract.balanceOf(NIFTY_OMNIBUS_ADDRESS)

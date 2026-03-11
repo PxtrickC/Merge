@@ -184,8 +184,7 @@ watch([dates, aliveOverTime, rangeMode], () => {
     <ClientOnly>
       <div class="cs__header">
         <p v-if="currentAliveCount" class="cs__stat">
-          {{ currentAliveCount.toLocaleString() }}/{{ ORIGINAL_SUPPLY.toLocaleString() }} remaining
-          <br/>{{ mergedCount.toLocaleString() }} merged <span class="cs__pct">(-{{ deflationPct }}%)</span>
+          {{ currentAliveCount.toLocaleString() }}/{{ ORIGINAL_SUPPLY.toLocaleString() }} remaining <span class="cs__pct">(-{{ deflationPct }}%)</span>
           <br/>Merge streak: {{ mergeStreak }} day{{ mergeStreak !== 1 ? 's' : '' }}
         </p>
         <p class="cs__toggle">
