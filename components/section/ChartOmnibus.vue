@@ -3,6 +3,7 @@ import { TOOLTIP, DATA_ZOOM, AXIS_STYLE, MASS_BLACK_AREA, MASS_BLACK_LINES } fro
 
 const { dates, omnibusOverTime, omnibusMassOverTime } = useSupplyHistory()
 const { stats } = useDB()
+const NG_SHUTDOWN = '2026-01-23'
 const omnibusCount = computed(() => {
   const o = omnibusOverTime.value
   return o.length ? o[o.length - 1] : 0
@@ -18,11 +19,12 @@ watch([dates, omnibusOverTime, omnibusMassOverTime, viewMode, stats], () => {
   const mass = omnibusMassOverTime.value
   if (!d.length) return
 
-  const totalMass = stats.value?.total_mass ?? 0
-  const isMass = viewMode.value === 'mass'
-  const values = isMass ? mass : omnibus
+  const mode = viewMode.value
+  const isShutdown = mode === 'shutdown'
+  const startFilter = isShutdown ? NG_SHUTDOWN : '2021-12-14'
 
-  const filtered = d.map((date, i) => ({ date, val: values[i], mass: mass[i] })).filter(r => r.date >= '2021-12-14')
+  const filtered = d.map((date, i) => ({ date, val: omnibus[i], mass: mass[i] })).filter(r => r.date >= startFilter)
+  const massLookup = Object.fromEntries(filtered.map(r => [r.date, r.mass]))
 
   setOption({
     animation: false,
@@ -32,15 +34,13 @@ watch([dates, omnibusOverTime, omnibusMassOverTime, viewMode, stats], () => {
       trigger: 'axis',
       formatter: (params) => {
         const date = params[0]?.value[0]
-        const lines = params.map(p => {
-          const val = p.value[1]
-          let text = `<span style="color:${p.color}">\u25CF</span> ${p.seriesName}: ${val?.toLocaleString()}`
-          if (isMass && totalMass > 0) {
-            text += ` (${((val / totalMass) * 100).toFixed(1)}%)`
-          }
-          return text
-        })
-        return `<span style="color:#555">${date}</span><br/>${lines.join('<br/>')}`
+        const val = params[0]?.value[1]
+        let result = `<span style="color:#555">${date}</span>`
+        result += `<br/><span style="color:#fff">\u25CF Tokens: ${val?.toLocaleString()}</span>`
+        if (date && massLookup[date] != null) {
+          result += `<br/><span style="color:#fff">\u25CF Mass: ${massLookup[date].toLocaleString()}</span>`
+        }
+        return result
       },
     },
     grid: { left: 55, right: 16, top: 24, bottom: 48 },
@@ -52,16 +52,16 @@ watch([dates, omnibusOverTime, omnibusMassOverTime, viewMode, stats], () => {
     yAxis: {
       type: 'value',
       ...AXIS_STYLE,
-      max: isMass ? 400000 : 28990,
+      scale: true,
       axisLabel: {
         ...AXIS_STYLE.axisLabel,
         formatter: (v) => v >= 1000 ? (v / 1000).toFixed(0) + 'k' : v,
       },
     },
-    dataZoom: DATA_ZOOM,
+    dataZoom: DATA_ZOOM.map(dz => ({ ...dz, filterMode: 'filter' })),
     series: [
       {
-        name: isMass ? 'Omnibus Mass' : 'Tokens',
+        name: isShutdown ? 'm count in NG Omnibus' : 'Tokens',
         type: 'line',
         showSymbol: false,
         step: 'end',
@@ -75,7 +75,7 @@ watch([dates, omnibusOverTime, omnibusMassOverTime, viewMode, stats], () => {
             ],
           },
         },
-        markLine: {
+        markLine: isShutdown ? undefined : {
           silent: true,
           symbol: 'none',
           data: [{
@@ -90,17 +90,9 @@ watch([dates, omnibusOverTime, omnibusMassOverTime, viewMode, stats], () => {
             lineStyle: { color: '#333', type: 'dashed', width: 1 },
           }, ...MASS_BLACK_LINES],
         },
-        markArea: MASS_BLACK_AREA,
+        markArea: isShutdown ? undefined : MASS_BLACK_AREA,
         data: filtered.map(r => [r.date, r.val]),
       },
-      ...(isMass && filtered.length > 0 ? [{
-        name: 'Total Mass',
-        type: 'line',
-        showSymbol: false,
-        tooltip: { show: false },
-        lineStyle: { color: '#333', width: 1, type: 'dashed' },
-        data: [[filtered[0].date, totalMass], [filtered[filtered.length - 1].date, totalMass]],
-      }] : []),
     ],
   }, { notMerge: true })
 }, { immediate: true })
@@ -114,7 +106,7 @@ watch([dates, omnibusOverTime, omnibusMassOverTime, viewMode, stats], () => {
       <ClientOnly>
         <p v-if="omnibusCount" class="cs__stat">{{ omnibusCount.toLocaleString() }} tokens</p>
         <p class="cs__toggle">
-          <span v-for="(mode, i) in [['count', 'count'], ['mass', 'Total mass']]" :key="mode[0]"
+          <span v-for="(mode, i) in [['count', 'All'], ['shutdown', 'since NG shutdown']]" :key="mode[0]"
             >{{ i > 0 ? ' ' : '' }}[<span
               class="cs__mode"
               :class="{ 'cs__mode--active': viewMode === mode[0] }"
