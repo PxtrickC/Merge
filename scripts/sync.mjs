@@ -1,8 +1,7 @@
-import { ethers } from "ethers"
 import { readFileSync, writeFileSync } from "fs"
 import { join, dirname } from "path"
 import { fileURLToPath } from "url"
-import { MERGE_CONTRACT_ADDRESS, MERGE_ABI, NIFTY_OMNIBUS_ADDRESS, decodeValue } from "../utils/contract.mjs"
+import { MERGE_CONTRACT_ADDRESS, NIFTY_OMNIBUS_ADDRESS, decodeValue } from "../utils/contract.mjs"
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const DATA_DIR = join(__dirname, "..", "public", "data")
@@ -17,8 +16,6 @@ if (!ALCHEMY_API_KEY) {
   console.error("Missing NUXT_PUBLIC_ALCHEMY_API_KEY env var")
   process.exit(1)
 }
-const RPC_URL = `https://eth-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}`
-
 const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY || ""
 const ETHERSCAN_BASE = "https://api.etherscan.io/v2/api"
 const ETHERSCAN_PAGE_SIZE = 1000
@@ -182,8 +179,6 @@ async function updateSupplyHistory(db, events) {
   try {
     const history = readJSON("supply_history.json")
     const startDate = new Date(history.startDate + "T00:00:00Z")
-    const rpcProvider = new ethers.JsonRpcProvider(RPC_URL)
-
     for (const event of events) {
       const mergedOn = event.timestamp
         ? new Date(event.timestamp * 1000).toISOString()
@@ -205,13 +200,41 @@ async function updateSupplyHistory(db, events) {
       row[6]++ // merge count
     }
 
-    // Update omnibus count (mass carried forward via push)
+    // Update omnibus count AND mass via Alchemy NFT API
     try {
-      const contract = new ethers.Contract(MERGE_CONTRACT_ADDRESS, MERGE_ABI, rpcProvider)
-      const bal = await contract.balanceOf(NIFTY_OMNIBUS_ADDRESS)
+      const omnibusTokenIds = []
+      let pageKey
+      while (true) {
+        const nftUrl = new URL(`https://eth-mainnet.g.alchemy.com/nft/v3/${ALCHEMY_API_KEY}/getNFTsForOwner`)
+        nftUrl.searchParams.set("owner", NIFTY_OMNIBUS_ADDRESS)
+        nftUrl.searchParams.set("contractAddresses[]", MERGE_CONTRACT_ADDRESS)
+        nftUrl.searchParams.set("withMetadata", "false")
+        nftUrl.searchParams.set("pageSize", "100")
+        if (pageKey) nftUrl.searchParams.set("pageKey", pageKey)
+
+        const nftRes = await fetch(nftUrl)
+        const nftJson = await nftRes.json()
+        for (const nft of (nftJson.ownedNfts || [])) {
+          omnibusTokenIds.push(parseInt(nft.tokenId))
+        }
+        if (nftJson.pageKey) { pageKey = nftJson.pageKey } else { break }
+      }
+
+      let omnibusMass = 0
+      for (const id of omnibusTokenIds) {
+        const entry = db.tokens[id]
+        if (entry && entry[0] > 0) {
+          omnibusMass += entry[0] % CLASS_DIVISOR
+        }
+      }
+
       const lastRow = history.data[history.data.length - 1]
-      lastRow[7] = Number(bal)
-    } catch {}
+      lastRow[7] = omnibusTokenIds.length
+      lastRow[8] = omnibusMass
+      console.log(`  Omnibus: ${omnibusTokenIds.length} tokens, mass=${omnibusMass}`)
+    } catch (err) {
+      console.log(`  ⚠️  Omnibus update failed: ${err.message}`)
+    }
 
     writeJSON("supply_history.json", history)
     console.log(`  ✅ supply_history.json`)
