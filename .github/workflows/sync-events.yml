@@ -45,6 +45,42 @@ jobs:
             git push
           fi
 
+      - name: Wait for Vercel deployment
+        if: ${{ success() }}
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: |
+          echo "Waiting for Vercel deployment to complete..."
+          COMMIT_SHA=$(git rev-parse HEAD)
+          MAX_WAIT=300
+          ELAPSED=0
+          INTERVAL=15
+
+          while [ $ELAPSED -lt $MAX_WAIT ]; do
+            RESPONSE=$(curl -s -H "Authorization: Bearer $VERCEL_TOKEN" \
+              "https://api.vercel.com/v6/deployments?projectId=$VERCEL_PROJECT_ID&limit=5&state=READY")
+
+            DEPLOYED_SHA=$(echo "$RESPONSE" | node -e "
+              const data = JSON.parse(require('fs').readFileSync('/dev/stdin','utf8'));
+              const dep = (data.deployments || []).find(d => d.meta?.githubCommitSha === '$COMMIT_SHA');
+              if (dep) console.log(dep.meta.githubCommitSha);
+            " 2>/dev/null)
+
+            if [ "$DEPLOYED_SHA" = "$COMMIT_SHA" ]; then
+              echo "Vercel deployment for $COMMIT_SHA is READY!"
+              break
+            fi
+
+            echo "  Not ready yet... (${ELAPSED}s elapsed)"
+            sleep $INTERVAL
+            ELAPSED=$((ELAPSED + INTERVAL))
+          done
+
+          if [ $ELAPSED -ge $MAX_WAIT ]; then
+            echo "⚠️  Timed out waiting for Vercel deployment (${MAX_WAIT}s). Sending notifications anyway."
+          fi
+
       - name: Send push notifications
         env:
           VAPID_PUBLIC_KEY: ${{ secrets.VAPID_PUBLIC_KEY }}
