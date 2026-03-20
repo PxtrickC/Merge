@@ -179,6 +179,15 @@ async function updateSupplyHistory(db, events) {
   try {
     const history = readJSON("supply_history.json")
     const startDate = new Date(history.startDate + "T00:00:00Z")
+
+    // Always extend history to today even if no events
+    const todayStr = new Date().toISOString().slice(0, 10)
+    const todayIndex = Math.floor((new Date(todayStr + "T00:00:00Z") - startDate) / 86400000)
+    while (history.data.length <= todayIndex) {
+      const prev = history.data[history.data.length - 1]
+      history.data.push([prev[0], prev[1], prev[2], prev[3], prev[4], prev[5], 0, prev[7] ?? 0, prev[8] ?? 0])
+    }
+
     for (const event of events) {
       const mergedOn = event.timestamp
         ? new Date(event.timestamp * 1000).toISOString()
@@ -256,7 +265,9 @@ async function main() {
   const events = await fetchNewEvents(lastBlock + 1)
 
   if (events.length === 0) {
-    console.log("\nAlready up to date! ✅")
+    console.log("\nNo new events — extending supply history to today...")
+    await updateSupplyHistory(db, [])
+    console.log("Done! ✅")
     return
   }
 

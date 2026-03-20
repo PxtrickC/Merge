@@ -164,13 +164,6 @@ function showMass(r) {
       </div>
     </div>
 
-    <div class="cs__info" v-if="hovered != null && rects[hovered]">
-      <span class="cs__info-label">{{ rects[hovered].label }}</span>
-      <span class="cs__info-sep">&middot;</span>
-      <span class="cs__info-detail">{{ rects[hovered].detail }}</span>
-      <span class="cs__info-sep">&middot;</span>
-      <span class="cs__info-mass">{{ rects[hovered].mass.toLocaleString() }} mass ({{ rects[hovered].pct }}%)</span>
-    </div>
   </section>
 </template>
 
@@ -217,7 +210,7 @@ function showMass(r) {
   padding-bottom: 80%;
 }
 @media (min-width: 768px) {
-  .cs__map { padding-bottom: 45%; }
+  .cs__map { padding-bottom: 28%; }
 }
 
 .cs__cell {
@@ -274,25 +267,4 @@ function showMass(r) {
   .cs__cmass { font-size: 0.75rem; }
 }
 
-.cs__info {
-  @apply mt-4;
-  font-family: 'HND', sans-serif;
-  font-size: 0.85rem;
-  color: rgba(255,255,255,0.5);
-  display: flex;
-  align-items: baseline;
-  gap: 0.5rem;
-}
-@media (min-width: 768px) {
-  .cs__info { font-size: 1rem; }
-}
-.cs__info-label {
-  color: #fff;
-}
-.cs__info-sep {
-  color: #333;
-}
-.cs__info-mass {
-  color: rgba(255,255,255,0.35);
-}
 </style>
