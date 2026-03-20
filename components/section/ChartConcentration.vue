@@ -9,7 +9,7 @@ const TIER_BG = {
   4: 'rgba(255,68,68,0.15)',
 }
 
-const viewMode = ref('rank')
+const viewMode = ref('tier')
 const hovered = ref(null)
 const totalMass = computed(() => stats.value?.total_mass || 0)
 
@@ -22,8 +22,7 @@ const items = computed(() => {
   if (viewMode.value === 'rank') {
     const groups = [
       { label: 'Top 10', from: 0, to: 10 },
-      { label: 'Top 11–50', from: 10, to: 50 },
-      { label: 'Top 51–100', from: 50, to: 100 },
+      { label: 'Top 11–100', from: 10, to: 100 },
       { label: 'Top 101–500', from: 100, to: 500 },
       { label: 'Top 501–2k', from: 500, to: 2000 },
       { label: '2k+', from: 2000, to: sorted.length },
@@ -137,7 +136,7 @@ function showMass(r) {
       <h2 class="cs__title">Mass Concentration</h2>
       <p v-if="totalMass" class="cs__stat">{{ totalMass.toLocaleString() }} total mass</p>
       <p class="cs__toggle">
-        <span v-for="(mode, i) in ['rank', 'tier']" :key="mode"
+        <span v-for="(mode, i) in ['tier', 'rank']" :key="mode"
           >{{ i > 0 ? ' ' : '' }}[<span
             class="cs__mode"
             :class="{ 'cs__mode--active': viewMode === mode }"
