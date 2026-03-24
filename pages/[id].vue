@@ -42,17 +42,20 @@ const { data: token } = useLazyAsyncData(`token-${id}`, async () => {
 
 const massVal = computed(() => token.value?.mass ?? '\u2014')
 
-useServerSeoMeta({
-  title: `Merge — m(${massVal.value}) #${id}`,
-  description: `Details for m(${massVal.value}) #${id} — view merge history, ranking, matters and trade.`,
-  ogTitle: `Merge — m(${massVal.value}) #${id}`,
-  ogDescription: `Details for m(${massVal.value}) #${id} — view merge history, ranking, matters and trade.`,
+const seoTitle = computed(() => `Merge — m(${massVal.value}) #${id}`)
+const seoDesc = computed(() => `Details for m(${massVal.value}) #${id} — view merge history, ranking, matters and trade.`)
+
+useSeoMeta({
+  title: seoTitle,
+  description: seoDesc,
+  ogTitle: seoTitle,
+  ogDescription: seoDesc,
   ogUrl: `${baseUrl.value}/${id}`,
   ogImage: `${baseUrl.value}/api/og/${id}`,
   ogImageWidth: 1400,
   ogImageHeight: 787,
-  twitterTitle: `Merge — m(${massVal.value}) #${id}`,
-  twitterDescription: `Details for m(${massVal.value}) #${id} — view merge history, ranking, matters and trade.`,
+  twitterTitle: seoTitle,
+  twitterDescription: seoDesc,
   twitterImage: `${baseUrl.value}/api/og/${id}`,
   twitterCard: 'summary_large_image',
 })

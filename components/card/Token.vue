@@ -10,10 +10,7 @@ const props = defineProps({
   owner: { type: String, default: null },
   ownerName: { type: String, default: null },
   alpha_mass: { type: Number, default: 0 },
-  refreshing: { type: Boolean, default: false },
 })
-
-const emit = defineEmits(['refresh'])
 
 function shortAddr(addr) {
   if (!addr) return ''
@@ -49,14 +46,6 @@ function displayOwner(name, addr) {
           </div>
         </div>
         <div class="token-card__extlinks">
-          <button
-            class="token-card__extlink token-card__refresh"
-            :class="{ 'token-card__refresh--spinning': refreshing }"
-            :disabled="refreshing"
-            @click="emit('refresh')"
-          >
-            <icon variant="refresh" class="w-full h-full" />
-          </button>
           <a
             class="token-card__extlink"
             :href="`https://etherscan.io/nft/0xc3f8a0f5841abff777d3eefa5047e8d413a1c9ab/${+id}`"
@@ -168,25 +157,5 @@ function displayOwner(name, addr) {
 .token-card__extlink img {
   @apply w-full h-full;
   filter: invert(var(--d-icon-invert, 0));
-}
-.token-card__refresh {
-  background: none;
-  border: none;
-  padding: 0;
-  cursor: pointer;
-  opacity: 0.6;
-  transition: opacity 0.2s;
-}
-.token-card__refresh:hover {
-  opacity: 1;
-}
-.token-card__refresh--spinning {
-  opacity: 0.4;
-  cursor: default;
-  animation: tc-spin 1s linear infinite;
-}
-@keyframes tc-spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
 }
 </style>
