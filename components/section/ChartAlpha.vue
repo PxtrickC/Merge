@@ -54,7 +54,6 @@ watch([dates, alphaMassOverTime, alphaChanges, alphaTokenHistory, rangeMode], ()
     if (events.length) {
       chartData = []
       // Build per-date merge list for tooltip
-      // First event = mint record, rest = merge records
       mergesByDate = new Map()
       const firstDate = events[0][0]
       if (!mergesByDate.has(firstDate)) mergesByDate.set(firstDate, [])
@@ -67,25 +66,13 @@ watch([dates, alphaMassOverTime, alphaChanges, alphaTokenHistory, rangeMode], ()
         mergesByDate.get(e[0]).push({ newMass: e[1], burnedId: e[2], gained })
         prev = e[1]
       }
-      let ei = 0
-      // First event mass = mint mass (initial state before further merges)
-      let mass = events[0][1]
-      const start = new Date(events[0][0] + 'T00:00:00Z')
-      const today = new Date()
-      today.setUTCHours(0, 0, 0, 0)
-      for (let cur = new Date(start); cur <= today; cur.setUTCDate(cur.getUTCDate() + 1)) {
-        const ds = cur.toISOString().slice(0, 10)
-        // Push start-of-day mass first (preserves initial m(4) etc.)
-        chartData.push([ds, mass])
-        // Then apply all merge events on this date
-        while (ei < events.length && events[ei][0] <= ds) {
-          mass = events[ei][1]
-          ei++
-        }
-        // If mass changed during this day, push end-of-day value too
-        if (mass !== chartData[chartData.length - 1][1]) {
-          chartData.push([ds, mass])
-        }
+      // Only plot dates that have events (end-of-day mass for each event date)
+      const dateEndMass = new Map()
+      for (const e of events) {
+        dateEndMass.set(e[0], e[1])
+      }
+      for (const [date, mass] of dateEndMass) {
+        chartData.push([date, mass])
       }
     } else {
       chartData = []

@@ -6,7 +6,7 @@ import { readFileSync } from 'node:fs'
 const stripImportAttributes = {
     name: 'strip-import-attributes',
     setup(build) {
-        build.onLoad({ filter: /node_modules\/@base-org\/.*\.js$/ }, (args) => {
+        build.onLoad({ filter: /node_modules[\\/]@base-org[\\/].*\.js$/ }, (args) => {
             let code = readFileSync(args.path, 'utf8')
             code = code.replace(/\bwith\s*\{\s*type\s*:\s*['"]json['"]\s*\}/g, '')
             return { contents: code, loader: 'js' }

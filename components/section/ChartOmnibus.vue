@@ -23,8 +23,10 @@ watch([dates, omnibusOverTime, omnibusMassOverTime, viewMode, stats], () => {
   const isShutdown = mode === 'shutdown'
   const startFilter = isShutdown ? NG_SHUTDOWN : '2021-12-14'
 
-  const filtered = d.map((date, i) => ({ date, val: omnibus[i], mass: mass[i] })).filter(r => r.date >= startFilter)
+  const deltaRaw = omnibus.map((v, i) => i === 0 ? 0 : v - omnibus[i - 1])
+  const filtered = d.map((date, i) => ({ date, val: omnibus[i], mass: mass[i], deltaRaw: deltaRaw[i], deltaAbs: Math.abs(deltaRaw[i]) })).filter(r => r.date >= startFilter)
   const massLookup = Object.fromEntries(filtered.map(r => [r.date, r.mass]))
+  const deltaRawLookup = Object.fromEntries(filtered.map(r => [r.date, r.deltaRaw]))
 
   setOption({
     animation: false,
@@ -34,13 +36,20 @@ watch([dates, omnibusOverTime, omnibusMassOverTime, viewMode, stats], () => {
       trigger: 'axis',
       formatter: (params) => {
         const date = params[0]?.value[0]
-        const val = params[0]?.value[1]
-        let result = `<span style="color:#555">${date}</span>`
-        result += `<br/><span style="color:#fff">\u25CF Tokens: ${val?.toLocaleString()}</span>`
-        if (date && massLookup[date] != null) {
-          result += `<br/><span style="color:#fff">\u25CF Mass: ${massLookup[date].toLocaleString()}</span>`
-        }
-        return result
+        const header = date ? `<div style="color:#888;margin-bottom:4px">${date}</div>` : ''
+        const lines = params.map(p => {
+          const val = p.value[1]
+          if (p.seriesName === 'Daily Change') {
+            const raw = deltaRawLookup[date] ?? val
+            return `<span style="color:${p.color}">\u25CF</span> ${p.seriesName}: ${raw?.toLocaleString()}`
+          }
+          let extra = ''
+          if (date && massLookup[date] != null) {
+            extra = ` (mass: ${massLookup[date].toLocaleString()})`
+          }
+          return `<span style="color:${p.color}">\u25CF</span> ${p.seriesName}: ${val?.toLocaleString()}${extra}`
+        }).join('<br/>')
+        return header + lines
       },
     },
     grid: { left: 55, right: 16, top: 24, bottom: 48 },
@@ -49,15 +58,24 @@ watch([dates, omnibusOverTime, omnibusMassOverTime, viewMode, stats], () => {
       ...AXIS_STYLE,
       splitLine: { show: false },
     },
-    yAxis: {
-      type: 'value',
-      ...AXIS_STYLE,
-      scale: true,
-      axisLabel: {
-        ...AXIS_STYLE.axisLabel,
-        formatter: (v) => v >= 1000 ? (v / 1000).toFixed(0) + 'k' : v,
+    yAxis: [
+      {
+        type: 'value',
+        ...AXIS_STYLE,
+        scale: true,
+        axisLabel: {
+          ...AXIS_STYLE.axisLabel,
+          formatter: (v) => v >= 1000 ? (v / 1000).toFixed(0) + 'k' : v,
+        },
       },
-    },
+      {
+        type: 'value',
+        ...AXIS_STYLE,
+        min: 0,
+        splitLine: { show: false },
+        axisLabel: { ...AXIS_STYLE.axisLabel },
+      },
+    ],
     dataZoom: DATA_ZOOM.map(dz => ({ ...dz, filterMode: 'filter' })),
     series: [
       {
@@ -92,6 +110,15 @@ watch([dates, omnibusOverTime, omnibusMassOverTime, viewMode, stats], () => {
         },
         markArea: isShutdown ? undefined : MASS_BLACK_AREA,
         data: filtered.map(r => [r.date, r.val]),
+      },
+      {
+        name: 'Daily Change',
+        type: 'bar',
+        yAxisIndex: 1,
+        barMaxWidth: 6,
+        itemStyle: { color: 'rgba(255,255,255,0.2)' },
+        emphasis: { itemStyle: { color: 'rgba(255,255,255,0.4)' } },
+        data: filtered.map(r => [r.date, r.deltaAbs]),
       },
     ],
   }, { notMerge: true })
