@@ -42,23 +42,20 @@ function dayKey(ts) {
 function buildTierMap() {
   console.log("Loading db.json for tier lookup...")
   const db = JSON.parse(readFileSync(join(DATA_DIR, "db.json"), "utf-8"))
-  const tokens = db.tokens
+  const dbTokens = db.tokens
   const tierMap = new Map() // tokenId → tier (1-4)
-  const massMap = new Map() // tokenId → current mass (alive tokens only)
   const tierCounts = { 1: 0, 2: 0, 3: 0, 4: 0 }
 
   const nullTokenIds = new Set()
-  for (let id = 1; id < tokens.length; id++) {
-    const entry = tokens[id]
+  for (let id = 1; id < dbTokens.length; id++) {
+    const entry = dbTokens[id]
     if (!entry || entry[0] === 0) {
-      // Unknown value — default to tier 1 (most common)
       tierMap.set(id, 1)
       tierCounts[1]++
       nullTokenIds.add(id)
       continue
     }
     const tier = Math.floor(entry[0] / CLASS_DIVISOR)
-    const mass = entry[0] % CLASS_DIVISOR
     if (tier >= 1 && tier <= 4) {
       tierMap.set(id, tier)
       tierCounts[tier]++
@@ -66,16 +63,13 @@ function buildTierMap() {
       tierMap.set(id, 1)
       tierCounts[1]++
     }
-    // Store current mass for alive tokens (mergedTo === 0)
-    if (entry[2] === 0 && mass > 0) {
-      massMap.set(id, mass)
-    }
   }
 
-  console.log(`  Tier distribution (all ${tokens.length - 1} tokens):`)
+  const aliveCount = dbTokens.slice(1).filter(e => e && e[2] === 0).length
+  console.log(`  Tier distribution (all ${dbTokens.length - 1} tokens):`)
   console.log(`    T1: ${tierCounts[1]}, T2: ${tierCounts[2]}, T3: ${tierCounts[3]}, T4: ${tierCounts[4]}`)
-  console.log(`  Alive tokens with known mass: ${massMap.size}`)
-  return { tierMap, tierCounts, nullTokenIds, massMap }
+  console.log(`  Alive tokens: ${aliveCount}`)
+  return { tierMap, tierCounts, nullTokenIds, dbTokens }
 }
 
 // ---------------------------------------------------------------------------
@@ -268,66 +262,56 @@ async function fetchOmnibusTransfers() {
 }
 
 // ---------------------------------------------------------------------------
-// 4. Compute initial masses for all tokens
+// 4. Compute migration-time masses for all tokens
 // ---------------------------------------------------------------------------
-// Uses db.json (alive tokens' current mass) + forward propagation through
-// merge events to resolve each token's mass at new-contract deployment.
-function computeInitialMasses(events, massMap) {
+// Uses db.json exact values (archive calls for burned tokens) to compute
+// each token's mass at new-contract deployment time.
+//
+// Formula: migration_mass = db_mass - sum(db masses of tokens burned into this
+// one on the new contract). Old-contract burns get mass 0 (their mass is
+// already included in the alive tokens they merged into).
+function computeInitialMasses(events, dbTokens) {
+  // Identify new-contract burned token IDs
+  const newContractBurnIds = new Set(events.map(e => e.burnedId))
+
+  // Compute total absorbed mass per token from new-contract events
+  // absorbed[P] = sum of (db mass of each B that was burned into P)
+  const absorbed = new Map()
+  for (const e of events) {
+    const burnedEntry = dbTokens[e.burnedId]
+    const burnedMass = burnedEntry ? burnedEntry[0] % CLASS_DIVISOR : 0
+    absorbed.set(e.persistId, (absorbed.get(e.persistId) ?? 0) + burnedMass)
+  }
+
   const initial = new Map()
+  let oldBurnCount = 0
 
-  // Tokens that were persist at least once in new-contract events
-  const everPersist = new Set()
-  for (const e of events) everPersist.add(e.persistId)
-
-  // Alive tokens never involved as persist: current mass = initial mass
-  for (const [id, mass] of massMap) {
-    if (!everPersist.has(id)) {
-      initial.set(id, mass)
+  for (let id = 1; id < dbTokens.length; id++) {
+    const entry = dbTokens[id]
+    if (!entry || entry[0] === 0) {
+      initial.set(id, 0)
+      continue
     }
+
+    // Old-contract burn: burned in db but not in new-contract events
+    // Their mass is already included in the persist tokens, so set to 0
+    if (entry[2] !== 0 && !newContractBurnIds.has(id)) {
+      initial.set(id, 0)
+      oldBurnCount++
+      continue
+    }
+
+    const dbMass = entry[0] % CLASS_DIVISOR
+    const absorbedMass = absorbed.get(id) ?? 0
+    initial.set(id, Math.max(0, dbMass - absorbedMass))
   }
 
-  // Iterative forward passes: each pass may resolve more tokens,
-  // which unblocks resolution in the next pass.
-  let pass = 0
-  let changed = true
-  while (changed) {
-    changed = false
-    pass++
-    const tracked = new Map()
-    for (const [id, mass] of initial) tracked.set(id, mass)
-
-    for (const e of events) {
-      const pBefore = tracked.get(e.persistId)
-      const bMass = tracked.get(e.burnedId)
-
-      if (pBefore !== undefined && !initial.has(e.burnedId)) {
-        initial.set(e.burnedId, e.mass - pBefore)
-        changed = true
-      }
-      if (bMass !== undefined && !initial.has(e.persistId)) {
-        initial.set(e.persistId, e.mass - bMass)
-        changed = true
-      }
-
-      // Always update persist to post-merge mass (known from event data)
-      tracked.set(e.persistId, e.mass)
-      tracked.delete(e.burnedId)
-    }
+  const sum = [...initial.values()].reduce((s, m) => s + m, 0)
+  console.log(`  Migration masses: ${initial.size} tokens (${oldBurnCount} old-contract burns zeroed)`)
+  console.log(`  Total mass: ${TOTAL_MASS}, computed sum: ${sum}`)
+  if (sum !== TOTAL_MASS) {
+    console.log(`  ⚠️  Mass diff: ${TOTAL_MASS - sum}`)
   }
-
-  // Fallback: distribute remaining mass using total mass conservation.
-  const resolvedSum = [...initial.values()].reduce((s, m) => s + m, 0)
-  const unresolvedCount = TOTAL_MINTED - initial.size
-  if (unresolvedCount > 0) {
-    const avg = Math.max(1, Math.round((TOTAL_MASS - resolvedSum) / unresolvedCount))
-    for (let id = 1; id <= TOTAL_MINTED; id++) {
-      if (!initial.has(id)) initial.set(id, avg)
-    }
-    console.log(`  Initial masses: ${initial.size - unresolvedCount} resolved, ${unresolvedCount} estimated (avg=${avg})`)
-  } else {
-    console.log(`  Initial masses: all ${initial.size} resolved`)
-  }
-  console.log(`  Total mass: ${TOTAL_MASS}, resolved sum: ${resolvedSum} (${pass} passes)`)
   return initial
 }
 
@@ -347,7 +331,7 @@ function fixNullTiers(events, tierMap, nullTokenIds) {
   }
 }
 
-function buildHistory(events, tierMap, tierCounts, omnibusTransfers, migrationOmnibusIds, massMap) {
+function buildHistory(events, tierMap, tierCounts, omnibusTransfers, migrationOmnibusIds, dbTokens) {
   console.log("\nBuilding daily supply history...")
 
   // Sort events by timestamp, then by blockNumber for stability
@@ -362,40 +346,17 @@ function buildHistory(events, tierMap, tierCounts, omnibusTransfers, migrationOm
     4: TIER_INITIAL[4],
   }
   // Alpha = token with highest mass. Token #1 was initial alpha (from old contract).
-  // Compute #1's initial mass by tracing its first merge event:
-  // first merge mass = initial mass + burned token's mass at that time.
-  // We track each token's mass to compute this.
+  // Compute migration-time masses from db.json exact values
+  const initialMasses = computeInitialMasses(events, dbTokens)
+
   const tokenMass = new Map() // tokenId → current mass
-  const firstT1Event = events.find(e => e.persistId === 1)
-  let initialAlphaMass = 1
-  if (firstT1Event) {
-    // Trace all events before #1's first merge to build token masses
-    for (const e of events) {
-      if (e === firstT1Event) break
-      // burned token is removed, persist token gets new mass
-      tokenMass.delete(e.burnedId)
-      tokenMass.set(e.persistId, e.mass)
-    }
-    const burnedMass = tokenMass.get(firstT1Event.burnedId) || 1
-    initialAlphaMass = firstT1Event.mass - burnedMass
-  }
-  console.log(`  Token #1 initial mass (from old contract): ${initialAlphaMass}`)
-
-  // Compute initial masses from db.json + forward propagation through events
-  const initialMasses = computeInitialMasses(events, massMap)
-
-  // Reset tokenMass (was polluted by initialAlphaMass computation above).
-  tokenMass.clear()
   for (let id = 1; id <= TOTAL_MINTED; id++) {
-    tokenMass.set(id, initialMasses.get(id) || 1)
-  }
-  // Token #1: use computed alpha mass if not resolved
-  if (!initialMasses.has(1)) {
-    tokenMass.set(1, initialAlphaMass)
+    tokenMass.set(id, initialMasses.get(id) || 0)
   }
 
   let alphaId = 1
-  let alphaMass = initialAlphaMass
+  let alphaMass = initialMasses.get(1) || 1
+  console.log(`  Token #1 migration mass: ${alphaMass}`)
   const alphaChanges = [] // { date, tokenId, mass }
   let dayMerges = 0
 
@@ -484,17 +445,23 @@ function buildHistory(events, tierMap, tierCounts, omnibusTransfers, migrationOm
     alive--
     const burnedTier = tierMap.get(event.burnedId) || 1
     tiers[burnedTier]--
-    // Update omnibus mass for cross-boundary merges before updating tokenMass
+    // Update omnibus for merges.
+    // Burned tokens in omnibus are removed from the set HERE so the Transfer
+    // handler (burn → 0x0) won't double-subtract their mass later.
     const persistInOmnibus = omnibusSet.has(event.persistId)
     const burnedInOmnibus = omnibusSet.has(event.burnedId)
-    if (persistInOmnibus && !burnedInOmnibus) {
-      // Persist (in omnibus) absorbed mass from outside
+    if (burnedInOmnibus) {
+      omnibusSet.delete(event.burnedId)
+      if (!persistInOmnibus) {
+        // Cross-boundary: burned mass leaves omnibus to outside persist
+        runningOmnibusMass -= tokenMass.get(event.burnedId) || 0
+      }
+      // Both in omnibus: mass conserved (burned → persist), net 0 for omnibus
+    } else if (persistInOmnibus) {
+      // Cross-boundary: persist (in omnibus) absorbed mass from outside
       runningOmnibusMass += event.mass - (tokenMass.get(event.persistId) || 0)
-    } else if (burnedInOmnibus && !persistInOmnibus) {
-      // Burned (in omnibus) mass leaves to outside persist
-      runningOmnibusMass -= tokenMass.get(event.burnedId) || 0
     }
-    // Both in omnibus: mass conserved (net 0). Both outside: no effect.
+    // Both outside: no effect on omnibus.
     // Update token masses
     tokenMass.set(event.persistId, event.mass)
     tokenMass.delete(event.burnedId)
@@ -548,7 +515,7 @@ function buildHistory(events, tierMap, tierCounts, omnibusTransfers, migrationOm
 async function main() {
   console.log("📊 Build Supply History\n")
 
-  const { tierMap, tierCounts, nullTokenIds, massMap } = buildTierMap()
+  const { tierMap, tierCounts, nullTokenIds, dbTokens } = buildTierMap()
   const events = await fetchMergeEvents()
 
   if (events.length === 0) {
@@ -558,7 +525,7 @@ async function main() {
 
   fixNullTiers(events, tierMap, nullTokenIds)
   const { events: omnibusTransfers, migrationOmnibusIds } = await fetchOmnibusTransfers()
-  const history = buildHistory(events, tierMap, tierCounts, omnibusTransfers, migrationOmnibusIds, massMap)
+  const history = buildHistory(events, tierMap, tierCounts, omnibusTransfers, migrationOmnibusIds, dbTokens)
 
   const json = JSON.stringify(history)
   writeFileSync(join(DATA_DIR, "supply_history.json"), json)
