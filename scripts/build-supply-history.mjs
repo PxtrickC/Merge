@@ -309,8 +309,16 @@ function computeInitialMasses(events, dbTokens) {
   const sum = [...initial.values()].reduce((s, m) => s + m, 0)
   console.log(`  Migration masses: ${initial.size} tokens (${oldBurnCount} old-contract burns zeroed)`)
   console.log(`  Total mass: ${TOTAL_MASS}, computed sum: ${sum}`)
+
+  // Normalize to TOTAL_MASS (small diff from old-contract cross-effects)
   if (sum !== TOTAL_MASS) {
-    console.log(`  ⚠️  Mass diff: ${TOTAL_MASS - sum}`)
+    const diff = sum - TOTAL_MASS
+    console.log(`  Normalizing: adjusting by ${-diff} to match on-chain total`)
+    let maxId = 1, maxMass = 0
+    for (const [id, mass] of initial) {
+      if (mass > maxMass) { maxMass = mass; maxId = id }
+    }
+    initial.set(maxId, maxMass - diff)
   }
   return initial
 }
