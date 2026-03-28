@@ -2,16 +2,15 @@
  * Incremental db.json update — designed for GitHub Actions / CI.
  *
  * Uses Etherscan API for event scanning (no block range limit).
- * Uses Alchemy RPC only for block timestamps.
+ * Uses Alchemy NFT API for daily omnibus count + mass snapshot.
  *
  * Usage:
  *   node scripts/update-db.mjs    # scan events from db.block+1 to latest
  */
-import { ethers } from "ethers"
 import { readFileSync, writeFileSync } from "fs"
 import { join, dirname } from "path"
 import { fileURLToPath } from "url"
-import { MERGE_CONTRACT_ADDRESS, MERGE_ABI, NIFTY_OMNIBUS_ADDRESS, decodeValue } from "../utils/contract.mjs"
+import { MERGE_CONTRACT_ADDRESS, NIFTY_OMNIBUS_ADDRESS, decodeValue } from "../utils/contract.mjs"
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const DATA_DIR = join(__dirname, "..", "public", "data")
@@ -26,7 +25,6 @@ if (!ALCHEMY_API_KEY) {
   process.exit(1)
 }
 const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY || ""
-const RPC_URL = `https://eth-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}`
 
 function readJSON(filename) {
   return JSON.parse(readFileSync(join(DATA_DIR, filename), "utf-8"))
@@ -98,6 +96,38 @@ async function fetchEventsFromEtherscan(fromBlock) {
 }
 
 // ---------------------------------------------------------------------------
+// Fetch current omnibus token count + mass via Alchemy NFT API
+// ---------------------------------------------------------------------------
+async function fetchOmnibusSnapshot(db) {
+  const omnibusTokenIds = []
+  let pageKey
+
+  while (true) {
+    const nftUrl = new URL(`https://eth-mainnet.g.alchemy.com/nft/v3/${ALCHEMY_API_KEY}/getNFTsForOwner`)
+    nftUrl.searchParams.set("owner", NIFTY_OMNIBUS_ADDRESS)
+    nftUrl.searchParams.set("contractAddresses[]", MERGE_CONTRACT_ADDRESS)
+    nftUrl.searchParams.set("withMetadata", "false")
+    nftUrl.searchParams.set("pageSize", "100")
+    if (pageKey) nftUrl.searchParams.set("pageKey", pageKey)
+
+    const res = await fetch(nftUrl)
+    const json = await res.json()
+    for (const nft of (json.ownedNfts || [])) {
+      omnibusTokenIds.push(parseInt(nft.tokenId))
+    }
+    if (json.pageKey) { pageKey = json.pageKey } else { break }
+  }
+
+  let omnibusMass = 0
+  for (const id of omnibusTokenIds) {
+    const entry = db.tokens[id]
+    if (entry && entry[0] > 0) omnibusMass += entry[0] % CLASS_DIVISOR
+  }
+
+  return { count: omnibusTokenIds.length, mass: omnibusMass }
+}
+
+// ---------------------------------------------------------------------------
 // Main
 // ---------------------------------------------------------------------------
 async function main() {
@@ -114,75 +144,74 @@ async function main() {
   console.log(`  Found ${events.length} new events`)
 
   if (events.length === 0) {
-    console.log("\n  db.json is up to date.")
+    console.log("\n  No new merge events.")
     repairMissingOmnibusMass()
-    return
-  }
+  } else {
+    // 2. Apply each event — pure computation, no RPC state queries
+    const latestMerges = readJSON("latest_merges.json")
 
-  // 2. Apply each event — pure computation, no RPC state queries
-  const latestMerges = readJSON("latest_merges.json")
+    for (const { burnedId, persistId, mass, blockNumber, timestamp } of events) {
+      // persistId === 0 means burned without merge target (sent to dead address)
+      const effectivePersistId = persistId || burnedId
 
-  for (const { burnedId, persistId, mass, blockNumber, timestamp } of events) {
-    // persistId === 0 means burned without merge target (sent to dead address)
-    const effectivePersistId = persistId || burnedId
+      // Ensure array is long enough
+      while (tokens.length <= Math.max(burnedId, effectivePersistId)) tokens.push(null)
 
-    // Ensure array is long enough
-    while (tokens.length <= Math.max(burnedId, effectivePersistId)) tokens.push(null)
+      // Burned token: keep existing value, mark as merged
+      const burnedValue = tokens[burnedId]?.[0] ?? 0
+      const burnedMerges = tokens[burnedId]?.[1] ?? 0
+      tokens[burnedId] = [burnedValue, burnedMerges, effectivePersistId]
 
-    // Burned token: keep existing value, mark as merged
-    const burnedValue = tokens[burnedId]?.[0] ?? 0
-    const burnedMerges = tokens[burnedId]?.[1] ?? 0
-    tokens[burnedId] = [burnedValue, burnedMerges, effectivePersistId]
+      // Persist token: update only if a real merge (persistId !== 0)
+      if (persistId !== 0) {
+        const existingEntry = tokens[persistId]
+        const existingTier = existingEntry ? Math.floor(existingEntry[0] / CLASS_DIVISOR) : 1
+        const newValue = existingTier * CLASS_DIVISOR + mass
+        const persistMerges = (existingEntry?.[1] ?? 0) + 1
+        tokens[persistId] = [newValue, persistMerges, 0]
+      }
 
-    // Persist token: update only if a real merge (persistId !== 0)
-    if (persistId !== 0) {
-      const existingEntry = tokens[persistId]
-      const existingTier = existingEntry ? Math.floor(existingEntry[0] / CLASS_DIVISOR) : 1
-      const newValue = existingTier * CLASS_DIVISOR + mass
-      const persistMerges = (existingEntry?.[1] ?? 0) + 1
-      tokens[persistId] = [newValue, persistMerges, 0]
+      // Append to latest_merges
+      const burnedDecoded = decodeValue(burnedValue)
+      if (persistId !== 0) {
+        const existingEntry = tokens[persistId]
+        const existingTier = existingEntry ? Math.floor(existingEntry[0] / CLASS_DIVISOR) : 1
+        latestMerges.unshift({
+          id: burnedId,
+          mass: burnedDecoded.mass,
+          tier: burnedDecoded.class,
+          merged_on: new Date(timestamp * 1000).toISOString(),
+          merged_to: {
+            id: persistId,
+            mass,
+            tier: existingTier,
+          },
+        })
+      }
+
+      const label = persistId === 0 ? 'BURNED (dead)' : `#${persistId} (m=${mass})`
+      console.log(`    #${burnedId} (m=${burnedDecoded.mass}) → ${label} [block ${blockNumber}]`)
     }
 
-    // Append to latest_merges
-    const burnedDecoded = decodeValue(burnedValue)
-    if (persistId !== 0) {
-      const existingEntry = tokens[persistId]
-      const existingTier = existingEntry ? Math.floor(existingEntry[0] / CLASS_DIVISOR) : 1
-      latestMerges.unshift({
-        id: burnedId,
-        mass: burnedDecoded.mass,
-        tier: burnedDecoded.class,
-        merged_on: new Date(timestamp * 1000).toISOString(),
-        merged_to: {
-          id: persistId,
-          mass,
-          tier: existingTier,
-        },
-      })
-    }
+    // 3. Write db.json + latest_merges.json
+    db.block = events[events.length - 1].blockNumber
+    latestMerges.splice(100)
 
-    const label = persistId === 0 ? 'BURNED (dead)' : `#${persistId} (m=${mass})`
-    console.log(`    #${burnedId} (m=${burnedDecoded.mass}) → ${label} [block ${blockNumber}]`)
+    writeJSON("db.json", db)
+    writeJSON("latest_merges.json", latestMerges)
   }
 
-  // 3. Write results
-  db.block = events[events.length - 1].blockNumber
-  latestMerges.splice(100)
-
-  writeJSON("db.json", db)
-  writeJSON("latest_merges.json", latestMerges)
-
-  // 4. Update supply_history.json
+  // 4. Always update supply_history.json — extend to today + omnibus snapshot
   try {
     const history = readJSON("supply_history.json")
     const startDate = new Date(history.startDate + "T00:00:00Z")
     const data = history.data
 
-    for (const { burnedId, persistId, mass, timestamp } of events) {
+    // Apply merge events to their respective days
+    for (const { burnedId, mass, timestamp } of events) {
       const eventDate = new Date(timestamp * 1000).toISOString().slice(0, 10)
       const dayIndex = Math.floor((new Date(eventDate + "T00:00:00Z") - startDate) / 86400000)
 
-      // Fill gap days if needed
       while (data.length <= dayIndex) {
         const prev = data[data.length - 1]
         data.push([prev[0], prev[1], prev[2], prev[3], prev[4], prev[5], 0, prev[7] ?? 0, prev[8] ?? 0])
@@ -190,7 +219,6 @@ async function main() {
 
       const row = data[dayIndex]
       row[0]-- // alive
-      // Determine burned token's tier from db
       const burnedValue = tokens[burnedId]?.[0] ?? 0
       const burnedTier = burnedValue > 0 ? Math.floor(burnedValue / CLASS_DIVISOR) : 1
       if (burnedTier >= 1 && burnedTier <= 4) row[burnedTier]--
@@ -198,14 +226,23 @@ async function main() {
       row[6]++ // merge count
     }
 
-    // Query current omnibus balanceOf and mass, update last row
+    // Extend to today
+    const todayStr = new Date().toISOString().slice(0, 10)
+    const todayIndex = Math.floor((new Date(todayStr + "T00:00:00Z") - startDate) / 86400000)
+    while (data.length <= todayIndex) {
+      const prev = data[data.length - 1]
+      data.push([prev[0], prev[1], prev[2], prev[3], prev[4], prev[5], 0, prev[7] ?? 0, prev[8] ?? 0])
+    }
+
+    // Query Alchemy for current omnibus count + mass, write to today's row
     try {
-      const provider = new ethers.JsonRpcProvider(RPC_URL)
-      const contract = new ethers.Contract(MERGE_CONTRACT_ADDRESS, MERGE_ABI, provider)
-      const bal = await contract.balanceOf(NIFTY_OMNIBUS_ADDRESS)
-      data[data.length - 1][7] = Number(bal)
+      console.log("\n  Fetching omnibus snapshot from Alchemy...")
+      const { count, mass } = await fetchOmnibusSnapshot(db)
+      data[data.length - 1][7] = count
+      data[data.length - 1][8] = mass
+      console.log(`  Omnibus: ${count} tokens, mass=${mass}`)
     } catch (err) {
-      console.log(`  ⚠️  omnibus update failed: ${err.message}`)
+      console.log(`  ⚠️  omnibus snapshot failed: ${err.message}`)
     }
 
     writeJSON("supply_history.json", history)
@@ -213,7 +250,7 @@ async function main() {
     console.log(`  ⚠️  supply_history.json update skipped: ${err.message}`)
   }
 
-  console.log(`\n  Applied ${events.length} events. Block: ${db.block}`)
+  if (events.length > 0) console.log(`\n  Applied ${events.length} events. Block: ${db.block}`)
   console.log("\nDone! ✅")
 }
 
