@@ -439,25 +439,13 @@ watch(isOpen, (open) => {
   if (!import.meta.client) return
   if (open) {
     savedScrollY = window.scrollY
-    document.body.style.position = 'fixed'
-    document.body.style.top = `-${savedScrollY}px`
-    document.body.style.left = '0'
-    document.body.style.right = '0'
-    document.body.style.width = '100%'
-    document.body.style.height = '100%'
+    document.documentElement.style.overflow = 'hidden'
     document.body.style.overflow = 'hidden'
-    // Block native pull-to-refresh so it never triggers a full page reload
     document.documentElement.style.overscrollBehaviorY = 'none'
   } else {
-    document.body.style.position = ''
-    document.body.style.top = ''
-    document.body.style.left = ''
-    document.body.style.right = ''
-    document.body.style.width = ''
-    document.body.style.height = ''
+    document.documentElement.style.overflow = ''
     document.body.style.overflow = ''
     document.documentElement.style.overscrollBehaviorY = ''
-    window.scrollTo(0, savedScrollY)
   }
 })
 
@@ -502,20 +490,15 @@ onUnmounted(() => {
   document.removeEventListener('keydown', onKeyDown)
   // Clean up body styles if drawer was open during unmount (e.g. route change)
   if (isOpen.value) {
-    document.body.style.position = ''
-    document.body.style.top = ''
-    document.body.style.left = ''
-    document.body.style.right = ''
-    document.body.style.width = ''
-    document.body.style.height = ''
+    document.documentElement.style.overflow = ''
     document.body.style.overflow = ''
     document.documentElement.style.overscrollBehaviorY = ''
-    window.scrollTo(0, savedScrollY)
   }
 })
 </script>
 
 <template>
+  <Teleport to="body">
   <Transition name="fade">
     <div v-if="isOpen" class="drawer__backdrop" @click="close" @touchmove.prevent />
   </Transition>
@@ -808,6 +791,7 @@ onUnmounted(() => {
       </div>
     </div>
   </Transition>
+  </Teleport>
 </template>
 
 <style lang="postcss" scoped>
