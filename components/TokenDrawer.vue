@@ -443,6 +443,8 @@ watch(isOpen, (open) => {
     document.body.style.top = `-${savedScrollY}px`
     document.body.style.left = '0'
     document.body.style.right = '0'
+    document.body.style.width = '100%'
+    document.body.style.height = '100%'
     document.body.style.overflow = 'hidden'
     // Block native pull-to-refresh so it never triggers a full page reload
     document.documentElement.style.overscrollBehaviorY = 'none'
@@ -451,6 +453,8 @@ watch(isOpen, (open) => {
     document.body.style.top = ''
     document.body.style.left = ''
     document.body.style.right = ''
+    document.body.style.width = ''
+    document.body.style.height = ''
     document.body.style.overflow = ''
     document.documentElement.style.overscrollBehaviorY = ''
     window.scrollTo(0, savedScrollY)
@@ -502,6 +506,8 @@ onUnmounted(() => {
     document.body.style.top = ''
     document.body.style.left = ''
     document.body.style.right = ''
+    document.body.style.width = ''
+    document.body.style.height = ''
     document.body.style.overflow = ''
     document.documentElement.style.overscrollBehaviorY = ''
     window.scrollTo(0, savedScrollY)
@@ -849,7 +855,7 @@ onUnmounted(() => {
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
-  padding: calc(1rem + env(safe-area-inset-top)) 1rem 1rem;
+  padding: calc(1rem + env(safe-area-inset-top)) 1rem calc(1rem + env(safe-area-inset-bottom));
 }
 
 /* Tier 2 — Black bg, Yellow text */
