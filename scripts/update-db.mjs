@@ -10,7 +10,8 @@
 import { readFileSync, writeFileSync } from "fs"
 import { join, dirname } from "path"
 import { fileURLToPath } from "url"
-import { MERGE_CONTRACT_ADDRESS, NIFTY_OMNIBUS_ADDRESS, decodeValue } from "../utils/contract.mjs"
+import { MERGE_CONTRACT_ADDRESS, decodeValue } from "../utils/contract.mjs"
+import { resolveOmnibusSnapshot } from "./lib/omnibus.mjs"
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const DATA_DIR = join(__dirname, "..", "public", "data")
@@ -93,38 +94,6 @@ async function fetchEventsFromEtherscan(fromBlock) {
   }
 
   return allLogs
-}
-
-// ---------------------------------------------------------------------------
-// Fetch current omnibus token count + mass via Alchemy NFT API
-// ---------------------------------------------------------------------------
-async function fetchOmnibusSnapshot(db) {
-  const omnibusTokenIds = []
-  let pageKey
-
-  while (true) {
-    const nftUrl = new URL(`https://eth-mainnet.g.alchemy.com/nft/v3/${ALCHEMY_API_KEY}/getNFTsForOwner`)
-    nftUrl.searchParams.set("owner", NIFTY_OMNIBUS_ADDRESS)
-    nftUrl.searchParams.set("contractAddresses[]", MERGE_CONTRACT_ADDRESS)
-    nftUrl.searchParams.set("withMetadata", "false")
-    nftUrl.searchParams.set("pageSize", "100")
-    if (pageKey) nftUrl.searchParams.set("pageKey", pageKey)
-
-    const res = await fetch(nftUrl)
-    const json = await res.json()
-    for (const nft of (json.ownedNfts || [])) {
-      omnibusTokenIds.push(parseInt(nft.tokenId))
-    }
-    if (json.pageKey) { pageKey = json.pageKey } else { break }
-  }
-
-  let omnibusMass = 0
-  for (const id of omnibusTokenIds) {
-    const entry = db.tokens[id]
-    if (entry && entry[0] > 0) omnibusMass += entry[0] % CLASS_DIVISOR
-  }
-
-  return { count: omnibusTokenIds.length, mass: omnibusMass }
 }
 
 // ---------------------------------------------------------------------------
@@ -237,10 +206,15 @@ async function main() {
     // Query Alchemy for current omnibus count + mass, write to today's row
     try {
       console.log("\n  Fetching omnibus snapshot from Alchemy...")
-      const { count, mass } = await fetchOmnibusSnapshot(db)
-      data[data.length - 1][7] = count
-      data[data.length - 1][8] = mass
-      console.log(`  Omnibus: ${count} tokens, mass=${mass}`)
+      const prevCount = data.length >= 2 ? data[data.length - 2][7] : undefined
+      const snapshot = await resolveOmnibusSnapshot(db, ALCHEMY_API_KEY, prevCount)
+      if (snapshot) {
+        data[data.length - 1][7] = snapshot.count
+        data[data.length - 1][8] = snapshot.mass
+        console.log(`  Omnibus: ${snapshot.count} tokens, mass=${snapshot.mass}`)
+      } else {
+        console.log(`  ⚠️  Omnibus snapshot rejected — carrying previous values forward`)
+      }
     } catch (err) {
       console.log(`  ⚠️  omnibus snapshot failed: ${err.message}`)
     }

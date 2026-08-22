@@ -1,7 +1,8 @@
 import { readFileSync, writeFileSync } from "fs"
 import { join, dirname } from "path"
 import { fileURLToPath } from "url"
-import { MERGE_CONTRACT_ADDRESS, NIFTY_OMNIBUS_ADDRESS, decodeValue } from "../utils/contract.mjs"
+import { MERGE_CONTRACT_ADDRESS, decodeValue } from "../utils/contract.mjs"
+import { resolveOmnibusSnapshot } from "./lib/omnibus.mjs"
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const DATA_DIR = join(__dirname, "..", "public", "data")
@@ -211,36 +212,16 @@ async function updateSupplyHistory(db, events) {
 
     // Update omnibus count AND mass via Alchemy NFT API
     try {
-      const omnibusTokenIds = []
-      let pageKey
-      while (true) {
-        const nftUrl = new URL(`https://eth-mainnet.g.alchemy.com/nft/v3/${ALCHEMY_API_KEY}/getNFTsForOwner`)
-        nftUrl.searchParams.set("owner", NIFTY_OMNIBUS_ADDRESS)
-        nftUrl.searchParams.set("contractAddresses[]", MERGE_CONTRACT_ADDRESS)
-        nftUrl.searchParams.set("withMetadata", "false")
-        nftUrl.searchParams.set("pageSize", "100")
-        if (pageKey) nftUrl.searchParams.set("pageKey", pageKey)
-
-        const nftRes = await fetch(nftUrl)
-        const nftJson = await nftRes.json()
-        for (const nft of (nftJson.ownedNfts || [])) {
-          omnibusTokenIds.push(parseInt(nft.tokenId))
-        }
-        if (nftJson.pageKey) { pageKey = nftJson.pageKey } else { break }
-      }
-
-      let omnibusMass = 0
-      for (const id of omnibusTokenIds) {
-        const entry = db.tokens[id]
-        if (entry && entry[0] > 0) {
-          omnibusMass += entry[0] % CLASS_DIVISOR
-        }
-      }
-
+      const prevCount = history.data.length >= 2 ? history.data[history.data.length - 2][7] : undefined
+      const snapshot = await resolveOmnibusSnapshot(db, ALCHEMY_API_KEY, prevCount)
       const lastRow = history.data[history.data.length - 1]
-      lastRow[7] = omnibusTokenIds.length
-      lastRow[8] = omnibusMass
-      console.log(`  Omnibus: ${omnibusTokenIds.length} tokens, mass=${omnibusMass}`)
+      if (snapshot) {
+        lastRow[7] = snapshot.count
+        lastRow[8] = snapshot.mass
+        console.log(`  Omnibus: ${snapshot.count} tokens, mass=${snapshot.mass}`)
+      } else {
+        console.log(`  ⚠️  Omnibus snapshot rejected — carrying previous values forward`)
+      }
     } catch (err) {
       console.log(`  ⚠️  Omnibus update failed: ${err.message}`)
     }
