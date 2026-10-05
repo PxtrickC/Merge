@@ -212,8 +212,7 @@ async function updateSupplyHistory(db, events) {
 
     // Update omnibus count AND mass via Alchemy NFT API
     try {
-      const prevCount = history.data.length >= 2 ? history.data[history.data.length - 2][7] : undefined
-      const snapshot = await resolveOmnibusSnapshot(db, ALCHEMY_API_KEY, prevCount)
+      const snapshot = await resolveOmnibusSnapshot(db, ALCHEMY_API_KEY)
       const lastRow = history.data[history.data.length - 1]
       if (snapshot) {
         lastRow[7] = snapshot.count

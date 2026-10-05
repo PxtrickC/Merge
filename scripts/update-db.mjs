@@ -206,8 +206,7 @@ async function main() {
     // Query Alchemy for current omnibus count + mass, write to today's row
     try {
       console.log("\n  Fetching omnibus snapshot from Alchemy...")
-      const prevCount = data.length >= 2 ? data[data.length - 2][7] : undefined
-      const snapshot = await resolveOmnibusSnapshot(db, ALCHEMY_API_KEY, prevCount)
+      const snapshot = await resolveOmnibusSnapshot(db, ALCHEMY_API_KEY)
       if (snapshot) {
         data[data.length - 1][7] = snapshot.count
         data[data.length - 1][8] = snapshot.mass

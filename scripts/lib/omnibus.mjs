@@ -6,34 +6,33 @@
  * Two safeguards live here:
  *   1. Pagination is deduplicated (Set) and guarded against repeated pageKeys,
  *      truncated responses and HTTP errors — a duplicated page used to double
- *      the count (2026-07-22), a swallowed error used to drop pages (2026-08-09).
- *   2. A sanity check against the previous day rejects implausible jumps, with
- *      one re-fetch so a genuine large move can still get through.
+ *      the count (2026-07-22).
+ *   2. The enumerated count must equal the contract's on-chain balanceOf.
+ *      Alchemy sometimes ends pagination early with a well-formed terminal page
+ *      (2026-08-09: 6900 = 69 pages, 2026-10-02: 7200 = 72 pages) and repeats the
+ *      same truncated result on an immediate re-fetch, so only an independent
+ *      source can tell a glitch from a real move.
  */
 import { MERGE_CONTRACT_ADDRESS, NIFTY_OMNIBUS_ADDRESS } from "../../utils/contract.mjs"
 
 const CLASS_DIVISOR = 100_000_000
 const PAGE_SIZE = 100
 const MAX_PAGES = 500
-const RECHECK_DELAY_MS = 3000
 const PAGE_RETRIES = 4
 const PAGE_RETRY_BASE_MS = 500
-
-// Omnibus holdings only shrink over time (tokens leave NG custody and never
-// come back in bulk), so any meaningful jump upward means the fetch went wrong.
-const MAX_INCREASE = 10
-const MAX_DECREASE_RATIO = 0.1
-const MIN_DECREASE_ALLOWANCE = 100
+const SNAPSHOT_ATTEMPTS = 3
+const RECHECK_DELAY_MS = 5000
+const BALANCE_OF_SELECTOR = "0x70a08231"
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)) }
 
-/** GET with retries on 429/5xx — the free Alchemy tier throws occasional 503s mid-pagination. */
-async function fetchPage(url) {
+/** Fetch JSON with retries on 429/5xx — the free Alchemy tier throws occasional 503s mid-pagination. */
+async function fetchJSON(url, init) {
   let lastErr
   for (let attempt = 0; attempt <= PAGE_RETRIES; attempt++) {
     if (attempt > 0) await sleep(PAGE_RETRY_BASE_MS * 2 ** (attempt - 1))
     try {
-      const res = await fetch(url)
+      const res = await fetch(url, init)
       if (res.ok) return await res.json()
       lastErr = new Error(`Alchemy HTTP ${res.status}`)
       if (res.status !== 429 && res.status < 500) throw lastErr
@@ -64,7 +63,7 @@ export async function fetchOmnibusSnapshot(db, alchemyKey) {
 
     let json
     try {
-      json = await fetchPage(url)
+      json = await fetchJSON(url)
     } catch (err) {
       throw new Error(`${err.message} on page ${page + 1}`)
     }
@@ -93,37 +92,34 @@ export async function fetchOmnibusSnapshot(db, alchemyKey) {
   return { count: tokenIds.size, mass }
 }
 
-/** True when `count` is a believable next value after `prevCount`. */
-export function isPlausibleOmnibusCount(prevCount, count) {
-  if (!Number.isFinite(prevCount) || prevCount <= 0) return true
-  if (!Number.isFinite(count) || count < 0) return false
-  if (count > prevCount + MAX_INCREASE) return false
-  const maxDrop = Math.max(MIN_DECREASE_ALLOWANCE, prevCount * MAX_DECREASE_RATIO)
-  return prevCount - count <= maxDrop
+/** On-chain balanceOf(omnibus) on the Merge contract — the authoritative token count. */
+export async function fetchOmnibusBalance(alchemyKey) {
+  const data = BALANCE_OF_SELECTOR + NIFTY_OMNIBUS_ADDRESS.slice(2).padStart(64, "0")
+  const json = await fetchJSON(`https://eth-mainnet.g.alchemy.com/v2/${alchemyKey}`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "eth_call", params: [{ to: MERGE_CONTRACT_ADDRESS, data }, "latest"] }),
+  })
+  if (json.error) throw new Error(`balanceOf failed: ${json.error.message || json.error}`)
+  const balance = parseInt(json.result, 16)
+  if (!Number.isFinite(balance)) throw new Error(`balanceOf returned ${json.result}`)
+  return balance
 }
 
 /**
- * Fetch a snapshot and sanity-check it against the previous day's count.
- * Returns null when the value stays implausible after a re-fetch — callers
- * should then carry the previous day's values forward.
+ * Fetch a snapshot whose count matches on-chain balanceOf, re-fetching a few
+ * times to ride out truncated pagination or a transfer landing mid-fetch.
+ * Returns null when they never agree — callers should then keep the values
+ * they already have rather than record a partial count.
  */
-export async function resolveOmnibusSnapshot(db, alchemyKey, prevCount, log = console.log) {
-  const first = await fetchOmnibusSnapshot(db, alchemyKey)
-  if (isPlausibleOmnibusCount(prevCount, first.count)) return first
-
-  log(`  ⚠️  Omnibus count ${first.count} implausible vs previous day (${prevCount}) — re-checking...`)
-  await sleep(RECHECK_DELAY_MS)
-  const second = await fetchOmnibusSnapshot(db, alchemyKey)
-
-  if (isPlausibleOmnibusCount(prevCount, second.count)) {
-    log(`  ✅ Re-check returned ${second.count} — first read was a fetch glitch`)
-    return second
+export async function resolveOmnibusSnapshot(db, alchemyKey, log = console.log) {
+  for (let attempt = 1; attempt <= SNAPSHOT_ATTEMPTS; attempt++) {
+    if (attempt > 1) await sleep(RECHECK_DELAY_MS * (attempt - 1))
+    const snapshot = await fetchOmnibusSnapshot(db, alchemyKey)
+    const balance = await fetchOmnibusBalance(alchemyKey)
+    if (snapshot.count === balance) return snapshot
+    log(`  ⚠️  Alchemy listed ${snapshot.count} omnibus tokens but balanceOf is ${balance} (attempt ${attempt}/${SNAPSHOT_ATTEMPTS})`)
   }
-  if (second.count === first.count && second.mass === first.mass) {
-    log(`  ⚠️  Re-check identical (${second.count}) — accepting as a real change`)
-    return second
-  }
-
-  log(`  ⚠️  Re-check disagreed (${first.count} vs ${second.count}) — snapshot rejected`)
+  log(`  ⚠️  Omnibus enumeration never matched balanceOf — snapshot rejected`)
   return null
 }
